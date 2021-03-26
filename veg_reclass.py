@@ -57,7 +57,7 @@ class Args():
     pass
 defaults = Args()
 
-defaults.veg_index = 'exg'
+defaults.veg_index = 'rgbvi'
 
 # basic libraries
 import os
@@ -374,21 +374,32 @@ def main():
         proc2.wait()
         (stdout2,stderr2) = proc2.communicate()
         if proc2.returncode!=0:
+            print("Unable to locate LAStools las2las utility. Please check that LAStools is installed properly.")
             print(stderr2)
         else:
             print('Successfully converted LAS to LAZ file using 32-bit las2las.')
+            '''
+            Remove the original output LAS file.
+            '''
+            rmfile = Popen(['rm',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.las'))).replace('\\','/')])
+            rmfile.wait()
+            (rmout,rmerr) = rmfile.communicate()
+            if rmfile.returncode!=0:
+                print(rmerr)
+            else:
+                print('Successfully deleted old LAS file to save storage space.')
     else:
         print('Successfully converted LAS to LAZ file using 64-bit las2las.')
-    '''
-    Remove the original output LAS file.
-    '''
-    rmfile = Popen(['rm',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.las'))).replace('\\','/')])
-    rmfile.wait()
-    (rmout,rmerr) = rmfile.communicate()
-    if rmfile.returncode!=0:
-        print(rmerr)
-    else:
-        print('Successfully deleted old LAS file to save storage space.')
+        '''
+        Remove the original output LAS file.
+        '''
+        rmfile = Popen(['rm',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.las'))).replace('\\','/')])
+        rmfile.wait()
+        (rmout,rmerr) = rmfile.communicate()
+        if rmfile.returncode!=0:
+            print(rmerr)
+        else:
+            print('Successfully deleted old LAS file to save storage space.')
 
     # print complete script runtime
     print('COMPLETE RUNTIME: {}'.format((time.time()-startTime)))
