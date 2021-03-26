@@ -206,7 +206,7 @@ RETURN:
 '''
 def vegidx(r,g,b, indicies='all'):
     pdindex,pdindexnames,minarr,maxarr = [],[],[],[]
-    if indicies=='all' or indicies=='exr':
+    if indicies=='all' or indicies=='exr' or indicies=='exgr':
         # Excess Red (ExR)
         #    Meyer, G.E.; Neto, J.C. Verification of color vegetation indices for automated crop imaging applications.
         #    Comput. Electron. Agric. 2008, 63, 282–293.
@@ -215,7 +215,7 @@ def vegidx(r,g,b, indicies='all'):
         pdindexnames.append('exr')
         minarr.append(-1.0)
         maxarr.append(1.4)
-    if indicies=='all' or indicies=='exg':
+    if indicies=='all' or indicies=='exg' or indicies=='exgr':
         # Excess Green (ExG)
         #    Woebbecke, D.M.; Meyer, G.E.; Von Bargen, K.; Mortensen, D.A. Color Indices forWeed Identification Under
         #    Various Soil, Residue, and Lighting Conditions. Trans. ASAE 1995, 38, 259–269.

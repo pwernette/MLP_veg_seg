@@ -57,7 +57,7 @@ class Args():
     pass
 defaults = Args()
 
-defaults.veg_index = ''
+defaults.veg_index = 'exg'
 
 # basic libraries
 import os
@@ -142,14 +142,14 @@ RETURN:
 '''
 def vegidx(r,g,b, indicies='all'):
     pdindex,pdindexnames = [],[]
-    if indicies=='all' or indicies=='exr':
+    if indicies=='all' or indicies=='exr'or indicies=='exgr':
         # Excess Red (ExR)
         #    Meyer, G.E.; Neto, J.C. Verification of color vegetation indices for automated crop imaging applications.
         #    Comput. Electron. Agric. 2008, 63, 282–293.
         exr = 1.4*b-g
         pdindex.append([exr])
         pdindexnames.append('exr')
-    if indicies=='all' or indicies=='exg':
+    if indicies=='all' or indicies=='exg' or indicies=='exgr':
         # Excess Green (ExG)
         #    Woebbecke, D.M.; Meyer, G.E.; Von Bargen, K.; Mortensen, D.A. Color Indices forWeed Identification Under
         #    Various Soil, Residue, and Lighting Conditions. Trans. ASAE 1995, 38, 259–269.
