@@ -1,4 +1,4 @@
-# Programs and Scripts for Filtering Vegetation from Point Clouds
+# Programs for Segmenting Vegetation from Point Clouds
 
 ## Usage:
 
@@ -94,4 +94,5 @@ Where *{filename}* is the original point cloud file name and *{vegetation_index_
 The output LAZ file will be saved in the same directory as the input file and will contain all the original points with updated classification values corresponding to either vegetation or bare-Earth.
 
 
+# FEEDBACK
 **If you have any questions about how to implement the code, suggestions for improvements, or feedback, please leave a comment or report the issue with as much detail as possible.**
