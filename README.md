@@ -66,7 +66,7 @@ The program will automatically request the user to select 2 input files:
 ### Outputs:
 An output CSV file will be generated with the following naming scheme:
 
-> {veg_filename}_{noveg_filename}.csv
+> {veg_filename}\_{noveg_filename}.csv
 
 Where *{veg_filename}* is the file name of the point cloud containing vegetation points only and *{noveg_filename}* is the name of the point cloud containing bare-Earth points only.
 
@@ -87,7 +87,7 @@ The program will automatically request the user to select 3 input files.
 
 A new LAZ file will be generated with the following naming scheme:
     
-> {filename}_reclass_{vegetation_index_name}_veg_noveg.las
+> {filename}\_reclass\_{vegetation_index_name}\_veg\_noveg.las
 
 Where *{filename}* is the original point cloud file name and *{vegetation_index_name}* is the name of the vegetation index determined or selected to differentiate vegetation from bare-Earth using Otsu's thresholding approach.
 
