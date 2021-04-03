@@ -70,7 +70,6 @@ import pandas as pd
 import tkinter
 from tkinter import Tk
 from tkinter.filedialog import askopenfile
-from tkinter.filedialog import askdirectory
 
 '''
 Function to open a dialog window where the user can select a single file.

@@ -57,7 +57,7 @@ class Args():
     pass
 defaults = Args()
 
-defaults.veg_index = 'rgbvi'
+defaults.veg_index = ''
 
 # basic libraries
 import os
