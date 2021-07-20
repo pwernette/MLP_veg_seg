@@ -206,6 +206,23 @@ RETURN:
 '''
 def vegidx(r,g,b, indicies='all'):
     pdindex,pdindexnames,minarr,maxarr = [],[],[],[]
+    pdindex.append([r])
+    pdindex.append([g])
+    pdindex.append([b])
+    pdindexnames.append('red')
+    pdindexnames.append('green')
+    pdindexnames.append('blue')
+    minarr.append(0)
+    minarr.append(0)
+    minarr.append(0)
+    if ((np.max(r)<=65536) and (np.max(r)>256)) or ((np.max(g)<=65536) and (np.max(g)>256)) or ((np.max(b)<=65536) and (np.max(b)>256)):
+        maxarr.append(65536)
+        maxarr.append(65536)
+        maxarr.append(65536)
+    elif (np.max(r)<=256) and (np.max(g)<=256) and (np.max(b)<=256):
+        maxarr.append(256)
+        maxarr.append(256)
+        maxarr.append(256)
     if indicies=='all' or indicies=='exr' or indicies=='exgr':
         # Excess Red (ExR)
         #    Meyer, G.E.; Neto, J.C. Verification of color vegetation indices for automated crop imaging applications.
