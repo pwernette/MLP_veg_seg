@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.spatial import cKDTree
+import tensorflow as tf
+from tensorflow import feature_column
+from tensorflow.keras import datasets, layers, models
+from tensorflow.keras.callbacks import EarlyStopping
 
 def arr2float32(inarr):
     '''

@@ -1,9 +1,7 @@
 import sys
 import time
 import numpy as np
-
-def testing():
-    print("TESTING 1, 2, 3...")
+from .miscfx import *
 
 def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.10):
     '''
