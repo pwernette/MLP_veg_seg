@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -290,24 +291,55 @@ def scale_dims(las_file):
 
     Returns a new data
     '''
+    lpvers = int(laspy.__version__.split('.')[0])
     # create an empty numpy array to store converted values
     outdat = np.empty(shape=(0,len(las_file.X)))
     # SCALE X dimension
     x_dimension = las_file.X
-    scale = las_file.header.scale[0]
-    offset = las_file.header.offset[0]
+    if lpvers == 1:
+        try:
+            scale = las_file.header.scale[0]
+            offset = las_file.header.offset[0]
+        except Exception as g:
+            sys.exit(g)
+    elif lpvers == 2:
+        try:
+            scale = las_file.header.scales[0]
+            offset = las_file.header.offsets[0]
+        except Exception as g:
+            sys.exit(g)
     newrow = x_dimension*scale + offset
     outdat = np.append(outdat, np.array([newrow]), axis=0)
     # SCALE Y dimension
     y_dimension = las_file.Y
-    scale = las_file.header.scale[1]
-    offset = las_file.header.offset[1]
+    if lpvers == 1:
+        try:
+            scale = las_file.header.scale[1]
+            offset = las_file.header.offset[1]
+        except Exception as g:
+            sys.exit(g)
+    elif lpvers == 2:
+        try:
+            scale = las_file.header.scales[1]
+            offset = las_file.header.offsets[1]
+        except Exception as g:
+            sys.exit(g)
     newrow = y_dimension*scale + offset
     outdat = np.append(outdat, np.array([newrow]), axis=0)
     # SCALE Z dimension
     z_dimension = las_file.Z
-    scale = las_file.header.scale[2]
-    offset = las_file.header.offset[2]
+    if lpvers == 1:
+        try:
+            scale = las_file.header.scale[2]
+            offset = las_file.header.offset[2]
+        except Exception as g:
+            sys.exit(g)
+    elif lpvers == 2:
+        try:
+            scale = las_file.header.scales[2]
+            offset = las_file.header.offsets[2]
+        except Exception as g:
+            sys.exit(g)
     newrow = z_dimension*scale + offset
     outdat = np.append(outdat, np.array([newrow]), axis=0)
     return outdat

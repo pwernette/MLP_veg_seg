@@ -27,7 +27,8 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
         :param float geom_radius: Radius used to compute geometric values.
 
     Returns:
-        An n-dimensional array (* denotes optional indices):
+        (1) An n-dimensional array with vegetation index values
+            (* denotes optional indices):
               x (:py:class:`float`)
               y (:py:class:`float`)
               z (:py:class:`float`)
@@ -45,6 +46,7 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
             * rgbvi (:py:class:`float`)
             * ikaw (:py:class:`float`)
             * gla (:py:class:`float`)
+        (2) A 1D np.array with vegetation index names
 
     Notes:
         There is no need to normalize any values before passing a valid
@@ -144,17 +146,17 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
     if ('all' in indices) or ('exg' in indices) or ('exgr' in indices) or ('simple' in indices):
         exg = 2*g-r-b
         pdindex = np.append(pdindex, exg, axis=0)
-        pdindexnames = np.append(pdindexnames, 'exg' or ('simple' in indices))
-    if ('all' in indices) or ('exb' in indices):
+        pdindexnames = np.append(pdindexnames, 'exg')
+    if ('all' in indices) or ('exb' in indices) or ('simple' in indices):
         exb = 1.4*r-g
         pdindex = np.append(pdindex, exb, axis=0)
         del(exb)
-        pdindexnames = np.append(pdindexnames, 'exb' or ('simple' in indices))
-    if ('all' in indices) or ('exgr' in indices):
+        pdindexnames = np.append(pdindexnames, 'exb')
+    if ('all' in indices) or ('exgr' in indices) or ('simple' in indices):
         exgr = exg-exr
         pdindex = np.append(pdindex, exgr, axis=0)
         del(exg,exr,exgr)
-        pdindexnames = np.append(pdindexnames, 'exgr' or ('simple' in indices))
+        pdindexnames = np.append(pdindexnames, 'exgr')
     if ('all' in indices) or ('ngrdi' in indices):
         ngrdi = np.divide((g-r), (r+g),
                           out=np.zeros_like((g-r)),
