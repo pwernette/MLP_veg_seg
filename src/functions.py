@@ -21,6 +21,16 @@ import tkinter
 from tkinter import Tk
 from tkinter.filedialog import askopenfile
 
+from src.veg_indices import *
+
+# load autoreload
+if '__IPYTHON__' in globals():
+    from IPython import get_ipython
+    ipython = get_ipython()
+    ipython.magic('load_ext autoreload')
+    ipython.magic('aimport src.veg_indices')
+    ipython.magic('autoreload 1')
+
 '''
 Function to open a dialog window where the user can select a single file.
 '''
@@ -309,9 +319,9 @@ def apply_otsu(inr,ing,inb, inclassvals, veg_index, otsu_threshold, reclasses=[2
     PURPOSE:
         Compute the appropriate vegetation index and reclassify a point cloud using previously extracted thresholds.
     '''
-    # compute vegetation indicies based on point cloud normalized and scaled rgb values
-    print('Computing vegetation indicies...')
-    idxvals = vegidx(inr,ing,inb, indicies=veg_index)
+    # compute vegetation indices based on point cloud normalized and scaled rgb values
+    print('Computing vegetation indices...')
+    idxvals = vegidx(inr,ing,inb, indices=veg_index)
     # create a deep copy of the original point classification values
     final_pts = deepcopy(inclassvals)
     print('Reclassifying input point cloud using "{}" with threshold of {}'.format(veg_index, otsu_threshold))

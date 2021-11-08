@@ -2,7 +2,7 @@ import sys, time
 import numpy as np
 from .functions import *
 
-def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.10):
+def vegidx(lasfileobj, indices=[], colordepth=8):
     '''
     Compute specified vegetation indices and/or geometric values.
 
@@ -97,25 +97,10 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
     # use n-dimensional numpy array as a data container for
     #  1) output values
     #  2) output attribute names
-    pdindex = np.empty(shape=(r.shape[1]), dtype=np.float32)
+    pdindex = np.empty(shape=(0,len(r.squeeze())), dtype=np.float32)
     pdindexnames = np.empty(shape=(0,0))
     minarr = np.empty(shape=(0,0))
     maxarr = np.empty(shape=(0,0))
-    # scale x, y, and z coordinates
-    xs,ys,zs = scale_dims(lasfileobj)
-    # ys = scale_dims(lasfileobj)[1]
-    # zs = scale_dims(lasfileobj)[2]
-    # append x, y, and z(raw values) to the output n-dim numpy array
-    pdindex = np.vstack((pdindex, xs))
-    pdindex = np.vstack((pdindex, ys))
-    pdindex = np.vstack((pdindex, zs))
-    # clean up the workspace (save memory)
-    pdindexnames = np.append(pdindexnames, ['x','y','z'])
-    pdindex = np.vstack((pdindex, r))
-    pdindex = np.vstack((pdindex, g))
-    pdindex = np.vstack((pdindex, b))
-    # append index names to names array
-    pdindexnames = np.append(pdindexnames, ['r','g','b'])
     '''
     Compute vegetation indices based on user specifications
 
@@ -129,27 +114,27 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
         exr = 1.4*b-g
         pdindex = np.vstack((pdindex, exr))
         pdindexnames = np.append(pdindexnames, 'exr')
-        maxarr = np.append(maxarr, -1.0)
+        minarr = np.append(minarr, -1.0)
         maxarr = np.append(maxarr, 1.4)
     if ('all' in indices) or ('exg' in indices) or ('exgr' in indices) or ('simple' in indices):
         exg = 2*g-r-b
         pdindex = np.vstack((pdindex, exg))
         pdindexnames = np.append(pdindexnames, 'exg')
-        maxarr = np.append(maxarr, -1.0)
+        minarr = np.append(minarr, -1.0)
         maxarr = np.append(maxarr, 2.0)
     if ('all' in indices) or ('exb' in indices) or ('simple' in indices):
         exb = 1.4*r-g
         pdindex = np.vstack((pdindex, exb))
         del(exb)
         pdindexnames = np.append(pdindexnames, 'exb')
-        maxarr = np.append(maxarr, -1.0)
+        minarr = np.append(minarr, -1.0)
         maxarr = np.append(maxarr, 1.4)
     if ('all' in indices) or ('exgr' in indices) or ('simple' in indices):
         exgr = exg-exr
         pdindex = np.vstack((pdindex, exgr))
         del(exg,exr,exgr)
         pdindexnames = np.append(pdindexnames, 'exgr')
-        maxarr = np.append(maxarr, -2.4)
+        minarr = np.append(minarr, -2.4)
         maxarr = np.append(maxarr, 3.0)
     if ('all' in indices) or ('ngrdi' in indices):
         ngrdi = np.divide((g-r), (r+g),
@@ -158,7 +143,7 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
         pdindex = np.vstack((pdindex, ngrdi))
         del(ngrdi)
         pdindexnames = np.append(pdindexnames, 'ngrdi')
-        maxarr = np.append(maxarr, -1.0)
+        minarr = np.append(minarr, -1.0)
         maxarr = np.append(maxarr, 1.0)
     if ('all' in indices) or ('mgrvi' in indices):
         mgrvi = np.divide((np.power(g,2)-np.power(r,2)),
@@ -168,7 +153,7 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
         pdindex = np.vstack((pdindex, mgrvi))
         del(mgrvi)
         pdindexnames = np.append(pdindexnames, 'mgrvi')
-        maxarr = np.append(maxarr, -1.0)
+        minarr = np.append(minarr, -1.0)
         maxarr = np.append(maxarr, 1.0)
     if ('all' in indices) or ('gli' in indices):
         gli = np.divide(2*g-r-b, 2*g+r+b,
@@ -177,7 +162,7 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
         pdindex = np.vstack((pdindex, gli))
         del(gli)
         pdindexnames = np.append(pdindexnames, 'gli')
-        maxarr = np.append(maxarr, -1.0)
+        minarr = np.append(minarr, -1.0)
         maxarr = np.append(maxarr, 1.0)
     if ('all' in indices) or ('rgbvi' in indices):
         rgbvi = np.divide((np.power(g,2)-b*r),
@@ -187,7 +172,7 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
         pdindex = np.vstack((pdindex, rgbvi))
         del(rgbvi)
         pdindexnames = np.append(pdindexnames, 'rgbvi')
-        maxarr = np.append(maxarr, -1.0)
+        minarr = np.append(minarr, -1.0)
         maxarr = np.append(maxarr, 1.0)
     if ('all' in indices) or ('ikaw' in indices):
         ikaw = np.divide((r-b), (r+b),
@@ -196,7 +181,7 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
         pdindex = np.vstack((pdindex, ikaw))
         del(ikaw)
         pdindexnames = np.append(pdindexnames, 'ikaw')
-        maxarr = np.append(maxarr, -1.0)
+        minarr = np.append(minarr, -1.0)
         maxarr = np.append(maxarr, 1.0)
     if ('all' in indices) or ('gla' in indices):
         gla = np.divide((2*g-r-b), (2*g+r+b),
@@ -205,8 +190,9 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
         pdindex = np.vstack((pdindex, gla))
         del(gla)
         pdindexnames = np.append(pdindexnames, 'gla')
-        maxarr = np.append(maxarr, -1.0)
+        minarr = np.append(minarr, -1.0)
         maxarr = np.append(maxarr, 1.0)
+
     '''
     Use vegetation indices names index to generate a dictionary
     (indexnamesdict) that can be used to reference the appropriate
@@ -220,9 +206,17 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
     '''
     print('Computed indices: {}'.format(pdindexnames))
     print('  Computation time: {}s'.format((time.time()-start_time)))
-    outdat = pd.DataFrame(list(pdindex),
-                          index=list(pdindexnames),
+    tmpdat = {'vals': list(pdindex)}
+    # print(pdindexnames.shape)
+    # print(pdindexnames)
+    # print(pdindex.shape)
+    # print(pdindex[0:10])
+    outdat = pd.DataFrame(tmpdat,
+                          index=pdindexnames,
                           columns=['vals'])
+    # del(tmpdat)
+    print(outdat)
+    print(minarr)
     outdat['minidxpos'] = minarr   # then add a new column with the minimum possible index values
     outdat['maxidxpos'] = maxarr   # then add a new column with the maximum possible index values
     return outdat

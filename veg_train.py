@@ -77,8 +77,6 @@ from src.functions import *
 from src.veg_indices import *
 
 # load autoreload
-
-
 if '__IPYTHON__' in globals():
     from IPython import get_ipython
     ipython = get_ipython()

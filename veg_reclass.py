@@ -85,12 +85,13 @@ from src.functions import *
 from src.veg_indices import *
 
 # load autoreload
-%load_ext autoreload
-
-# autreload selected modules
-%aimport src.functions
-%aimport src.veg_indices
-%autoreload 1
+if '__IPYTHON__' in globals():
+    from IPython import get_ipython
+    ipython = get_ipython()
+    ipython.magic('load_ext autoreload')
+    ipython.magic('aimport src.functions')
+    ipython.magic('aimport src.veg_indices')
+    ipython.magic('autoreload 1')
 
 def main():
     # check the laspy version
@@ -136,7 +137,7 @@ def main():
     veg_otsu_infile = pd.read_csv(trained_csv_file, index_col=0)
 
     # extract the base filename from the input sample LAS/LAZ file header
-    root_dir,infilename = os.path.split(f.filename)
+    root_dir,infilename = os.path.split(classifyfile)
     infilename = infilename.split('.')[0]
 
     '''
