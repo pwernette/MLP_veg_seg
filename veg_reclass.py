@@ -52,23 +52,18 @@ Required Python modules:
     pandas
     tKinter
 """
-class Args():
-    """ Simple class to hold arguments """
-    pass
-defaults = Args()
-
-defaults.veg_index = ''
-
 # basic libraries
-import os
-import ntpath
-import time
+import os, ntpath, time, getopt
 from copy import deepcopy
 from subprocess import Popen
 
 # import laspy
 import laspy
-from laspy import file
+if int(laspy.__version__.split('.')[0]) == 1:
+    try:
+        from laspy import file
+    except Exception as e:
+        sys.exit(e)
 
 # import libraries for managing and plotting data
 import numpy as np
@@ -82,6 +77,7 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfile
 
 from src.functions import *
+from src.dat_norm_and_format import *
 from src.veg_indices import *
 
 # load autoreload
@@ -90,10 +86,20 @@ if '__IPYTHON__' in globals():
     ipython = get_ipython()
     ipython.magic('load_ext autoreload')
     ipython.magic('aimport src.functions')
+    ipython.magic('aimport src.dat_norm_and_format')
     ipython.magic('aimport src.veg_indices')
     ipython.magic('autoreload 1')
 
-def main():
+class Args():
+    """ Simple class to hold arguments """
+    pass
+defaults = Args()
+
+defaults.veg_index = ''
+defaults.veg_threshold = -9999
+
+
+def main(vegetationindex, vegetationthreshold):
     # check the laspy version
     laspyversion = int(laspy.__version__.split('.')[0])
     print('Found laspy version {}'.format(laspy.__version__))
@@ -141,25 +147,26 @@ def main():
     infilename = infilename.split('.')[0]
 
     '''
-    Normalize the r,g,b values
-    '''
-    print('Normalizing R, G, B bands...')
-    r,g,b = normBands(deepcopy(f.red), deepcopy(f.green), deepcopy(f.blue))
-
-    '''
     Select vegetation index
     '''
-    if defaults.veg_index=='':
+    if vegetationindex == '':
         vegetation_index = veg_otsu_infile[['M-statistic']].idxmax()[0]
         print('{} vegetation index automatically selected based on M-statistic in input table.'.format(vegetation_index))
     else:
-        vegetation_index = defaults.veg_index
+        vegetation_index = vegetationindex
         print('Using specified vegetation index: {}'.format(vegetation_index))
+
+    if vegetationthreshold == -9999:
+        veg_reclass_threshold = veg_otsu_infile['threshold'][vegetation_index]
+        print('Using vegetation threshold = {}'.format(veg_reclass_threshold))
+    else:
+        veg_reclass_threshold = vegetationthreshold
+        print('Using MANUAL threshold = {}'.format(veg_reclass_threshold))
 
     '''
     Apply threshold from veg/no-veg binarization using otsu_appthresh() function
     '''
-    updated_classes = apply_otsu(r,g,b, deepcopy(f.classification), vegetation_index, veg_otsu_infile['threshold'][vegetation_index], reclasses=[2,4])
+    updated_classes = apply_otsu(f, vegetation_index, veg_reclass_threshold, reclasses=[2,4])
 
     '''
     Copy point cloud, update classification field, & save new LAZ file.
@@ -168,7 +175,7 @@ def main():
     #   "_reclass_{vegetation_index_name}_veg_noveg.laz" is appended to filename
     if laspyversion == 1:
         try:
-            f_out = file.File(str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.las'))).replace('\\','/'), mode='w', header=f.header)
+            f_out = file.File(str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg_'+str(np.round(veg_reclass_threshold,4))+'.las'))).replace('\\','/'), mode='w', header=f.header)
             # copy the points from the origina file to the new output file
             f_out.points = f.points
             # update the classification with the computed/binarized classes
@@ -176,17 +183,17 @@ def main():
             # close the output file
             f_out.close()
             f.close()
-            del(r,g,b,updated_classes)
+            del(updated_classes)
 
             # NOTE: Because laspy version 1.x.x cannot write LAZ files, Popen
             # utility is used to convert the output LAS file to a compressed
             # LAZ file (to save on storage space)
-            proc = Popen(['las2las64','-i',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.las'))).replace('\\','/'),'-o',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.laz'))).replace('\\','/')])
+            proc = Popen(['las2las64','-i',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg_'+str(np.round(veg_reclass_threshold,4))+'.las'))).replace('\\','/'),'-o',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.laz'))).replace('\\','/')])
             proc.wait()
             (stdout,stderr) = proc.communicate()
             if proc.returncode!=0:
                 print(stderr)
-                proc2 = Popen(['las2las','-i',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.las'))).replace('\\','/'),'-o',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.laz'))).replace('\\','/')])
+                proc2 = Popen(['las2las','-i',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg_'+str(np.round(veg_reclass_threshold,4))+'.las'))).replace('\\','/'),'-o',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.laz'))).replace('\\','/')])
                 proc2.wait()
                 (stdout2,stderr2) = proc2.communicate()
                 if proc2.returncode!=0:
@@ -195,7 +202,7 @@ def main():
                 else:
                     print('Successfully converted LAS to LAZ file using 32-bit las2las.')
                     # Remove the original output LAS file.
-                    rmfile = Popen(['rm',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.las'))).replace('\\','/')])
+                    rmfile = Popen(['rm',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg_'+str(np.round(veg_reclass_threshold,4))+'.las'))).replace('\\','/')])
                     rmfile.wait()
                     (rmout,rmerr) = rmfile.communicate()
                     if rmfile.returncode!=0:
@@ -205,7 +212,7 @@ def main():
             else:
                 print('Successfully converted LAS to LAZ file using 64-bit las2las.')
                 # Remove the original output LAS file.
-                rmfile = Popen(['rm',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.las'))).replace('\\','/')])
+                rmfile = Popen(['rm',str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg_'+str(np.round(veg_reclass_threshold,4))+'.las'))).replace('\\','/')])
                 rmfile.wait()
                 (rmout,rmerr) = rmfile.communicate()
                 if rmfile.returncode!=0:
@@ -222,8 +229,8 @@ def main():
             # update the classification with the computed/binarized classes
             f_out.classification = updated_classes
             # close the output file
-            f_out.write(str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg.laz'))).replace('\\','/'))
-            del(r,g,b,updated_classes)
+            f_out.write(str(ntpath.join(root_dir,(infilename+'_reclass_'+str(vegetation_index)+'_veg_noveg_'+str(np.round(veg_reclass_threshold,4))+'.laz'))).replace('\\','/'))
+            del(updated_classes)
         except Exception as e:
             sys.exit(e)
 
@@ -231,4 +238,19 @@ def main():
     print('COMPLETE RUNTIME: {}'.format((time.time()-startTime)))
 
 if __name__ == '__main__':
-    main()
+    arg_vegidx = defaults.veg_index
+    arg_vegthresh = defaults.veg_threshold
+
+    argv = sys.argv[1:]
+    try:
+        opts,args = getopt.getopt(argv,"i:t:")
+    except Exception as e:
+        print(e)
+        sys.exit()
+
+    for opt,arg in opts:
+        if opt in ['-i','--index']:
+            arg_vegidx = str(arg)
+        elif opt in ['-t','--threshold']:
+            arg_vegthresh = arg
+    main(arg_vegidx, arg_vegthresh)

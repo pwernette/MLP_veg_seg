@@ -74,6 +74,7 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfile
 
 from src.functions import *
+from src.dat_norm_and_format import *
 from src.veg_indices import *
 
 # load autoreload
@@ -82,6 +83,7 @@ if '__IPYTHON__' in globals():
     ipython = get_ipython()
     ipython.magic('load_ext autoreload')
     ipython.magic('aimport src.functions')
+    ipython.magic('aimport src.dat_norm_and_format')
     ipython.magic('aimport src.veg_indices')
     ipython.magic('autoreload 1')
 

@@ -1,6 +1,16 @@
 import sys, time
 import numpy as np
-from .functions import *
+import pandas as pd
+
+from .dat_norm_and_format import *
+
+# load autoreload
+if '__IPYTHON__' in globals():
+    from IPython import get_ipython
+    ipython = get_ipython()
+    ipython.magic('load_ext autoreload')
+    ipython.magic('aimport .functions')
+    ipython.magic('autoreload 1')
 
 def vegidx(lasfileobj, indices=[], colordepth=8):
     '''
@@ -97,6 +107,8 @@ def vegidx(lasfileobj, indices=[], colordepth=8):
     # use n-dimensional numpy array as a data container for
     #  1) output values
     #  2) output attribute names
+    #  3) minimum index values
+    #  4) maximum index values
     pdindex = np.empty(shape=(0,len(r.squeeze())), dtype=np.float32)
     pdindexnames = np.empty(shape=(0,0))
     minarr = np.empty(shape=(0,0))
