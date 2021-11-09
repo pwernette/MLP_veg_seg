@@ -12,7 +12,7 @@ if '__IPYTHON__' in globals():
     ipython.magic('aimport .functions')
     ipython.magic('autoreload 1')
 
-def vegidx(lasfileobj, indices=[], colordepth=8):
+def vegidx(lasfileobj, indices=[], colordepth=8, verbose=True):
     '''
     Compute specified vegetation indices and/or geometric values.
 
@@ -216,8 +216,9 @@ def vegidx(lasfileobj, indices=[], colordepth=8):
         following to access the X coordinates:
             pdindex[indexnames['x']]
     '''
-    print('Computed indices: {}'.format(pdindexnames))
-    print('  Computation time: {}s'.format((time.time()-start_time)))
+    if verbose:
+        print('Computed indices: {}'.format(pdindexnames))
+        print('  Computation time: {}s'.format((time.time()-start_time)))
     tmpdat = {'vals': list(pdindex)}
     # print(pdindexnames.shape)
     # print(pdindexnames)
@@ -226,9 +227,9 @@ def vegidx(lasfileobj, indices=[], colordepth=8):
     outdat = pd.DataFrame(tmpdat,
                           index=pdindexnames,
                           columns=['vals'])
-    # del(tmpdat)
-    print(outdat)
-    print(minarr)
+    del(tmpdat)
     outdat['minidxpos'] = minarr   # then add a new column with the minimum possible index values
     outdat['maxidxpos'] = maxarr   # then add a new column with the maximum possible index values
+    if verbose:
+        print(outdat)
     return outdat
