@@ -1,6 +1,7 @@
 import sys
 import numpy as np
 import pandas as pd
+import laspy
 import matplotlib.pyplot as plt
 from scipy.spatial import cKDTree
 import tensorflow as tf

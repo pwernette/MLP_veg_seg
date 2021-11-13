@@ -23,7 +23,8 @@ from .vegindex import vegidx
 from .miscfx import *
 from .modelbuilder import *
 
-def las2split(infile_ground_pc, infile_veg_pc, veg_indices=[],
+def las2split(infile_ground_pc, infile_veg_pc,
+                veg_indices=[], geometry_metrics=[],
                 training_split=0.7, class_imbalance_corr=True,
                 data_reduction=1.0, verbose=True):
     '''
@@ -71,8 +72,10 @@ def las2split(infile_ground_pc, infile_veg_pc, veg_indices=[],
             sys.exit(e)
 
     # compute vegetation indices
-    names_ground,dat_ground = vegidx(fground, indices=veg_indices)
-    names_veg,dat_veg = vegidx(fveg, indices=veg_indices)
+    print('Read {}'.format(infile_ground_pc))
+    names_ground,dat_ground = vegidx(fground, indices=veg_indices, geom_metrics=geometry_metrics)
+    print('Read {}'.format(infile_veg_pc))
+    names_veg,dat_veg = vegidx(fveg, indices=veg_indices, geom_metrics=geometry_metrics)
 
     # transpose the output objects
     ground_sample = np.transpose(dat_ground)
@@ -217,6 +220,8 @@ def pd2fl(input_pd_dat, col_names=['r','g','b'], targetcol='', dat_type='float32
     '''
     if col_names=='all':
         col_names = list(input_pd_dat.columns)
+    if targetcol == '' and 'veglab' in col_names:
+        targetcol = 'veglab'
     dset = df_to_dataset(input_pd_dat[col_names].astype(dat_type),
                                  targetcolname=targetcol,
                                  shuffle=shuf,

@@ -1,5 +1,9 @@
 # basic libraries
-import os, sys, time
+import os
+import sys
+from copy import deepcopy
+import time
+import subprocess
 
 # import laspy
 import laspy
@@ -15,6 +19,17 @@ if int(laspy.__version__.split('.')[0]) == 1:
 
 # import libraries for managing and plotting data
 import numpy as np
+# import matplotlib.pyplot as plt
+# import math
+#
+# # import sklearn libraries to sample numpy arrays
+# from sklearn.model_selection import train_test_split
+#
+# # import scipy modules for KDTree fast spatial queries
+# from scipy.spatial import cKDTree
+
+# import data frame libraries
+import pandas as pd
 
 # import machine learning libraries
 import tensorflow as tf
@@ -48,13 +63,7 @@ defs.filein_ground = 'NA'
 # program will default to requesting the one or both files that are missing
 # but required.
 
-# model inputs and vegetation indices of interest:
-defs.model_inputs = ['r','g','b']
-defs.model_vegetation_indices = ''
-defs.model_include_coords = False
-defs.model_include_geom = False
-defs.model_nodes = [16,16,16]
-defs.model_dropout = 0.2
+
 
 # for training:
 #   epoch: number of training epochs
@@ -71,25 +80,10 @@ defs.training_shuffle = True
 #          of epochs specified by patience.
 #   patience: The number of epochs to monitor change. If there is no improvement
 #          greater than the value specified by delta, then training will stop.
-defs.model_early_stop_patience = 5
-defs.model_early_stop_delta = 0.001
+defs.early_stop_patience = 5
+defs.early_stop_delta = 0.001
 
-def main(filevegetation,
-            filebareearth,
-            output_model_name,
-            vegetationindices=['all'],
-            model_include_coordinates=False,
-            model_include_geometry_metrics=False,
-            model_nodes=[16,16,16],
-            model_dropout=0.2,
-            trainingepochs=1000,
-            trainingclassinbalancecorrection=True,
-            trainingsplit=0.7,
-            trainingdatareduction=1.0,
-            trainingshuffle=True,
-            trainingearly_stop_patience=5,
-            trainingearly_stop_delta=0.001,
-            verbose=True):
+def main(filevegetation, filebareearth, vegetationindices, trainingclassinbalancecorrection, trainingsplit, trainingdatareduction):
     # print info about TF and laspy packages
     print("Tensorflow Information:")
     # print tensorflow version
@@ -120,74 +114,18 @@ def main(filevegetation,
                            training_split=trainingsplit,
                            data_reduction=trainingdatareduction)
 
-    voi_list = ['r','g','b']
-    # append columns/variables of interest list
-    if model_include_coordinates:
-        voi_list.extend(('x','y','z'))
-    if model_include_geometry_metrics:
-        voi_list.extend(('sd'))
-    voi_list.append('veglab')
-
     # convert train, test, and validation to feature layers
-    train_ds,train_ins,train_lyr = pd2fl(train, voi_list, shuf=defs.training_shuffle, ds_prefetch=defs.training_prefetch, batch_sz=defs.training_batch_size)
-    val_ds,val_ins,val_lyr = pd2fl(val, voi_list, shuf=defs.training_shuffle, ds_prefetch=defs.training_prefetch, batch_sz=defs.training_batch_size)
-    test_ds,test_ins,test_lyr = pd2fl(test, voi_list, shuf=defs.training_shuffle, ds_prefetch=defs.training_prefetch, batch_sz=defs.training_batch_size)
+    rgb_train_ds,train_ins,train_lyr = pd2fl(train, ['r','g','b','veglab'], shuf=defs.training_shuffle, ds_prefetch=defs.training_prefetch, batch_sz=defs.training_batch_size)
+    rgb_val_ds,val_ins,val_lyr = pd2fl(val, ['r','g','b','veglab'], shuf=defs.training_shuffle, ds_prefetch=defs.training_prefetch, batch_sz=defs.training_batch_size)
+    rgb_test_ds,test_ins,test_lyr = pd2fl(test, ['r','g','b','veglab'], shuf=defs.training_shuffle, ds_prefetch=defs.training_prefetch, batch_sz=defs.training_batch_size)
 
-    # print model input attributes
-    if verbose:
-        print(list(train_ins))
-
-    # build and train model
-    mod = build_model(model_name=output_model_name,
-                        model_inputs=list(train_ins),
-                        input_feature_layer=train_lyr,
-                        training_tf_dataset=train_ds,
-                        validation_tf_dataset=val_ds,
-                        nodes=model_nodes,
-                        activation_fx='relu',
-                        dropout_rate=model_dropout,
-                        loss_metric='mean_squared_error',
-                        model_optimizer='adam',
-                        earlystopping=[trainingearly_stop_patience,trainingearly_stop_delta],
-                        dotrain=True,
-                        dotrain_epochs=trainingepochs,
-                        verbose=True)
-
-    # # evaluate the model
-    # loss,accuracy = mod.evaluate(test_ds, verbose=1)
-    # # write to model metadata file
-    # # 1) model name,
-    # # 2) model inputs (file names),
-    # # 3) model inputs (variables),
-    # # 4) creation timestamp,
-    # # 5) model accuracy, and
-    # # 6) model summary
-
-    # # check if saved model dir already exists (create if not present)
-    # if not os.path.isdir('saved_models'):
-    #     os.makedirs('saved_models')
     #
-    # # save the complete model
-    # mod.save(ps.path.join('saved_models',output_model_name))
-    # # save the model weights as H5 file
-    # mod.save(ps.path.join('saved_models',(output_model_name+'.h5')))
-    #
-    # # print model summary to console
-    # if verbose:
-    #     print(mod.summary())
 
 if __name__ == '__main__':
     # get default args from the defs class
     # (these will be updated as necessary)
     arg_vegetation_file = defs.filein_vegetation
     arg_ground_file = defs.filein_ground
-    arg_model_inputs = defs.model_inputs
-    arg_model_include_geometry = defs.model_include_geom
-    arg_model_vegetation_indices = defs.model_vegation_indices
-    arg_model_nodes = defs.model_nodes
-    arg_model_dropout = defs.model_dropout
-    arg_model_early_stop_patience = defs.model_early_stop_patience
-    arg_model_early_stop_delta = defs.model_early_stop_delta
     arg_training_epoch = defs.training_epoch
     arg_training_batch_size = defs.training_batch_size
     arg_training_prefetch = defs.training_prefetch
