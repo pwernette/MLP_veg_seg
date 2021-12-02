@@ -55,37 +55,47 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
 
     References:
         Excess Red (ExR)
-               Meyer, G.E.; Neto, J.C. Verification of color vegetation indices for automated crop imaging applications.
-               Comput. Electron. Agric. 2008, 63, 282–293.
+            Meyer, G.E.; Neto, J.C. 2008. Verification of color vegetation
+            indices for automated crop imaging applications. Comput.
+            Electron. Agric. 63, 282–293.
         Excess Green (ExG)
-               Woebbecke, D.M.; Meyer, G.E.; Von Bargen, K.; Mortensen, D.A. Color Indices forWeed Identification Under
-               Various Soil, Residue, and Lighting Conditions. Trans. ASAE 1995, 38, 259–269.
+            Woebbecke, D.M.; Meyer, G.E.; Von Bargen, K.; Mortensen, D.A.
+            1995. Color Indices forWeed Identification Under Various Soil,
+            Residue, and Lighting Conditions. Trans. ASAE, 38, 259–269.
         Excess Blue (ExB)
-               Mao,W.;Wang, Y.;Wang, Y. Real-time detection of between-row weeds using machine vision. In Proceedings
-               of the 2003 ASAE Annual Meeting; American Society of Agricultural and Biological Engineers, Las Vegas,
-               NV, USA, 27–30 July 2003.
+            Mao,W.;Wang, Y.;Wang, Y. 2003. Real-time detection of between-row
+            weeds using machine vision. In Proceedings of the 2003 ASAE
+            Annual Meeting; American Society of Agricultural and Biological
+            Engineers, Las Vegas, NV, USA, 27–30 July 2003.
         Excess Green minus R (ExGR)
-               Neto, J.C. A combined statistical-soft computing approach for classification and mapping weed species in
-               minimum -tillage systems. Ph.D. Thesis, University of Nebraska – Lincoln, Lincoln, NE, USA, August 2004.
+            Neto, J.C. 2004. A combined statistical-soft computing approach
+            for classification and mapping weed species in minimum -tillage
+            systems. Ph.D. Thesis, University of Nebraska – Lincoln, Lincoln,
+            NE, USA, August 2004.
         Normal Green-Red Difference Index (NGRDI)
-               Tucker, C.J. Red and photographic infrared linear combinations for monitoring vegetation. Remote Sens.
-               Environ. 1979, 8, 127–150.
+            Tucker, C.J. Red and photographic infrared linear combinations
+            for monitoring vegetation. Remote Sens. Environ. 8, 127–150.
         Modified Green Red Vegetation Index (MGRVI)
-               Tucker, C.J. Red and photographic infrared linear combinations for monitoring vegetation. Remote Sens.
-               Environ. 1979, 8, 127–150.
+            Tucker, C.J. Red and photographic infrared linear combinations
+            for monitoring vegetation. Remote Sens. Environ. 8, 127–150.
         Green Leaf Index (GLI)
-               Louhaichi, M.; Borman, M.M.; Johnson, D.E. Spatially located platform and aerial photography for
-               documentation of grazing impacts on wheat. Geocarto Int. 2001, 16, 65–70.
+            Louhaichi, M.; Borman, M.M.; Johnson, D.E. 2001. Spatially
+            located platform and aerial photography for documentation of
+            grazing impacts on wheat. Geocarto Int. 16, 65–70.
         Red Green Blue Vegetation Index (RGBVI)
-               Bendig, J.; Yu, K.; Aasen, H.; Bolten, A.; Bennertz, S.; Broscheit, J.; Gnyp, M.L.; Bareth, G. Combining
-               UAV-based plant height from crop surface models, visible, and near infrared vegetation indices for biomass
-               monitoring in barley. Int. J. Appl. Earth Obs. Geoinf. 2015, 39, 79–87.
+            Bendig, J.; Yu, K.; Aasen, H.; Bolten, A.; Bennertz, S.;
+            Broscheit, J.; Gnyp, M.L.; Bareth, G. 2015. Combining UAV-based
+            plant height from crop surface models, visible, and near infrared
+            vegetation indices for biomass monitoring in barley. Int. J.
+            Appl. Earth Obs. Geoinf. 39, 79–87.
         Kawashima Index (IKAW)
-               Kawashima, S.; Nakatani, M. An algorithm for estimating chlorophyll content in leaves using a video camera.
-               Ann. Bot. 1998, 81, 49–54.
+            Kawashima, S.; Nakatani, M. 1998. An algorithm for estimating
+            chlorophyll content in leaves using a video camera. Ann. Bot.
+            81, 49–54.
         Green Leaf Algorithm (GLA)
-               Louhaichi, M.; Borman, M.M.; Johnson, D.E. Spatially located platform and aerial photography for
-               documentation of grazing impacts on wheat. Geocarto Int. 2001, 16, 65–70.
+            Louhaichi, M.; Borman, M.M.; Johnson, D.E. 2001. Spatially
+            located platform and aerial photography for documentation of
+            grazing impacts on wheat. Geocarto Int. 16, 65–70.
     '''
     # start timer
     start_time = time.time()

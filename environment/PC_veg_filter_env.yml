@@ -1,0 +1,14 @@
+name: vegfilter
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+ - python=3.9
+ - graphviz
+ - pip
+ - pip:
+   - pandas
+   - numpy
+   - pydot
+   - laspy==2.0.3
+   - lazrs==0.4.0

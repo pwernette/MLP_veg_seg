@@ -18,10 +18,71 @@ from tensorflow import feature_column
 from tensorflow.keras import datasets, layers, models
 from tensorflow.keras.callbacks import EarlyStopping
 
+# load tkinter modules for GUI user input
+import tkinter as tk
+from tkinter import *
+
 # load custom modules
 from .vegindex import vegidx
 from .miscfx import *
 from .modelbuilder import *
+
+
+def getfile(window_title='Select File'):
+    '''
+    Function to open a dialog window where the user can select a single file.
+    '''
+    root_win = Tk()  # initialize the tKinter window to get user input
+    root_win.withdraw()
+    root_win.update()
+    file_io = askopenfile(title=window_title)  # get user input for the output directory
+    root_win.destroy()  # destroy the tKinter window
+    if not os.name=='nt':  # if the OS is not Windows, then correct slashes in directory name
+        file.io = ntpath.normpath(file_io)
+    return str(file_io.name)
+
+def getmodelname():
+    '''
+    Function to create a dialog box to get a user-specified name for the model
+    to be created.
+
+    Returns the model name as a string (with underscores in place of spaces)
+    '''
+    # create window instance
+    win = Tk()
+    win.title('Specify Model Name')
+
+    # create entry widget to accept user input
+    textbox = Text(win, height=1, width=50)
+    textbox.pack()
+
+    def getinput():
+        global modelname
+        modelname = textbox.get('1.0','end-1c').split('\n')[0]
+        win.destroy()
+        return modelname
+
+    def cancel_and_exit():
+        win.destroy()
+        sys.exit('No model name specified. Exiting program.')
+
+    # create validation button
+    buttonconfirm = Button(win,
+                            text='Confirm Model Name',
+                            width=40,
+                            command=lambda:getinput())
+    buttonconfirm.pack(pady=5)
+
+    win.bind('<Return>', lambda event:getinput())
+
+    win.bind('<Escape>', lambda event:cancel_and_exit())
+
+    win.mainloop()
+    if ' ' in modelname:
+        mname = modelname.replace(' ','_')
+    else:
+        mname = modelname
+    return(mname)
 
 def las2split(infile_ground_pc, infile_veg_pc,
                 veg_indices=[], geometry_metrics=[],
@@ -191,7 +252,15 @@ def df_to_dataset(dataframe, targetcolname='', shuffle=False, prefetch=False, ca
     return ds
 
 
-def pd2fl(input_pd_dat, col_names=['r','g','b'], targetcol='', dat_type='float32', shuf=False, batch_sz=32, ds_prefetch=False, ds_cache=False, verbose=True):
+def pd2fl(input_pd_dat,
+            col_names=['r','g','b'],
+            targetcol='',
+            dat_type='float32',
+            shuf=False,
+            batch_sz=32,
+            ds_prefetch=False,
+            ds_cache=False,
+            verbose=True):
     '''
     Read a pandas.DataFrame object and (1) convert to tf.data object, (2) return
     a list of column names from the pd.DataFrame, and (3) return a

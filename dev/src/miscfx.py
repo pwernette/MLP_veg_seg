@@ -1,13 +1,21 @@
-import sys
+import sys, os
 import numpy as np
 import pandas as pd
 import laspy
 import matplotlib.pyplot as plt
 from scipy.spatial import cKDTree
+
+# import machine learning libraries
 import tensorflow as tf
 from tensorflow import feature_column
 from tensorflow.keras import datasets, layers, models
 from tensorflow.keras.callbacks import EarlyStopping
+
+# message box and file selection libraries
+import tkinter
+from tkinter import Tk
+from tkinter.filedialog import askopenfile
+from tkinter import simpledialog
 
 def arr2float32(inarr):
     '''
