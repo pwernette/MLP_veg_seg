@@ -1,10 +1,40 @@
 # Programs for Segmenting Vegetation from Point Clouds
 
-## Usage:
+These programs are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other. There are two general approaches:
+
+1. The first utilizes a vegetation index and Otsu's thresholding method. This approach is more computationally demanding and the appropriate vegetation index and threshold value are likely to vary by location and application.
+2. The second approach utilizes machine learning and the Tensorflow API. This approach is more efficient, less subjective, and more robust and transferrable across geographies and applications. Assuming you have access to a GPU, we recommend the second approach (utilizing ML).
+
+## Installation:
+
+Clone the repository locally first.
+
+Then, create a virtual environment from one of the .yml environment files in the environment sub-directory.
+
+To create an environment for the non-machine learning approach (utilizing Otsu's thresholding method and a vegetation index), create the environment using:
+```
+conda env create -f PC_veg_filter_env.yml
+```
+
+To create an environment for the machine learning approach (utilizing Tensorflow), create the environment using:
+```
+conda env create -f ML_veg_filter_env.yml
+```
+
+Once you have created the virtual environment, activate the environment by either:
+```
+conda activate vegfilter
+```
+or
+```
+conda activate mlvegfilter
+```
+
+## Usage (non-machine learning version):
 
 Before running the training program or reclassification program, ensure that you have pre-clipped two separate LAS or LAZ point clouds:
 
-1. Point cloud containing points only of ***class A** (e.g. point cloud containing only vegetation points).
+1. Point cloud containing points only of **class A** (e.g. point cloud containing only vegetation points).
 2. Point cloud containing points only of **class B** (e.g. point cloud containing only bare-Earth or non-vegetation points).
 
 These point clouds can be segmented from larger point clouds using any number of programs. I utilize CloudCompare to manually clip out points for each class. It is important that each of the two segmented point clouds specified above include only points of the same class. Including points actually belonging to another class but included in a different sample point cloud will introduce error in the histogram values and will affect the computed Otsu's threshold value for each vegetation index.
@@ -17,6 +47,45 @@ Then, run the reclassification program:
 ```
 python veg_reclass.py
 ```
+
+### veg_train.py
+#### Inputs:
+
+The program will automatically request the user to select 2 input files:
+
+1. The point cloud containing vegetation points only (for training).
+2. The point cloud containing only bare-Earth points (for training).
+
+#### Outputs:
+An output CSV file will be generated with the following naming scheme:
+
+> {veg_filename}\_{noveg_filename}.csv
+
+Where *{veg_filename}* is the file name of the point cloud containing vegetation points only and *{noveg_filename}* is the name of the point cloud containing bare-Earth points only.
+
+The output CSV will have the following attributes (columns) of information:
+
+> {vegetation_index_name}     {minimum_possible_index_value}      {maximum_possible_index_value}      {M-statistic}       {Otsu_threshold_value}
+
+### veg_reclass.py
+#### Inputs:
+
+The program will automatically request the user to select 3 input files.
+
+1. The point cloud to be reclassified.
+2. The CSV file containing the vegetation index value ranges, M-statistics, and Otsu threshold values.
+          --> This file is automatically created when you run veg_train.py
+
+#### Outputs:
+
+A new LAZ file will be generated with the following naming scheme:
+
+> {filename}\_reclass\_{vegetation_index_name}\_veg\_noveg.las
+
+Where *{filename}* is the original point cloud file name and *{vegetation_index_name}* is the name of the vegetation index determined or selected to differentiate vegetation from bare-Earth using Otsu's thresholding approach.
+
+The output LAZ file will be saved in the same directory as the input file and will contain all the original points with updated classification values corresponding to either vegetation or bare-Earth.
+
 These programs compute the following vegetation indicies, their M-statistics, and Otsu threshold values:
 
 - Excess Red (exr)
@@ -38,8 +107,8 @@ These programs compute the following vegetation indicies, their M-statistics, an
 
 *Asterisk denotes vegetation indicies that appear to be **unstable in simulated values** (i.e. their values are not properly constrained).*
 
-Each of the vegetation indicies only requires some combination of the red, green, and blue color bands. No NIR, SWIR, or other band is required.
-Citations for each of the vegetation indicies are included in the vegidx() function of the code.
+Each of the vegetation indices only requires some combination of the red, green, and blue color bands. No NIR, SWIR, or other band is required.
+Citations for each of the vegetation indices are included in the vegidx() function of the code.
 
 The following Python modules are required:
 
@@ -55,43 +124,7 @@ pandas
 tKinter
 ```
 
-## VEG_TRAIN.PY
-### Inputs:
 
-The program will automatically request the user to select 2 input files:
-
-1. The point cloud containing vegetation points only (for training).
-2. The point cloud containing only bare-Earth points (for training).
-
-### Outputs:
-An output CSV file will be generated with the following naming scheme:
-
-> {veg_filename}\_{noveg_filename}.csv
-
-Where *{veg_filename}* is the file name of the point cloud containing vegetation points only and *{noveg_filename}* is the name of the point cloud containing bare-Earth points only.
-
-The output CSV will have the following attributes (columns) of information:
-
-> {vegetation_index_name}     {minimum_possible_index_value}      {maximum_possible_index_value}      {M-statistic}       {Otsu_threshold_value}
-
-## VEG_RECLASS.PY
-### Inputs:
-
-The program will automatically request the user to select 3 input files.
-
-1. The point cloud to be reclassified.
-2. The CSV file containing the vegetation index value ranges, M-statistics, and Otsu threshold values.
-          --> This file is automatically created when you run veg_train.py
-
-### Outputs:
-
-A new LAZ file will be generated with the following naming scheme:
-    
-> {filename}\_reclass\_{vegetation_index_name}\_veg\_noveg.las
-
-Where *{filename}* is the original point cloud file name and *{vegetation_index_name}* is the name of the vegetation index determined or selected to differentiate vegetation from bare-Earth using Otsu's thresholding approach.
-
-The output LAZ file will be saved in the same directory as the input file and will contain all the original points with updated classification values corresponding to either vegetation or bare-Earth.
 
 
 # FEEDBACK

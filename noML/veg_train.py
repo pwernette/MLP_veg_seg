@@ -14,14 +14,6 @@ Description:
         Red Green Blue Veggetation Index (rgbvi)
         Kawashima Index (ikaw)
         Green Lead Algorithm (gla)
-        Visible Atmospherically Resistant Index (vari)*
-        Woebbecke Index (wi)*
-        Color Index of Vegetation Extraction (cive)*
-        Vegetation (vega)*
-        Combined Vegetation Index (com)*
-            --> This index is a combination of (1) exg, (2) exgr, (3) cive, and (4) vega
-
-    *denotes vegetation indices that appear to be unstable in simulated values (i.e. their values are not properly constrained)
 
 Usage:
     python veg_train.py

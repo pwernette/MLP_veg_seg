@@ -1,5 +1,5 @@
 # basic libraries
-import os, sys, time, getopt
+import os, sys, time
 
 # import laspy
 import laspy
@@ -24,6 +24,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 # import functions from other files
 from src.fileio import *
+from src.argument_parsing import *
 from src.vegindex import *
 from src.miscfx import *
 from src.modelbuilder import *
@@ -44,30 +45,13 @@ defs.filein_ground = 'NA'
 # but required.
 
 # model name:
-defs.model_output_name = ''
+defs.model_output_name = 'NA'
 
 # model inputs and vegetation indices of interest:
 defs.model_inputs = ['r','g','b']
 defs.model_vegetation_indices = 'rgb'
-defs.model_include_coords = False
-defs.model_include_geom = False
 defs.model_nodes = [16,16,16]
 defs.model_dropout = 0.2
-
-# for training:
-#   epoch: number of training epochs
-#   batch size: how many records should be aggregated (i.e. batched) together
-#   prefetch: option to prefetch batches (may speed up training time)
-#   shuffle: option to shuffle input data (good practice)
-#   training split: proportion of the data to use for training (remainder will
-#                   be used for testing of the model performance)
-defs.training_epoch = 100
-defs.training_batch_size = 1000
-defs.training_prefetch = True
-defs.training_shuffle = True
-defs.training_split = 0.7
-defs.training_class_imbalance_corr = True
-defs.training_data_reduction = 1.0
 
 # for early stopping:
 #   delta: The minmum change required to continue training beyond the number
@@ -76,6 +60,26 @@ defs.training_data_reduction = 1.0
 #          greater than the value specified by delta, then training will stop.
 defs.model_early_stop_patience = 5
 defs.model_early_stop_delta = 0.001
+
+# for training:
+#   epoch: number of training epochs
+#   batch size: how many records should be aggregated (i.e. batched) together
+#   prefetch: option to prefetch batches (may speed up training time)
+#   cache: option to cache batches ahead of time (speeds up training time)
+#   shuffle: option to shuffle input data (good practice)
+#   training split: proportion of the data to use for training (remainder will
+#                   be used for testing of the model performance)
+#   class imbalance corr: option to correct for class size imbalance
+#   data reduction: setting this to a number between 0 and 1 will reduce the
+#                   overall volume of data used for training and validation
+defs.training_epoch = 100
+defs.training_batch_size = 1000
+defs.training_cache = True
+defs.training_prefetch = True
+defs.training_shuffle = True
+defs.training_split = 0.7
+defs.training_class_imbalance_corr = True
+defs.training_data_reduction = 1.0
 
 def main(default_values,
             verbose=True):
@@ -91,13 +95,16 @@ def main(default_values,
     # print laspy version installed and configured
     print("   laspy Version: {}\n".format(laspy.__version__))
 
+    # parse any command line arguments (if present)
+    parse_cmd_arguments(default_values)
+
     # if no bare Earth or vegetation point clouds have been specified in the
     # user command line args, then request an input LAS/LAZ file for each
     if default_values.filein_ground == 'NA':
-        default_values.filein_ground = getfile(window_title='BARE EARTH point cloud')
+        default_values.filein_ground = getfile(window_title='Specitfy input BARE-EARTH (GROUND) point cloud')
     if default_values.filein_vegetation == 'NA':
-        default_values.filein_vegetation = getfile(window_title='VEGETATION point cloud')
-    if default_values.model_output_name == '':
+        default_values.filein_vegetation = getfile(window_title='Specify input VEGETATION point cloud')
+    while default_values.model_output_name == 'NA':
         default_values.model_output_name = getmodelname()
 
     # the las2split() function performs the following actions:
@@ -121,7 +128,7 @@ def main(default_values,
                                data_reduction=default_values.training_data_reduction)
 
     # append columns/variables of interest list
-    variablesofinterest.append('veglab')
+    default_values.model_inputs.append('veglab')
 
     # convert train, test, and validation to feature layers
     train_ds,train_ins,train_lyr = pd2fl(train, default_values.model_inputs,
@@ -142,11 +149,11 @@ def main(default_values,
 
     # print model input attributes
     if verbose:
-        print("Model inputs:\n   {}".format(default_values.model_inputs))
+        print("Model inputs:\n   {}".format(list(train_ins)))
 
     # build and train model
     mod = build_model(model_name=default_values.model_output_name,
-                        model_inputs=default_values.model_inputs,
+                        model_inputs=train_ins,
                         input_feature_layer=train_lyr,
                         training_tf_dataset=train_ds,
                         validation_tf_dataset=val_ds,
@@ -178,66 +185,6 @@ def main(default_values,
     # mod.save(ps.path.join('saved_models',output_model_name))
     # # save the model weights as H5 file
     # mod.save(ps.path.join('saved_models',(output_model_name+'.h5')))
-    #
-    # # print model summary to console
-    # if verbose:
-    #     print(mod.summary())
 
 if __name__ == '__main__':
-    arg_model_early_stop_patience = defs.model_early_stop_patience
-    arg_model_early_stop_delta = defs.model_early_stop_delta
-    arg_training_epoch = defs.training_epoch
-    arg_training_batch_size = defs.training_batch_size
-    arg_training_prefetch = defs.training_prefetch
-    arg_training_shuffle = defs.training_shuffle
-
-    # parse command line arguments
-    argv = sys.argv[1:]
-    try:
-        opts,args = getopt.getopt(argv,"v:g:m:vi:mi:mn:md:te:tb")
-    except Exception as e:
-        print(e)
-        sys.exit()
-    for opt,arg in opts:
-        if opt in ['-v','--vegfile']:
-            # input vegetation only dense cloud/point cloud
-            defs.filein_vegetation = str(arg)
-        elif opt in ['-g','--groundfile']:
-            # input bare-Earth only dense cloud/point cloud
-            defs.filein_ground = str(arg)
-        elif opt in ['-m','--modelname']:
-            # model output name (used to save the model)
-            defs.model_output_name = str(arg)
-        elif opt in ['-vi','--vegind']:
-            # because the input argument is handled as a single string, we need
-            # to strip the brackets, split by the delimeter, and then re-form it
-            # as a list of characters/strings
-            defs.model_vegetation_indices = str(arg).strip('[').strip(']').split(',')
-        elif opt in ['-mi','--modelinputs']:
-            # because the input argument is handled as a single string, we need
-            # to strip the brackets, split by the delimeter, and then re-form it
-            # as a list of characters/strings
-            defs.model_inputs = str(arg).strip('[').strip(']').split(',')
-        elif opt in ['-mn','--modelnodes']:
-            # because the input argument is handled as a string, we need to
-            # strip the brackets and split by the delimeter, convert each string
-            # to an integer, and then re-map the converted integers to a list
-            defs.model_nodes = list(map(int, str(arg).strip('[').strip(']').split(',')))
-        elif opt in ['-md','--modeldropout']:
-            # model dropout value must be within 0.0 and 1.0
-            if 0.0 > arg and arg < 1.0:
-                defs.model_dropout = arg
-            else:
-                print('Invalid dropout specified, using default probability of 0.2')
-        elif opt in ['-mes','--modelearlystop']:
-            # option to define early stopping criteria
-            earlystopcriteria = list(map(float, str(arg).strip('[').strip(']').split(',')))
-            defs.model_early_stop_patience = earlystopcriteria[0]
-            defs.model_early_stop_delta = earlystopcriteria[1]
-        elif opt in ['-te','--epochs']:
-            # define training epochs
-            defs.training_epoch = arg
-        elif opt in ['-tb','--batchsize']:
-            # training batch size
-            defs.training_batch_size
     main(default_values=defs)

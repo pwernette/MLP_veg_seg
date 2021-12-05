@@ -64,7 +64,7 @@ def getmodelname():
 
     def cancel_and_exit():
         win.destroy()
-        sys.exit('No model name specified. Exiting program.')
+        sys.exit('Exiting program.')
 
     # create validation button
     buttonconfirm = Button(win,
@@ -260,7 +260,7 @@ def pd2fl(input_pd_dat,
             batch_sz=32,
             ds_prefetch=False,
             ds_cache=False,
-            verbose=True):
+            verbose=False):
     '''
     Read a pandas.DataFrame object and (1) convert to tf.data object, (2) return
     a list of column names from the pd.DataFrame, and (3) return a
@@ -287,10 +287,20 @@ def pd2fl(input_pd_dat,
         * inpts (:py:class:`list`)
         * lyr (:py:class:`tf.DenseFeatures`)
     '''
-    if col_names=='all':
+    # special use cases:
+    #  CASE 1: use all vegetation indices
+    if col_names == 'all':
+        col_names.remove('all')
         col_names = list(input_pd_dat.columns)
+    #  CASE 2: use RGB and "simple" vegetation indices
+    if 'simple' in col_names:
+        col_names.remove('simple')
+        col_names = ['r','g','b','exr','exg','exb','exgr'] + col_names
+
     if targetcol == '' and 'veglab' in col_names:
         targetcol = 'veglab'
+
+    print(col_names)
     dset = df_to_dataset(input_pd_dat[col_names].astype(dat_type),
                                  targetcolname=targetcol,
                                  shuffle=shuf,
