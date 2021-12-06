@@ -300,7 +300,7 @@ def pd2fl(input_pd_dat,
     if targetcol == '' and 'veglab' in col_names:
         targetcol = 'veglab'
 
-    print(col_names)
+    # print(col_names)
     dset = df_to_dataset(input_pd_dat[col_names].astype(dat_type),
                                  targetcolname=targetcol,
                                  shuffle=shuf,

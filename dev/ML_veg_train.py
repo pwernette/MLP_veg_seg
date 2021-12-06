@@ -1,5 +1,6 @@
 # basic libraries
-import os, sys, time
+import os, sys, time, datetime
+from datetime import date
 
 # import laspy
 import laspy
@@ -81,6 +82,10 @@ defs.training_split = 0.7
 defs.training_class_imbalance_corr = True
 defs.training_data_reduction = 1.0
 
+# for plotting:
+#   plotdir: plotting direction (horizontal (h) or vertical (v))
+defs.plotdir = 'v'
+
 def main(default_values,
             verbose=True):
     # print info about TF and laspy packages
@@ -149,10 +154,10 @@ def main(default_values,
 
     # print model input attributes
     if verbose:
-        print("Model inputs:\n   {}".format(list(train_ins)))
+        print("\nModel inputs:\n   {}".format(list(train_ins)))
 
     # build and train model
-    mod = build_model(model_name=default_values.model_output_name,
+    mod,tt = build_model(model_name=default_values.model_output_name,
                         model_inputs=train_ins,
                         input_feature_layer=train_lyr,
                         training_tf_dataset=train_ds,
@@ -167,24 +172,40 @@ def main(default_values,
                         dotrain_epochs=default_values.training_epoch,
                         verbose=True)
 
-    # # evaluate the model
-    # loss,accuracy = mod.evaluate(test_ds, verbose=1)
-    # # write to model metadata file
-    # # 1) model name,
-    # # 2) model inputs (file names),
-    # # 3) model inputs (variables),
-    # # 4) creation timestamp,
-    # # 5) model accuracy, and
-    # # 6) model summary
+    # evaluate the model
+    print('\nEvaluating model with validation set...')
+    model_loss,model_accuracy = mod.evaluate(test_ds, verbose=2)
 
-    # # check if saved model dir already exists (create if not present)
-    # if not os.path.isdir('saved_models'):
-    #     os.makedirs('saved_models')
-    #
-    # # save the complete model
-    # mod.save(ps.path.join('saved_models',output_model_name))
-    # # save the model weights as H5 file
-    # mod.save(ps.path.join('saved_models',(output_model_name+'.h5')))
+    # get today's date as string
+    tdate = str(date.today()).replace('-','')
+
+    # check if saved model dir already exists (create if not present)
+    if not os.path.isdir('saved_models_'+tdate):
+        os.makedirs('saved_models_'+tdate)
+
+    print('\nWriting summary log file...')
+    # write model information and metadata to output txt file
+    with open(os.path.join('saved_models_'+tdate,'SUMMARY_'+default_values.model_output_name+'.txt'),'w') as fh:
+        # print model summary to output file
+        # Pass the file handle in as a lambda function to make it callable
+        mod.summary(print_fn=lambda x: fh.write(x+'\n'))
+        fh.write('created: {}\n'.format(tdate))
+        fh.write('bare-Earth file: {}\n'.format(default_values.filein_ground))
+        fh.write('vegetation file: {}\n'.format(default_values.filein_vegetation))
+        fh.write('model inputs: {}\n'.format(list(default_values.model_inputs)))
+        fh.write('validation accuracy: {}\n'.format(model_accuracy))
+        fh.write('validation loss: {}\n'.format(model_loss))
+        fh.write('train time: {}'.format(datetime.timedelta(seconds=tt))+'\n')
+
+    print('\nSaving model as .h5 and sub-directory in {}...'.format('saved_models_'+tdate))
+    # save the complete model (will create a new folder with the saved model)
+    mod.save(os.path.join('saved_models_'+tdate,default_values.model_output_name))
+    # save the model weights as H5 file
+    mod.save(os.path.join('saved_models_'+tdate,(default_values.model_output_name+'.h5')))
+
+    print('\nPlotting model...')
+    # plot the model as a PNG
+    plot_model(mod, to_file=(os.path.join('saved_models_'+tdate,str(default_values.model_output_name)+'_GRAPH.png')), rankdir=default_values.plotdir, dpi=300)
 
 if __name__ == '__main__':
     main(default_values=defs)

@@ -51,6 +51,7 @@ class PlotLearning(tf.keras.callbacks.Callback):
         plt.show()
 
 def build_model(model_name, model_inputs, input_feature_layer, training_tf_dataset, validation_tf_dataset, nodes=[16,16,16], activation_fx='relu', dropout_rate=0.2, loss_metric='mean_squared_error', model_optimizer='adam', earlystopping=[], dotrain=True, dotrain_epochs=1000, verbose=True, plotmodel=True):
+    print('Building {} model...'.format(model_name))
     # the first layer should take the input features as its input
     input_layer = input_feature_layer(model_inputs)
     # l = layers.Dense(nodes[0], activation=activation_fx)(input_feat_layer)
@@ -81,9 +82,9 @@ def build_model(model_name, model_inputs, input_feature_layer, training_tf_datas
     if verbose:
         print(mod.summary())
 
-    # plot the model as a PNG
-    if plotmodel:
-        plot_model(mod, to_file=('PLOT_'+model_name+'.png'), dpi=300)
+    # # plot the model as a PNG
+    # if plotmodel:
+    #     plot_model(mod, to_file=('PLOT_'+model_name+'.png'), dpi=300)
 
     if dotrain:
         call_list = []
@@ -102,7 +103,8 @@ def build_model(model_name, model_inputs, input_feature_layer, training_tf_datas
                 verbose=2,
                 callbacks=call_list
         )
-        print("Train time = {}s".format(time.time()-start_time))
+        train_time = time.time()-start_time
+        print("Train time = {}s".format(train_time))
 
     # return the model
-    return mod
+    return mod,train_time

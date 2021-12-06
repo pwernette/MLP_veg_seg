@@ -58,6 +58,7 @@ def parse_cmd_arguments(default_vals):
     psr.add_argument('-tsp','-split','--trainingsplit')
     psr.add_argument('-tci','-imbalance','--classimbalance')
     psr.add_argument('-tdr','-reduction','--datareduction')
+    psr.add_argument('-plotdir','--plotdir')
 
     # parse arguments
     args = psr.parse_args()
@@ -160,6 +161,16 @@ def parse_cmd_arguments(default_vals):
         # reduce data volume
         default_vals.training_data_reduction = float(args.datareduction)
         optionsargs['data reduction'] = default_vals.training_data_reduction
+    if args.plotdir:
+        # plot model direction
+        if args.plotdir in ['h','horizontal']:
+            default_vals.plotdir = 'LR'
+        elif args.plotdir in ['v','vertical']:
+            default_vals.plotdir = 'TB'
+        else:
+            print('Invalid plot direction. Defaulting to vertical model plot.')
+            default_vals.plotdir = 'TB'
+        optionsargs['plot direction'] = default_vals.plotdir
 
     for k,v in optionsargs.items():
         print('{} = {}'.format(k,v))
