@@ -63,7 +63,7 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
             1995. Color Indices forWeed Identification Under Various Soil,
             Residue, and Lighting Conditions. Trans. ASAE, 38, 259–269.
         Excess Blue (ExB)
-            Mao,W.;Wang, Y.;Wang, Y. 2003. Real-time detection of between-row
+            Mao, W.; Wang, Y.;Wang, Y. 2003. Real-time detection of between-row
             weeds using machine vision. In Proceedings of the 2003 ASAE
             Annual Meeting; American Society of Agricultural and Biological
             Engineers, Las Vegas, NV, USA, 27–30 July 2003.
