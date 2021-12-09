@@ -44,6 +44,7 @@ def parse_cmd_arguments(default_vals):
     # add arguments
     psr.add_argument('-v','-veg','--vegfile')
     psr.add_argument('-g','-ground','--groundfile')
+    psr.add_argument('-r','-reclass','--reclassfile')
     psr.add_argument('-m','-name','--modelname')
     psr.add_argument('-vi','-index','--vegindex')
     psr.add_argument('-mi','-inputs','--modelinputs')
@@ -75,6 +76,10 @@ def parse_cmd_arguments(default_vals):
         # input bare-Earth only dense cloud/point cloud
         default_vals.filein_ground = str(args.groundfile)
         optionsargs['bare-Earth file'] = str(args.groundfile)
+    if args.reclassfile:
+        # input file to reclassify
+        default_vals.reclassfile = str(args.reclassfile)
+        optionsargs['reclassify file'] = str(default_vals.reclassfile)
     if args.modelname:
         # model output name (used to save the model)
         default_vals.model_output_name = str(args.modelname)
