@@ -107,12 +107,10 @@ def main(default_values,
 
     # if no bare Earth or vegetation point clouds have been specified in the
     # user command line args, then request an input LAS/LAZ file for each
-    if default_values.filein_ground == 'NA':
-        default_values.filein_ground = getfile(window_title='Specitfy input BARE-EARTH (GROUND) point cloud')
-    if default_values.filein_vegetation == 'NA':
-        default_values.filein_vegetation = getfile(window_title='Specify input VEGETATION point cloud')
+    if default_values.reclassfile == 'NA':
+        default_values.reclassfile = getfile(window_title='Select point cloud to reclassify')
     while default_values.model_output_name == 'NA':
-        default_values.model_output_name = getmodelname()
+        default_values.model_output_name = getfile(window_title='Select trained model')
 
     # the las2split() function performs the following actions:
     #   1) import training point cloud files

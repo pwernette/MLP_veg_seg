@@ -381,7 +381,7 @@ def predict_reclass_write(incloud, ofname, model_list, geo_metrics=[], geom_rad=
             sys.exit(e)
 
     # convert the pd.DataFrame to feature layer
-    in_ds,in_cols,in_lyr = pd2fl(col_names=['r','g','b'], targetcol='', dat_type='float32', shuf=False, batch_sz=32, ds_prefetch=True, ds_cache=False, verbose=True))
+    in_ds,in_cols,in_lyr = pd2fl(col_names=['r','g','b'], targetcol='', dat_type='float32', shuf=False, batch_sz=32, ds_prefetch=True, ds_cache=False, verbose=True)
 
     # compute vegetation indices
     colnames,indat = vegidx(incloud, indices=veg_indices)
@@ -465,8 +465,6 @@ def predict_reclass_write(incloud, ofname, model_list, geo_metrics=[], geom_rad=
                 outfile = file.File((ofname + "_" + str(m) + "_" + str(threshold_val) + '.las'), mode='w', header=incloud.header)
             elif int(laspy.__version__.split('.')[0]) == 2:
                 outfile = laspy.LasData(header=incloud.header)
-            except Exception as e:
-                print(e)
 
             # copy the points information from the original file
             outfile.points = incloud.points
