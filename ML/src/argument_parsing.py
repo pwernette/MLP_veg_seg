@@ -45,6 +45,7 @@ def parse_cmd_arguments(default_vals):
     psr.add_argument('-v','-veg','--vegfile')
     psr.add_argument('-g','-ground','--groundfile')
     psr.add_argument('-r','-reclass','--reclassfile')
+    psr.add_argument('-mf','-model','--modelfile')
     psr.add_argument('-m','-name','--modelname')
     psr.add_argument('-vi','-index','--vegindex')
     psr.add_argument('-mi','-inputs','--modelinputs')
@@ -80,6 +81,10 @@ def parse_cmd_arguments(default_vals):
         # input file to reclassify
         default_vals.reclassfile = str(args.reclassfile)
         optionsargs['reclassify file'] = str(default_vals.reclassfile)
+    if args.modelfile:
+        # model filename
+        default_vals.model_file = str(args.modelfile)
+        optionsargs['model file'] = str(default_vals.model_file)
     if args.modelname:
         # model output name (used to save the model)
         default_vals.model_output_name = str(args.modelname)

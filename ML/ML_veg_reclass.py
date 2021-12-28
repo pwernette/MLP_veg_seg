@@ -47,8 +47,11 @@ defs.reclassfile = 'NA'
 # program will default to requesting the one or both files that are missing
 # but required.
 
+# model file
+defs.model_file = 'NA'
+
 # model name:
-defs.model_output_name = 'NA'
+defs.model_name = 'NA'
 
 # model inputs and vegetation indices of interest:
 defs.model_inputs = ['r','g','b']
@@ -105,107 +108,137 @@ def main(default_values,
     # parse any command line arguments (if present)
     parse_cmd_arguments(default_values)
 
-    # if no bare Earth or vegetation point clouds have been specified in the
-    # user command line args, then request an input LAS/LAZ file for each
-    if default_values.reclassfile == 'NA':
-        default_values.reclassfile = getfile(window_title='Select point cloud to reclassify')
-    while default_values.model_output_name == 'NA':
-        default_values.model_output_name = getfile(window_title='Select trained model')
-
-    # the las2split() function performs the following actions:
-    #   1) import training point cloud files
-    #   2) compute vegetation indices
-    #   3) split point clouds into training, testing, and validation sets
-    if 'sd' in default_values.model_inputs:
-        train,test,val = las2split(default_values.filein_ground,
-                               default_values.filein_vegetation,
-                               veg_indices=default_values.model_vegetation_indices,
-                               class_imbalance_corr=default_values.training_class_imbalance_corr,
-                               training_split=default_values.training_split,
-                               data_reduction=default_values.training_data_reduction,
-                               geom_metrics='sd')
-    else:
-        train,test,val = las2split(default_values.filein_ground,
-                               default_values.filein_vegetation,
-                               veg_indices=default_values.model_vegetation_indices,
-                               class_imbalance_corr=default_values.training_class_imbalance_corr,
-                               training_split=default_values.training_split,
-                               data_reduction=default_values.training_data_reduction)
-
-    # append columns/variables of interest list
-    default_values.model_inputs.append('veglab')
-
-    # convert train, test, and validation to feature layers
-    train_ds,train_ins,train_lyr = pd2fl(train, default_values.model_inputs,
-                                            shuf=default_values.training_shuffle,
-                                            ds_prefetch=default_values.training_prefetch,
-                                            batch_sz=default_values.training_batch_size,
-                                            ds_cache=default_values.training_cache)
-    val_ds,val_ins,val_lyr = pd2fl(val, default_values.model_inputs,
-                                            shuf=default_values.training_shuffle,
-                                            ds_prefetch=default_values.training_prefetch,
-                                            batch_sz=default_values.training_batch_size,
-                                            ds_cache=default_values.training_cache)
-    test_ds,test_ins,test_lyr = pd2fl(test, default_values.model_inputs,
-                                            shuf=default_values.training_shuffle,
-                                            ds_prefetch=default_values.training_prefetch,
-                                            batch_sz=default_values.training_batch_size,
-                                            ds_cache=default_values.training_cache)
-
-    # print model input attributes
-    if verbose:
-        print("\nModel inputs:\n   {}".format(list(train_ins)))
-
-    # build and train model
-    mod,tt = build_model(model_name=default_values.model_output_name,
-                        model_inputs=train_ins,
-                        input_feature_layer=train_lyr,
-                        training_tf_dataset=train_ds,
-                        validation_tf_dataset=val_ds,
-                        nodes=default_values.model_nodes,
-                        activation_fx='relu',
-                        dropout_rate=default_values.model_dropout,
-                        loss_metric='mean_squared_error',
-                        model_optimizer='adam',
-                        earlystopping=[default_values.model_early_stop_patience,default_values.model_early_stop_delta],
-                        dotrain=True,
-                        dotrain_epochs=default_values.training_epoch,
-                        verbose=True)
-
-    # evaluate the model
-    print('\nEvaluating model with validation set...')
-    model_loss,model_accuracy = mod.evaluate(test_ds, verbose=2)
-
+    # # if no bare Earth or vegetation point clouds have been specified in the
+    # # user command line args, then request an input LAS/LAZ file for each
+    # if default_values.filein_ground == 'NA':
+    #     default_values.filein_ground = getfile(window_title='Specitfy input BARE-EARTH (GROUND) point cloud')
+    # if default_values.filein_vegetation == 'NA':
+    #     default_values.filein_vegetation = getfile(window_title='Specify input VEGETATION point cloud')
+    # while default_values.model_output_name == 'NA':
+    #     default_values.model_output_name = getmodelname()
+    #
+    # # the las2split() function performs the following actions:
+    # #   1) import training point cloud files
+    # #   2) compute vegetation indices
+    # #   3) split point clouds into training, testing, and validation sets
+    # if 'sd' in default_values.model_inputs:
+    #     train,test,val = las2split(default_values.filein_ground,
+    #                            default_values.filein_vegetation,
+    #                            veg_indices=default_values.model_vegetation_indices,
+    #                            class_imbalance_corr=default_values.training_class_imbalance_corr,
+    #                            training_split=default_values.training_split,
+    #                            data_reduction=default_values.training_data_reduction,
+    #                            geom_metrics='sd')
+    # else:
+    #     train,test,val = las2split(default_values.filein_ground,
+    #                            default_values.filein_vegetation,
+    #                            veg_indices=default_values.model_vegetation_indices,
+    #                            class_imbalance_corr=default_values.training_class_imbalance_corr,
+    #                            training_split=default_values.training_split,
+    #                            data_reduction=default_values.training_data_reduction)
+    #
+    # # append columns/variables of interest list
+    # default_values.model_inputs.append('veglab')
+    #
+    # # convert train, test, and validation to feature layers
+    # train_ds,train_ins,train_lyr = pd2fl(train, default_values.model_inputs,
+    #                                         shuf=default_values.training_shuffle,
+    #                                         ds_prefetch=default_values.training_prefetch,
+    #                                         batch_sz=default_values.training_batch_size,
+    #                                         ds_cache=default_values.training_cache)
+    # val_ds,val_ins,val_lyr = pd2fl(val, default_values.model_inputs,
+    #                                         shuf=default_values.training_shuffle,
+    #                                         ds_prefetch=default_values.training_prefetch,
+    #                                         batch_sz=default_values.training_batch_size,
+    #                                         ds_cache=default_values.training_cache)
+    # test_ds,test_ins,test_lyr = pd2fl(test, default_values.model_inputs,
+    #                                         shuf=default_values.training_shuffle,
+    #                                         ds_prefetch=default_values.training_prefetch,
+    #                                         batch_sz=default_values.training_batch_size,
+    #                                         ds_cache=default_values.training_cache)
+    #
+    # # print model input attributes
+    # if verbose:
+    #     print("\nModel inputs:\n   {}".format(list(train_ins)))
+    #
+    # # build and train model
+    # mod,tt = build_model(model_name=default_values.model_output_name,
+    #                     model_inputs=train_ins,
+    #                     input_feature_layer=train_lyr,
+    #                     training_tf_dataset=train_ds,
+    #                     validation_tf_dataset=val_ds,
+    #                     nodes=default_values.model_nodes,
+    #                     activation_fx='relu',
+    #                     dropout_rate=default_values.model_dropout,
+    #                     loss_metric='mean_squared_error',
+    #                     model_optimizer='adam',
+    #                     earlystopping=[default_values.model_early_stop_patience,default_values.model_early_stop_delta],
+    #                     dotrain=True,
+    #                     dotrain_epochs=default_values.training_epoch,
+    #                     verbose=True)
+    #
+    # # evaluate the model
+    # print('\nEvaluating model with validation set...')
+    # model_loss,model_accuracy = mod.evaluate(test_ds, verbose=2)
+    #
     # get today's date as string
     tdate = str(date.today()).replace('-','')
+    #
+    # # check if saved model dir already exists (create if not present)
+    # if not os.path.isdir('saved_models_'+tdate):
+    #     os.makedirs('saved_models_'+tdate)
+    #
+    # print('\nWriting summary log file...')
+    # # write model information and metadata to output txt file
+    # with open(os.path.join('saved_models_'+tdate,'SUMMARY_'+default_values.model_output_name+'.txt'),'w') as fh:
+    #     # print model summary to output file
+    #     # Pass the file handle in as a lambda function to make it callable
+    #     mod.summary(print_fn=lambda x: fh.write(x+'\n'))
+    #     fh.write('created: {}\n'.format(tdate))
+    #     fh.write('bare-Earth file: {}\n'.format(default_values.filein_ground))
+    #     fh.write('vegetation file: {}\n'.format(default_values.filein_vegetation))
+    #     fh.write('model inputs: {}\n'.format(list(default_values.model_inputs)))
+    #     fh.write('validation accuracy: {}\n'.format(model_accuracy))
+    #     fh.write('validation loss: {}\n'.format(model_loss))
+    #     fh.write('train time: {}'.format(datetime.timedelta(seconds=tt))+'\n')
+    #
+    # print('\nSaving model as .h5 and sub-directory in {}...'.format('saved_models_'+tdate))
+    # # save the complete model (will create a new folder with the saved model)
+    # mod.save(os.path.join('saved_models_'+tdate,default_values.model_output_name))
+    # # save the model weights as H5 file
+    # mod.save(os.path.join('saved_models_'+tdate,(default_values.model_output_name+'.h5')))
+    #
+    # print('\nPlotting model...')
+    # # plot the model as a PNG
+    # plot_model(mod, to_file=(os.path.join('saved_models_'+tdate,str(default_values.model_output_name)+'_GRAPH.png')), rankdir=default_values.plotdir, dpi=300)
 
-    # check if saved model dir already exists (create if not present)
-    if not os.path.isdir('saved_models_'+tdate):
-        os.makedirs('saved_models_'+tdate)
+    ## RECLASSIFY A FilE USING TRAINED MODEL FILE
+    # get the input model
+    while default_values.model_file == 'NA':
+        default_values.model_file = getfile(window_title='Select trained model h5 file')
+    # load the model
+    try:
+        reclassmodel = tf.keras.models.load_model(default_values.model_file)
+    except Exception as e:
+        sys.exit(e)
 
-    print('\nWriting summary log file...')
-    # write model information and metadata to output txt file
-    with open(os.path.join('saved_models_'+tdate,'SUMMARY_'+default_values.model_output_name+'.txt'),'w') as fh:
-        # print model summary to output file
-        # Pass the file handle in as a lambda function to make it callable
-        mod.summary(print_fn=lambda x: fh.write(x+'\n'))
-        fh.write('created: {}\n'.format(tdate))
-        fh.write('bare-Earth file: {}\n'.format(default_values.filein_ground))
-        fh.write('vegetation file: {}\n'.format(default_values.filein_vegetation))
-        fh.write('model inputs: {}\n'.format(list(default_values.model_inputs)))
-        fh.write('validation accuracy: {}\n'.format(model_accuracy))
-        fh.write('validation loss: {}\n'.format(model_loss))
-        fh.write('train time: {}'.format(datetime.timedelta(seconds=tt))+'\n')
+    # get the model name from the loaded file
+    if default_values.model_name == 'NA':
+        default_values.model_name = reclassmodel.name
 
-    print('\nSaving model as .h5 and sub-directory in {}...'.format('saved_models_'+tdate))
-    # save the complete model (will create a new folder with the saved model)
-    mod.save(os.path.join('saved_models_'+tdate,default_values.model_output_name))
-    # save the model weights as H5 file
-    mod.save(os.path.join('saved_models_'+tdate,(default_values.model_output_name+'.h5')))
+    # get model inputs from the loaded file
+    default_values.model_inputs = [f.name for f in reclassmodel.inputs]
 
-    print('\nPlotting model...')
-    # plot the model as a PNG
-    plot_model(mod, to_file=(os.path.join('saved_models_'+tdate,str(default_values.model_output_name)+'_GRAPH.png')), rankdir=default_values.plotdir, dpi=300)
+    # print the model summary
+    if verbose:
+        print(reclassmodel.summary())
 
+    # get the input dense cloud
+    if default_values.reclassfile == 'NA':
+        default_values.reclassfile = getfile(window_title='Select point cloud to reclassify')
+
+    f
+
+    # get the model inputs from the loaded file
 if __name__ == '__main__':
     main(default_values=defs)

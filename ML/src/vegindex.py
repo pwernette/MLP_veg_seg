@@ -3,7 +3,7 @@ import time
 import numpy as np
 from .miscfx import *
 
-def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.10):
+def vegidx(lasfileobj, geom_metrics=[], indices=['rgb'], colordepth=8, geom_radius=0.10):
     '''
     Compute specified vegetation indices and/or geometric values.
 
@@ -113,15 +113,18 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
     pdindex = np.empty(shape=(0,(len(r[0]))), dtype=np.float32)
     pdindexnames = np.empty(shape=(0,0))
     # scale x, y, and z coordinates
-    xs = scale_dims(lasfileobj)[0]
-    ys = scale_dims(lasfileobj)[1]
-    zs = scale_dims(lasfileobj)[2]
-    # append x, y, and z(raw values) to the output n-dim numpy array
-    pdindex = np.append(pdindex, [xs], axis=0)
-    pdindex = np.append(pdindex, [ys], axis=0)
-    pdindex = np.append(pdindex, [zs], axis=0)
-    # clean up the workspace (save memory)
-    pdindexnames = np.append(pdindexnames, ['x','y','z'])
+    if ('x' in indices) or ('sd' in indices) or ('coords' in indices) or ('all' in indices):
+        xs = scale_dims(lasfileobj)[0]
+        pdindex = np.append(pdindex, [xs], axis=0)
+        pdindexnames = np.append(pdindexnames, 'x')
+    if ('y' in indices) or ('sd' in indices) or ('coords' in indices) or ('all' in indices):
+        ys = scale_dims(lasfileobj)[1]
+        pdindex = np.append(pdindex, [ys], axis=0)
+        pdindexnames = np.append(pdindexnames, 'y')
+    if ('z' in indices) or ('sd' in indices) or ('coords' in indices) or ('all' in indices):
+        zs = scale_dims(lasfileobj)[2]
+        pdindex = np.append(pdindex, [zs], axis=0)
+        pdindexnames = np.append(pdindexnames, 'z')
     # if standard deviation is specified as a geometric metric, then
     # compute the sd using a pointwise approach
     # NOTE: This computation is very time and resource expensive.
@@ -134,12 +137,22 @@ def vegidx(lasfileobj, geom_metrics=[], indices=[], colordepth=8, geom_radius=0.
         pdindex = np.append(pdindex, [sd3d], axis=0)
         # clean up workspace memory
         del(xs,ys,zs,sd3d)
-        pdindexnames = np.append(pdindexnames, ['sd'])
-    pdindex = np.append(pdindex, r, axis=0)
-    pdindex = np.append(pdindex, g, axis=0)
-    pdindex = np.append(pdindex, b, axis=0)
-    # append index names to names array
-    pdindexnames = np.append(pdindexnames, ['r','g','b'])
+        pdindexnames = np.append(pdindexnames, 'sd')
+    # since not all users may require R, G, B values, these are optional but
+    # default variables
+    if ('r' in indices) or ('rgb' in indices) or ('all' in indices):
+        pdindex = np.append(pdindex, r, axis=0)
+        pdindexnames = np.append(pdindexnames, 'r')
+    if ('g' in indices) or ('rgb' in indices) or ('all' in indices):
+        pdindex = np.append(pdindex, g, axis=0)
+        pdindexnames = np.append(pdindexnames, 'g')
+    if ('b' in indices) or ('rgb' in indices) or ('all' in indices):
+        pdindex = np.append(pdindex, b, axis=0)
+        pdindexnames = np.append(pdindexnames, 'b')
+    # option to include intensty as a variable
+    if ('intensity' in indices) or ('all' in indices):
+        pdindex = np.append(pdindex, lasfileobj.intensity, axis=0)
+        pdindexnames = np.append(pdindexnames, 'intensity')
     '''
     Compute vegetation indices based on user specifications
 

@@ -331,24 +331,23 @@ def pd2fl(input_pd_dat,
     # convert feat_cols to a single tensor layer
     return dset,inpts,feat_lyr
 
-def predict_reclass_write(incloud, ofname, model_list, geo_metrics=[], geom_rad=0.10, threshold_vals=[0.5], batch_sz=1000, ds_cache=False, col_depth=16):
+def predict_reclass_write(incloudname, model_list, geo_metrics=[], geom_rad=0.10, threshold_vals=[0.6], batch_sz=1000, ds_cache=False, col_depth=16):
     '''
-    Reclassify the input point cloud using the models specified in the
-    model_list variable and the threshold value(s) specified in the
-    threshold_vals list. It is important to note that any model using standard
-    deviation as a model input should include 'sd' in the geo_metrics list.
+    Reclassify the input point cloud using the models specified in the model_list
+    variable and the threshold value(s) specified in the threshold_vals list. It
+    is important to note that any model using standard deviation as a model input
+    should include 'sd' in the geo_metrics list.
 
     Input parameters:
         :param laspy.file.File incloud: Input point cloud
-        :param string ofname: Output file name
         :param list model_list: List of trained tensorflow models to apply.
         :param list geo_metrics: List of geometry metrics to compute.
             (NOTE: Currently limited to standard deviation - i.e. 'sd')
-        :param float geom_rad: Geometric radius to compute geometry metrics.
-        :param list threshold_vals: List of threholds for reclassification.
+        :param float geom_rad: Geometric radius used to compute geometry metrics.
+        :param list threshold_vals: List of threholds to use for reclassification.
             (Threshold values must be between 0.0 and 1.0)
         :param int batch_sz: Batch size for prediction/reclassification.
-        :param bool ds_cache: Option to cache batches (can speed up prediction).
+        :param bool ds_cache: Option to cache batches (can speed up prediction??).
 
     Returns:
         No values or objects are returned with this function; however,
@@ -371,44 +370,31 @@ def predict_reclass_write(incloud, ofname, model_list, geo_metrics=[], geom_rad=
     # open both ground and vegetation files
     if laspy_majorversion == 1:
         try:
-            f = file.File(incloud,mode='r')
+            incloud = file.File(incloudname,mode='r')
         except Exception as e:
             sys.exit(e)
     elif laspy_majorversion == 2:
         try:
-            f  =laspy.read(incloud)
+            incloud = laspy.read(incloudname)
         except Exception as e:
             sys.exit(e)
 
-    # convert the pd.DataFrame to feature layer
-    in_ds,in_cols,in_lyr = pd2fl(col_names=['r','g','b'], targetcol='', dat_type='float32', shuf=False, batch_sz=32, ds_prefetch=True, ds_cache=False, verbose=True)
+    # extract model names from list of model variables
+    modnamelist = [f.name for f in model_list]
+    print('List of model names: {}'.format(modnamelist))
 
     # compute vegetation indices
-    colnames,indat = vegidx(incloud, indices=veg_indices)
-
-    # transpose the output objects
-    dat_sample = np.transpose(indat)
-
-    # OPTIONAL: print number of points in each input dense point cloud
-    if verbose:
-        print('# of points     = {}'.format(ground_sample.shape))
-
-    if len(threshold_vals) == 0:
-        print('WARNING: No threshold values were specified. Using a default threshold value of 0.5.')
-        threshold_vals = [0.5]
-
-    # compute vegetation indices
-    if any('sd' in m for m in model_list):
-        if any('all' in m for m in model_list):
+    if any('sdrgb' in m for m in modnamelist):
+        if any('all' in m for m in modnamelist):
             indfnames,indf = vegidx(incloud, geom_metrics=geo_metrics, indices=['all','sd'], geom_radius=geom_rad)
-        elif any('simple' in m for m in model_list):
+        elif any('simple' in m for m in modnamelist):
             indfnames,indf = vegidx(incloud, geom_metrics=geo_metrics, indices=['simple','sd'], geom_radius=geom_rad)
         else:
             indfnames,indf = vegidx(incloud, geom_metrics=geo_metrics, indices=['sd'], geom_radius=geom_rad)
     else:
-        if any('all' in m for m in model_list):
+        if any('all' in m for m in modnamelist):
             indfnames,indf = vegidx(incloud, indices=['all'])
-        elif any('simple' in m for m in model_list):
+        elif any('simple' in m for m in modnamelist):
             indfnames,indf = vegidx(incloud, indices=['simple'])
         else:
             indfnames,indf = vegidx(incloud, indices=[])
@@ -417,31 +403,42 @@ def predict_reclass_write(incloud, ofname, model_list, geo_metrics=[], geom_rad=
 
     # FIRST, get only the columns needed for model inputs (will be matched against the model name)
     # SECOND, convert the dataframe to a tf.dataset
-    if any('sdrgb' in m for m in model_list):
+    if any('sdrgb' in m for m in modnamelist):
         sdrgb_df = indat[['r','g','b','sd']]
         sdrgb_ds = df_to_dataset(sdrgb_df, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
         del(sdrgb_df)
-    if any('xyzrgb' in m for m in model_list):
+    if any('xyzrgb' in m for m in modnamelist):
         xyzrgb_df = indat[['x','y','z','r','g','b']]
         xyzrgb_ds = df_to_dataset(xyzrgb_df, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
         del(xyzrgb_df)
-    if any('simple' in m for m in model_list):
+    if any('simple' in m for m in modnamelist):
         rgb_simple_df = indat[['r','g','b','exr','exg','exb','exgr']]
         rgb_simple_ds = df_to_dataset(rgb_simple_df, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
         del(rgb_simple_df)
-    if any('all' in m for m in model_list):
+    if any('all' in m for m in modnamelist):
         all_ds = df_to_dataset(indat, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
-    if any('rgb_8' in m for m in model_list) or any('rgb_16' in m for m in model_names_list):
+    if any('rgb' in m for m in modnamelist) or any('rgb' in m for m in modnamelist):
         rgb_df = indat[['r','g','b']]
         rgb_ds = df_to_dataset(rgb_df, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
         del(rgb_df)
 
     del(indat)
+    ofname = os.path.split(incloudname)[1].split('.')[0]
 
+    # uncomment the following block of code for use with multiple models as a list of inputs
     for m in model_list:
         print(m)  # print model name to console
-#         globals()[m]
+        #globals()[m]
+        # try:
+        #     mod = globals()[(m.name)]
+        # except Exception as e:
+        #     print(e)
         mod = globals()[(m)]
+        # try:
+        #     mod = globals()[(m)]
+        # except Exception as e:
+        #     print(e)
+        print(mod.name)
 
         # predict classification
         if "simple" in m:
@@ -461,26 +458,32 @@ def predict_reclass_write(incloud, ofname, model_list, geo_metrics=[], geom_rad=
             outdat_pred_reclass[(outdat_pred_reclass < threshold_val)] = 2   # reclass no veg. points
             outdat_pred_reclass = outdat_pred_reclass.flatten().astype(np.int32)  # convert float to int
 
-            if int(laspy.__version__.split('.')[0]) == 1:
-                outfile = file.File((ofname + "_" + str(m) + "_" + str(threshold_val) + '.las'), mode='w', header=incloud.header)
-            elif int(laspy.__version__.split('.')[0]) == 2:
-                outfile = laspy.LasData(header=incloud.header)
+            # open the output file (laspy version dependent)
+            try:
+                if int(laspy.__version__.split('.')[0]) == 1:
+                    print('Writing LAS file: {}'.format(ofname + "_" + str(m) + "_" + str(threshold_val.replace('.',''))))
+                    outfile = file.File((ofname + "_" + str(m) + "_" + str(threshold_val.replace('.','')) + '.las'), mode='w', header=incloud.header)
+                elif int(laspy.__version__.split('.')[0]) == 2:
+                    outfile = laspy.LasData(header=incloud.header)
+            except Exception as e:
+                print(e)
 
-            # copy the points information from the original file
+            # copy the points from the original file
             outfile.points = incloud.points
 
             # update the classification values
             outfile.classification = outdat_pred_reclass
             if int(laspy.__version__.split('.')[0]) == 1:
                 outfile.close()
+                print('  --> Converting from LAS to LAZ format')
+                # the following functions use the subprocess module to call commands outside of Python.
+                # use lastools outside of program to convert las to laz file
+                subprocess.call(['las2las',
+                                '-i', (ofname + "_" + str(m) + "_" + str(threshold_val.replace('.','')) + '.las'),
+                                '-o', (ofname + "_" + str(m) + "_" + str(threshold_val.replace('.','')) + '.laz')])
+                # remove las output file (after compressed to laz)
+                subprocess.call(['rm',
+                                (ofname + "_" + str(m) + "_" + str(threshold_val.replace('.','')) + '.las')])
             elif int(laspy.__version__.split('.')[0]) == 2:
-                outfile.write((ofname + "_" + str(m) + "_" + str(threshold_val) + '.las'))
-
-            # the following functions use the subprocess module to call commands outside of Python.
-            # use lastools outside of program to convert las to laz file
-            subprocess.call(['las2las',
-                            '-i', (ofname + "_" + str(m) + "_" + str(threshold_val) + '.las'),
-                            '-o', (ofname + "_" + str(m) + "_" + str(threshold_val) + '.laz')])
-            # remove las output file (after compressed to laz)
-            subprocess.call(['rm',
-                            (ofname + "_" + str(m) + "_" + str(threshold_val) + '.las')])
+                print('Writing LAZ file: {}'.format(ofname + "_" + str(m) + "_" + str(threshold_val.replace('.',''))))
+                outfile.write((ofname + "_" + str(m) + "_" + str(threshold_val.replace('.','')) + '.laz'))

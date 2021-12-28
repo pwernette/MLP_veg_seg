@@ -251,6 +251,32 @@ def otsu_appthresh(inpts, vegidxarr, veg_noveg_thresh, reclasses=[2,4]):
     print('UPDATED Classes: {}'.format(final_pts))
     return final_pts.astype(np.int)
 
+def threshold_otsu(inpts, minval=0.0, maxval=1.0, nbins=1000):
+    '''
+    PURPOSE:
+        Function to read in an array (combined from two training class histograms) and find a threshold value that
+        maximizes the interclass variability.
+
+    RETURN:
+        Returns a single threshold value.
+    '''
+    num_pts = len(inpts)
+    mean_weigth = 1.0/num_pts
+    his,bins = np.histogram(inpts, np.arange(rmin.astype(np.float), rmax.astype(np.float), (rmax.astype(np.float)-rmin.astype(np.float))/nbins))
+    final_thresh = -1
+    final_value = -1
+    for t in range(1,len(bins)-1):
+        Wb = np.sum(his[:t]) * mean_weigth
+        Wf = np.sum(his[t:]) * mean_weigth
+        mub = np.mean(his[:t])
+        muf = np.mean(his[t:])
+        value = Wb * Wf * (mub - muf) ** 2
+        if value > final_value:
+            final_thresh = bins[t]
+            final_value = value
+    print('Otsu threshold: {}'.format(final_thresh))
+    print('Otsu threshold value: {}'.format(final_value))
+    return final_thresh,final_value
 
 def mergehist(vegarr, novegarr, plothist=True):
     '''
