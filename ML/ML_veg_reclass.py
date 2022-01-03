@@ -236,6 +236,7 @@ def main(default_values,
     # load the model
     try:
         reclassmodel = tf.keras.models.load_model(default_values.model_file)
+        globals()[reclassmodel.name] = reclassmodel
     except Exception as e:
         sys.exit(e)
 
@@ -265,7 +266,7 @@ def main(default_values,
         default_values.reclassfile = getfile(window_title='Select point cloud to reclassify')
 
     predict_reclass_write(default_values.reclassfile,
-                            reclassmodel,
+                            [reclassmodel],
                             threshold_vals=default_values.reclass_thresholds,
                             batch_sz=default_values.training_batch_size,
                             ds_cache=default_values.training_cache,

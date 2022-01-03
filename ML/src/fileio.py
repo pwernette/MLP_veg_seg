@@ -2,6 +2,7 @@ import sys
 import subprocess
 import pandas as pd
 import numpy as np
+from datetime import date
 
 # import laspy and check major version
 import laspy
@@ -331,7 +332,7 @@ def pd2fl(input_pd_dat,
     # convert feat_cols to a single tensor layer
     return dset,inpts,feat_lyr
 
-def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_cache, geo_metrics=[], geom_rad=0.10):
+def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_cache, geo_metrics=[], geom_rad=0.10, verbose_output=2):
     '''
     Reclassify the input point cloud using the models specified in the model_list
     variable and the threshold value(s) specified in the threshold_vals list. It
@@ -380,7 +381,7 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
             sys.exit(e)
 
     # extract model names from list of model variables
-    modnamelist = [str(f.name) for f in [model_list]]
+    modnamelist = [str(f.name) for f in model_list]
     print('List of models for reclassification: {}'.format(modnamelist))
 
     # figure out what vegetation indices to compute
@@ -424,33 +425,37 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
     ofname = os.path.split(incloudname)[1].split('.')[0]
     print('Output file base name: {}'.format(ofname))
 
+    rdate = str(date.today()).replace('-','')
+    if not os.path.isdir('results_'+rdate):
+        os.makedirs('results_'+rdate)
+
     # uncomment the following block of code for use with multiple models as a list of inputs
-    for m in modnamelist:
-        # print(m)  # print model name to console
+    for m in model_list:
+        print(m.name)  # print model name to console
         #globals()[m]
         # try:
         #     mod = globals()[(m.name)]
         # except Exception as e:
         #     print(e)
-        mod = globals()[m]
+        mod = m
         # try:
         #     mod = globals()[(m)]
         # except Exception as e:
         #     print(e)
-        print(mod.name)
+        # print(mod.name)
 
         # predict classification
         print('Reclassifying using {} model'.format(m))
-        if "simple" in m:
-            outdat_pred = mod.predict(rgb_simple_ds, batch_size=batch_sz, verbose=1, use_multiprocessing=True)
-        elif "all" in m:
-            outdat_pred = mod.predict(all_ds, batch_size=batch_sz, verbose=1, use_multiprocessing=True)
-        elif "sdrgb" in m:
-            outdat_pred = mod.predict(sdrgb_ds, batch_size=batch_sz, verbose=1, use_multiprocessing=True)
-        elif "xyzrgb" in m:
-            outdat_pred = mod.predict(xyzrgb_ds, batch_size=batch_sz, verbose=1, use_multiprocessing=True)
+        if "simple" in mod.name:
+            outdat_pred = mod.predict(rgb_simple_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
+        elif "all" in mod.name:
+            outdat_pred = mod.predict(all_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
+        elif "sdrgb" in mod.name:
+            outdat_pred = mod.predict(sdrgb_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
+        elif "xyzrgb" in mod.name:
+            outdat_pred = mod.predict(xyzrgb_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
         else:
-            outdat_pred = mod.predict(rgb_ds, batch_size=batch_sz, verbose=1, use_multiprocessing=True)
+            outdat_pred = mod.predict(rgb_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
 
         for threshold_val in threshold_vals:
             outdat_pred_reclass = outdat_pred
@@ -461,8 +466,8 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
             # open the output file (laspy version dependent)
             try:
                 if int(laspy.__version__.split('.')[0]) == 1:
-                    print('Writing LAS file: {}'.format(ofname + "_" + str(m) + "_" + str(threshold_val.replace('.',''))))
-                    outfile = file.File((ofname + "_" + str(m) + "_" + str(threshold_val.replace('.','')) + '.las'), mode='w', header=incloud.header)
+                    print('Writing LAS file: {}'.format('results_' + rdate + '/' + ofname + "_" + str(mod.name) + "_" + str(threshold_val).replace('.','')))
+                    outfile = file.File(('results_' + rdate + '/' + ofname + "_" + str(mod.name) + "_" + str(threshold_val).replace('.','') + '.las'), mode='w', header=incloud.header)
                 elif int(laspy.__version__.split('.')[0]) == 2:
                     outfile = laspy.LasData(header=incloud.header)
             except Exception as e:
@@ -479,11 +484,11 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
                 # the following functions use the subprocess module to call commands outside of Python.
                 # use lastools outside of program to convert las to laz file
                 subprocess.call(['las2las',
-                                '-i', (ofname + "_" + str(m) + "_" + str(threshold_val.replace('.','')) + '.las'),
-                                '-o', (ofname + "_" + str(m) + "_" + str(threshold_val.replace('.','')) + '.laz')])
+                                '-i', ('results_' + rdate + '/' + ofname + "_" + str(mod.name) + "_" + str(threshold_val).replace('.','') + '.las'),
+                                '-o', ('results_' + rdate + '/' + ofname + "_" + str(mod.name) + "_" + str(threshold_val).replace('.','') + '.laz')])
                 # remove las output file (after compressed to laz)
                 subprocess.call(['rm',
-                                (ofname + "_" + str(m) + "_" + str(threshold_val.replace('.','')) + '.las')])
+                                ('results_' + rdate + '/' + ofname + "_" + str(mod.name) + "_" + str(threshold_val).replace('.','') + '.las')])
             elif int(laspy.__version__.split('.')[0]) == 2:
-                print('Writing LAZ file: {}'.format(ofname + "_" + str(m) + "_" + str(threshold_val.replace('.',''))))
-                outfile.write((ofname + "_" + str(m) + "_" + str(threshold_val.replace('.','')) + '.laz'))
+                print('Writing LAZ file: {}'.format('results_' + rdate + '/' + ofname + "_" + str(mod.name) + "_" + str(threshold_val).replace('.',''))
+                outfile.write(('results_' + rdate + '/' + ofname + "_" + str(mod.name) + "_" + str(threshold_val).replace('.','') + '.laz'))
