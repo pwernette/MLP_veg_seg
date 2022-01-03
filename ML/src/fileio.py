@@ -331,7 +331,7 @@ def pd2fl(input_pd_dat,
     # convert feat_cols to a single tensor layer
     return dset,inpts,feat_lyr
 
-def predict_reclass_write(incloudname, model_list, geo_metrics=[], geom_rad=0.10, threshold_vals=[0.6], batch_sz=1000, ds_cache=False, col_depth=16):
+def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_cache, geo_metrics=[], geom_rad=0.10):
     '''
     Reclassify the input point cloud using the models specified in the model_list
     variable and the threshold value(s) specified in the threshold_vals list. It
@@ -380,24 +380,22 @@ def predict_reclass_write(incloudname, model_list, geo_metrics=[], geom_rad=0.10
             sys.exit(e)
 
     # extract model names from list of model variables
-    modnamelist = [f.name for f in model_list]
-    print('List of model names: {}'.format(modnamelist))
+    modnamelist = [str(f.name) for f in [model_list]]
+    print('List of models for reclassification: {}'.format(modnamelist))
+
+    # figure out what vegetation indices to compute
+    indiceslist = ['x','y','z','r','g','b']
+    if any('sdrgb' in m for m in modnamelist):
+        indiceslist.extend('sd')
+    if any('all' in m for m in modnamelist):
+        indiceslist.extend('all')
+    if any('simple' in m for m in modnamelist):
+        indiceslist.extend('simple')
+    if any('rgb' in m for m in modnamelist):
+        indiceslist.extend('rgb')
 
     # compute vegetation indices
-    if any('sdrgb' in m for m in modnamelist):
-        if any('all' in m for m in modnamelist):
-            indfnames,indf = vegidx(incloud, geom_metrics=geo_metrics, indices=['all','sd'], geom_radius=geom_rad)
-        elif any('simple' in m for m in modnamelist):
-            indfnames,indf = vegidx(incloud, geom_metrics=geo_metrics, indices=['simple','sd'], geom_radius=geom_rad)
-        else:
-            indfnames,indf = vegidx(incloud, geom_metrics=geo_metrics, indices=['sd'], geom_radius=geom_rad)
-    else:
-        if any('all' in m for m in modnamelist):
-            indfnames,indf = vegidx(incloud, indices=['all'])
-        elif any('simple' in m for m in modnamelist):
-            indfnames,indf = vegidx(incloud, indices=['simple'])
-        else:
-            indfnames,indf = vegidx(incloud, indices=[])
+    indfnames,indf = vegidx(incloud, geom_metrics=geo_metrics, indices=indiceslist, geom_radius=geom_rad)
 
     indat = pd.DataFrame(indf.astype('float32').transpose(), columns=indfnames)
 
@@ -417,23 +415,24 @@ def predict_reclass_write(incloudname, model_list, geo_metrics=[], geom_rad=0.10
         del(rgb_simple_df)
     if any('all' in m for m in modnamelist):
         all_ds = df_to_dataset(indat, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
-    if any('rgb' in m for m in modnamelist) or any('rgb' in m for m in modnamelist):
+    if any('rgb' in m for m in modnamelist):
         rgb_df = indat[['r','g','b']]
         rgb_ds = df_to_dataset(rgb_df, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
         del(rgb_df)
 
     del(indat)
     ofname = os.path.split(incloudname)[1].split('.')[0]
+    print('Output file base name: {}'.format(ofname))
 
     # uncomment the following block of code for use with multiple models as a list of inputs
-    for m in model_list:
-        print(m)  # print model name to console
+    for m in modnamelist:
+        # print(m)  # print model name to console
         #globals()[m]
         # try:
         #     mod = globals()[(m.name)]
         # except Exception as e:
         #     print(e)
-        mod = globals()[(m)]
+        mod = globals()[m]
         # try:
         #     mod = globals()[(m)]
         # except Exception as e:
@@ -441,6 +440,7 @@ def predict_reclass_write(incloudname, model_list, geo_metrics=[], geom_rad=0.10
         print(mod.name)
 
         # predict classification
+        print('Reclassifying using {} model'.format(m))
         if "simple" in m:
             outdat_pred = mod.predict(rgb_simple_ds, batch_size=batch_sz, verbose=1, use_multiprocessing=True)
         elif "all" in m:

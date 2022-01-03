@@ -140,13 +140,13 @@ def vegidx(lasfileobj, geom_metrics=[], indices=['rgb'], colordepth=8, geom_radi
         pdindexnames = np.append(pdindexnames, 'sd')
     # since not all users may require R, G, B values, these are optional but
     # default variables
-    if ('r' in indices) or ('rgb' in indices) or ('all' in indices):
+    if ('r' in indices) or ('rgb' in indices) or ('simple' in indices) or ('all' in indices):
         pdindex = np.append(pdindex, r, axis=0)
         pdindexnames = np.append(pdindexnames, 'r')
-    if ('g' in indices) or ('rgb' in indices) or ('all' in indices):
+    if ('g' in indices) or ('rgb' in indices) or ('simple' in indices) or ('all' in indices):
         pdindex = np.append(pdindex, g, axis=0)
         pdindexnames = np.append(pdindexnames, 'g')
-    if ('b' in indices) or ('rgb' in indices) or ('all' in indices):
+    if ('b' in indices) or ('rgb' in indices) or ('simple' in indices) or ('all' in indices):
         pdindex = np.append(pdindex, b, axis=0)
         pdindexnames = np.append(pdindexnames, 'b')
     # option to include intensty as a variable

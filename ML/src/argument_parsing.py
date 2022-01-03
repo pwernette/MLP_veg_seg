@@ -45,7 +45,7 @@ def parse_cmd_arguments(default_vals):
     psr.add_argument('-v','-veg','--vegfile')
     psr.add_argument('-g','-ground','--groundfile')
     psr.add_argument('-r','-reclass','--reclassfile')
-    psr.add_argument('-mf','-model','--modelfile')
+    psr.add_argument('-h5','-mf','-model','--modelfile')
     psr.add_argument('-m','-name','--modelname')
     psr.add_argument('-vi','-index','--vegindex')
     psr.add_argument('-mi','-inputs','--modelinputs')
@@ -61,6 +61,8 @@ def parse_cmd_arguments(default_vals):
     psr.add_argument('-tci','-imbalance','--classimbalance')
     psr.add_argument('-tdr','-reduction','--datareduction')
     psr.add_argument('-plotdir','--plotdir')
+    psr.add_argument('-thresh','-threshold','--reclassthresholds')
+    psr.add_argument('-rad','-radius','--geometryradius')
 
     # parse arguments
     args = psr.parse_args()
@@ -132,6 +134,11 @@ def parse_cmd_arguments(default_vals):
             print('Invalid dropout specified, using default probability of 0.2')
             default_vals.model_dropout = 0.2
         optionsargs['model dropout'] = default_vals.model_dropout
+    if args.geometryradius:
+        # option to specify geometry radius will only be used IF one of the
+        # geometry metrics is specified
+        default_vals.geometry_radius = float(args.geometryradius)
+        optionsargs['geometry radius'] = default_vals.geometry_radius
     if args.modelearlystop:
         # option to define early stopping criteria
         earlystopcriteria = list(str(args.modelearlystop).split(','))
@@ -181,6 +188,13 @@ def parse_cmd_arguments(default_vals):
             print('Invalid plot direction. Defaulting to vertical model plot.')
             default_vals.plotdir = 'TB'
         optionsargs['plot direction'] = default_vals.plotdir
+    if args.reclassthresholds:
+        # because the input argument is handled as a single string, we need
+        # to strip the brackets, split by the delimeter, and then re-form it
+        # as a list of characters/strings
+        default_vals.reclass_thresholds = list(str(args.reclassthresholds).split(','))
+        optionsargs['reclassification thresholds'] = default_vals.reclass_thresholds
 
+    print('Command line parameters:')
     for k,v in optionsargs.items():
-        print('{} = {}'.format(k,v))
+        print('  {} = {}'.format(k,v))

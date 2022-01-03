@@ -47,17 +47,26 @@ defs.reclassfile = 'NA'
 # program will default to requesting the one or both files that are missing
 # but required.
 
-# model file
+# model file used for reclassification
 defs.model_file = 'NA'
 
 # model name:
 defs.model_name = 'NA'
 
 # model inputs and vegetation indices of interest:
+#   model_inputs: list of input variables for model training and prediction
+#   model_vegetation_indices: list of vegetation indices to calculate
+#   model_nodes: list with the number of nodes per layer
+#      NOTE: The number of layers corresponds to the list length. For example:
+#          8,8,8 --> 3 layer model with 8 nodes per layer
+#          8,16 --> 2 layer model with 8 nodes (L1) and 16 nodes (L2)
+#   model_dropout: probability of dropping out (i.e. not using) any node
+#   geometry_radius: 3D radius used to compute geometry information over
 defs.model_inputs = ['r','g','b']
 defs.model_vegetation_indices = 'rgb'
 defs.model_nodes = [16,16,16]
 defs.model_dropout = 0.2
+defs.geometry_radius = 0.10
 
 # for early stopping:
 #   delta: The minmum change required to continue training beyond the number
@@ -91,6 +100,10 @@ defs.training_data_reduction = 1.0
 #   plotdir: plotting direction (horizontal (h) or vertical (v))
 defs.plotdir = 'v'
 
+# for reclassification
+#   reclass_thresholds: list of thresholds used for reclassification
+defs.reclass_thresholds = [0.6]
+
 def main(default_values,
             verbose=True):
     # print info about TF and laspy packages
@@ -104,6 +117,10 @@ def main(default_values,
     print("laspy Information:")
     # print laspy version installed and configured
     print("   laspy Version: {}\n".format(laspy.__version__))
+
+    # list of acceptable geometric metrics to calculate
+    # this list is subject to expansion or reduction depending on new code
+    acceptablegeometrics = ['sd']
 
     # parse any command line arguments (if present)
     parse_cmd_arguments(default_values)
@@ -224,10 +241,20 @@ def main(default_values,
 
     # get the model name from the loaded file
     if default_values.model_name == 'NA':
-        default_values.model_name = reclassmodel.name
+        try:
+            default_values.model_name = reclassmodel.name
+        except Exception as e:
+            print(e)
+
+    ''' LOOK AT COMBINING MODEL_NAME WITH MODEL_FILE'''
 
     # get model inputs from the loaded file
     default_values.model_inputs = [f.name for f in reclassmodel.inputs]
+    if verbose:
+        print(default_values.model_inputs)
+
+    # check if any geometry metrics are specified
+    geomet = list(set(acceptablegeometrics).intersection(default_values.model_inputs))
 
     # print the model summary
     if verbose:
@@ -237,7 +264,13 @@ def main(default_values,
     if default_values.reclassfile == 'NA':
         default_values.reclassfile = getfile(window_title='Select point cloud to reclassify')
 
-    f
+    predict_reclass_write(default_values.reclassfile,
+                            reclassmodel,
+                            threshold_vals=default_values.reclass_thresholds,
+                            batch_sz=default_values.training_batch_size,
+                            ds_cache=default_values.training_cache,
+                            geo_metrics=geomet,
+                            geom_rad=default_values.geometry_radius)
 
     # get the model inputs from the loaded file
 if __name__ == '__main__':
