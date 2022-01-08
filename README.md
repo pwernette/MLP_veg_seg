@@ -150,7 +150,8 @@ The following inputs are required for the ML_veg_train program:
 3. The output model name
 
 Additional command line options are available to cut down on pop-up windows and to aid in batch scripting:
-Command line option | Default value(s) | Option description/function(s)
+| Command line option | Default value(s) | Option description/function(s) |
+| --- | --- | --- |
 | `-v`, `-veg` | NA | Point cloud containing vegetation points only |
 | `-g`, `-ground` | NA | Point cloud containing ground points only |
 
