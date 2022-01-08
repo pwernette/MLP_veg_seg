@@ -37,22 +37,36 @@ defs = Args()
 
 # define default values/settings
 # input files:
-#   vegetation: input LAS or LAZ file containing only vegetation points
-#   ground: input LAS or LAZ file containing only bare Earth points
+#   vegetation: input LAS/LAZ file containing only vegetation points
+#   ground: input LAS/LAZ file containing only bare Earth points
+#   reclassfile: input LAS/LAZ file to reclassify using the specified model
 defs.filein_vegetation = 'NA'
 defs.filein_ground = 'NA'
+defs.reclassfile = 'NA'
 # NOTE: If no filein_vegetation or filein_ground is/are specified, then the
 # program will default to requesting the one or both files that are missing
 # but required.
 
+# model file used for reclassification
+defs.model_file = 'NA'
+
 # model name:
-defs.model_output_name = 'NA'
+defs.model_name = 'NA'
 
 # model inputs and vegetation indices of interest:
+#   model_inputs: list of input variables for model training and prediction
+#   model_vegetation_indices: list of vegetation indices to calculate
+#   model_nodes: list with the number of nodes per layer
+#      NOTE: The number of layers corresponds to the list length. For example:
+#          8,8,8 --> 3 layer model with 8 nodes per layer
+#          8,16 --> 2 layer model with 8 nodes (L1) and 16 nodes (L2)
+#   model_dropout: probability of dropping out (i.e. not using) any node
+#   geometry_radius: 3D radius used to compute geometry information over
 defs.model_inputs = ['r','g','b']
 defs.model_vegetation_indices = 'rgb'
 defs.model_nodes = [16,16,16]
 defs.model_dropout = 0.2
+defs.geometry_radius = 0.10
 
 # for early stopping:
 #   delta: The minmum change required to continue training beyond the number
@@ -86,6 +100,10 @@ defs.training_data_reduction = 1.0
 #   plotdir: plotting direction (horizontal (h) or vertical (v))
 defs.plotdir = 'v'
 
+# for reclassification
+#   reclass_thresholds: list of thresholds used for reclassification
+defs.reclass_thresholds = [0.6]
+
 def main(default_values,
             verbose=True):
     # print info about TF and laspy packages
@@ -100,6 +118,10 @@ def main(default_values,
     # print laspy version installed and configured
     print("   laspy Version: {}\n".format(laspy.__version__))
 
+    # list of acceptable geometric metrics to calculate
+    # this list is subject to expansion or reduction depending on new code
+    acceptablegeometrics = ['sd']
+
     # parse any command line arguments (if present)
     parse_cmd_arguments(default_values)
 
@@ -109,8 +131,11 @@ def main(default_values,
         default_values.filein_ground = getfile(window_title='Specitfy input BARE-EARTH (GROUND) point cloud')
     if default_values.filein_vegetation == 'NA':
         default_values.filein_vegetation = getfile(window_title='Specify input VEGETATION point cloud')
-    while default_values.model_output_name == 'NA':
+    if default_values.model_output_name == 'NA':
         default_values.model_output_name = getmodelname()
+    # get the input dense cloud
+    if default_values.reclassfile == 'NA':
+        default_values.reclassfile = getfile(window_title='Select point cloud to reclassify')
 
     # the las2split() function performs the following actions:
     #   1) import training point cloud files
@@ -183,7 +208,7 @@ def main(default_values,
     if not os.path.isdir('saved_models_'+tdate):
         os.makedirs('saved_models_'+tdate)
 
-    print('\nWriting summary log file...')
+    print('\nWriting summary log file')
     # write model information and metadata to output txt file
     with open(os.path.join('saved_models_'+tdate,'SUMMARY_'+default_values.model_output_name+'.txt'),'w') as fh:
         # print model summary to output file
@@ -197,15 +222,52 @@ def main(default_values,
         fh.write('validation loss: {}\n'.format(model_loss))
         fh.write('train time: {}'.format(datetime.timedelta(seconds=tt))+'\n')
 
-    print('\nSaving model as .h5 and sub-directory in {}...'.format('saved_models_'+tdate))
+    print('\nSaving model as .h5 and sub-directory in {}'.format('saved_models_'+tdate))
     # save the complete model (will create a new folder with the saved model)
     mod.save(os.path.join('saved_models_'+tdate,default_values.model_output_name))
     # save the model weights as H5 file
     mod.save(os.path.join('saved_models_'+tdate,(default_values.model_output_name+'.h5')))
 
-    print('\nPlotting model...')
+    print('\nPlotting model')
     # plot the model as a PNG
     plot_model(mod, to_file=(os.path.join('saved_models_'+tdate,str(default_values.model_output_name)+'_GRAPH.png')), rankdir=default_values.plotdir, dpi=300)
 
+    ## RECLASSIFY A FilE USING TRAINED MODEL FILE
+    print('\n\nRECLASSIFYING FILE...')
+
+    # load the model
+    globals()[mod.name] = mod
+
+    # get the model name from the loaded file
+    default_values.model_name = mod.name
+
+    ''' LOOK AT COMBINING MODEL_NAME WITH MODEL_FILE'''
+
+    # get model inputs from the loaded file
+    default_values.model_inputs = [f.name for f in mod.inputs]
+    if verbose:
+        print(default_values.model_inputs)
+
+    # check if any geometry metrics are specified
+    geomet = list(set(acceptablegeometrics).intersection(default_values.model_inputs))
+
+    # print the model summary
+    if verbose:
+        print(mod.summary())
+
+    # reclassify the input file
+    try:
+        predict_reclass_write(default_values.reclassfile,
+                                [globals()[mod.name]],
+                                threshold_vals=default_values.reclass_thresholds,
+                                batch_sz=default_values.training_batch_size,
+                                ds_cache=default_values.training_cache,
+                                geo_metrics=geomet,
+                                geom_rad=default_values.geometry_radius)
+    except Exception as e:
+        print('ERROR: Unable to reclassify the input file. See below for specific error:')
+        sys.exit(e)
+
+    # get the model inputs from the loaded file
 if __name__ == '__main__':
     main(default_values=defs)

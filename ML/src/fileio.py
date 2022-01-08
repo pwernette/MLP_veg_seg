@@ -434,7 +434,7 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
         print(m.name)  # print model name to console
 
         # predict classification
-        print('Reclassifying using {} model'.format(m))
+        print('Reclassifying using {} model'.format(m.name))
         if "simple" in m.name:
             outdat_pred = m.predict(rgb_simple_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
         elif "all" in m.name:
