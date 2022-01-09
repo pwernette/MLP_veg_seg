@@ -64,7 +64,7 @@ defs.model_name = 'NA'
 #   geometry_radius: 3D radius used to compute geometry information over
 defs.model_inputs = ['r','g','b']
 defs.model_vegetation_indices = 'rgb'
-defs.model_nodes = [16,16,16]
+defs.model_nodes = [8,8,8]
 defs.model_dropout = 0.2
 defs.geometry_radius = 0.10
 
@@ -88,7 +88,7 @@ defs.model_early_stop_delta = 0.001
 #   data reduction: setting this to a number between 0 and 1 will reduce the
 #                   overall volume of data used for training and validation
 defs.training_epoch = 100
-defs.training_batch_size = 1000
+defs.training_batch_size = 100
 defs.training_cache = True
 defs.training_prefetch = True
 defs.training_shuffle = True

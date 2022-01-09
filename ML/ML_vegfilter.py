@@ -64,7 +64,7 @@ defs.model_name = 'NA'
 #   geometry_radius: 3D radius used to compute geometry information over
 defs.model_inputs = ['r','g','b']
 defs.model_vegetation_indices = 'rgb'
-defs.model_nodes = [16,16,16]
+defs.model_nodes = [8,8,8]
 defs.model_dropout = 0.2
 defs.geometry_radius = 0.10
 
