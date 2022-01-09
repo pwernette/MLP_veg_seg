@@ -131,7 +131,29 @@ The output LAZ file will be saved in the same directory as the input file and wi
 
 ## Usage (Machine Learning):
 
-The machine learning approach can be run (1) as two separate programs, one for ML model training and a second for LAS/LAZ file (re)classification, or (2) as a single program that builds and trains a ML model and then uses that model to reclassify a LAS/LAZ file:
+The machine learning approach can be run (1) as two separate programs, one for ML model training and a second for LAS/LAZ file (re)classification, or (2) as a single program that builds and trains a ML model and then uses that model to reclassify a LAS/LAZ file.
+
+Command line options are available to for both the two program and one program options to cut down on pop-up windows and aid in batch scripting:
+| Option | Option type(s) | Default value(s) | Option description/function(s) |
+| --- | --- | --- | --- |
+| `-v`, `-veg` | string | NA | Point cloud containing vegetation points only |
+| `-g`, `-ground` | string | NA | Point cloud containing ground points only |
+| `-m`, `-name` | string | NA | ML model name |
+| `-vi`, `-index` | string | rgb | Vegetation index or indices to be calculated |
+| `-mi`, `-inputs` | list-string | r,g,b | Model inputs (will be used in conjuction with `-index` flag options) |
+| `-mn`, `-nodes` | list-integer | 8,8,8 | Number of nodes per model layer (by default specifies the number of layers) |
+| `-md`, `-dropout` | float | 0.2 | Probability of model layer dropout (used to avoid overfitting) |
+| `-mes`, `-earlystop` | list-integer,float | 5,0.001 | Early stop criteria ([patience],[change_threshold]) |
+| `-te`, `-epochs` | integer | 100 | Number of training epochs (maximum number) |
+| `-tb`, `-batch` | integer | 100 | Batch size |
+| `-tc`, `-cache` | boolean | True | Cache batches (improves training time) |
+| `-tp`, `-prefetch` | boolean | True | Prefetch batches (significantly improves training time) |
+| `-tsh`, `-shuffle` | boolean | True | Shuffle inputs (use only for training to avoid overfitting) |
+| `-tsp`, `-split` | float | 0.7 | Data split for model training (remainder will be used for model validation) |
+| `-tci`, `-imbalance` | boolean | True | Adjust data inputs for class imbalance (will use lowest number of inputs) |
+|`-tdr`, `-reduction` | float | 0.0 | Data reduction as proportion of 1.0 (useful if working with limited computing resources) |
+| `-thresh`, `-threshold` | float | 0.6 | Confidence threshold used for reclassification |
+| `-rad`, `-radius` | float | 0.10 | Radius used to compute geometry metrics (if specified in inputs) |
 
 ### Option A: Running as two separate programs
 If utilizing the two program approach, first build, train, and save the model (line 1). Then, reclassify a LAS/LAZ file using one or more models (line 2):
@@ -143,33 +165,11 @@ python ML_veg_reclass.py
 #### ML_veg_train.py
 ##### Inputs:
 
-The following inputs are required for the ML_veg_train program:
+The following inputs are required for the ML_veg_train program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
 
-1. The point cloud containing vegetation points only (for training).
-2. The point cloud containing only bare-Earth points (for training).
+1. The point cloud containing vegetation points only
+2. The point cloud containing only bare-Earth points
 3. The output model name
-
-Additional command line options are available to cut down on pop-up windows and to aid in batch scripting:
-| Option | Option type(s) | Default value(s) | Option description/function(s) |
-| --- | --- | --- | --- |
-| `-v`, `-veg` | str | NA | Point cloud containing vegetation points only |
-| `-g`, `-ground` | str | NA | Point cloud containing ground points only |
-| `-m`, `-name` | str | NA | ML model name |
-| `-vi`, `-index` | str | rgb | Vegetation index or indices to be calculated |
-| `-mi`, `-inputs` | list-str | r,g,b | Model inputs (will be used in conjuction with `-index` flag options) |
-| `-mn`, `-nodes` | list-int | 8,8,8 | Number of nodes per model layer (by default specifies the number of layers) |
-| `-md`, `-dropout` | float | 0.2 | Probability of model layer dropout (used to avoid overfitting) |
-| `-mes`, `-earlystop` | list-int,float | 5,0.001 | Early stop criteria ([patience],[change_threshold]) |
-| `-te`, `-epochs` | int | 100 | Number of training epochs (maximum number) |
-| `-tb`, `-batch` | int | 100 | Batch size |
-| `-tc`, `-cache` | bool | True | Cache batches (improves training time) |
-| `-tp`, `-prefetch` | bool | True | Prefetch batches (significantly improves training time) |
-| `-tsh`, `-shuffle` | bool | True | Shuffle inputs (use only for training to avoid overfitting) |
-| `-tsp`, `-split` | float | 0.7 | Data split for model training (remainder will be used for model validation) |
-| `-tci`, `-imbalance` | bool | True | Adjust data inputs for class imbalance (will use lowest number of inputs) |
-|`-tdr`, `-reduction` | float | 0.0 | Data reduction as proportion of 1.0 (useful if working with limited computing resources) |
-| `-thresh`, `-threshold` | float | 0.6 | Confidence threshold used for reclassification |
-| `-rad`, `-radius` | float | 0.10 | Radius used to compute geometry metrics (if specified in inputs) |
 
 ##### Outputs:
 An output CSV file will be generated with the following naming scheme:
