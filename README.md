@@ -188,7 +188,7 @@ The trained model will be written out as a single h5 file as well as a directory
 
 A plot of the model will also be saved as a PNG file (see example below), and a summary text file will be written that contains the complete model summary and metadata.
 
-<img src='/misc/images/rgb_8_GRAPH.png' alt='R G B model with one layer of 8 nodes'>
+<img src='/misc/images/rgb_8_GRAPH.png' alt='R G B model with one layer of 8 nodes' height=50% width=50%>
 
 #### veg_reclass.py
 ##### Inputs:
