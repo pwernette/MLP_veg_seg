@@ -422,6 +422,7 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
         del(rgb_df)
 
     del(indat)
+    # odir = os.path.split(incloudname)[0]
     ofname = os.path.split(incloudname)[1].split('.')[0]
     print('Output file base name: {}'.format(ofname))
 

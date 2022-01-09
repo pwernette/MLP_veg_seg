@@ -73,7 +73,7 @@ or
 conda activate mlvegfilter
 ```
 
-## Usage (No Machine Learning):
+## USAGE (PROGRAMS **WITHOUT** MACHINE LEARNING):
 
 Before running the training program or reclassification program, ensure that you have pre-clipped two separate LAS or LAZ point clouds:
 
@@ -129,7 +129,8 @@ Where *{filename}* is the original point cloud file name and *{vegetation_index_
 
 The output LAZ file will be saved in the same directory as the input file and will contain all the original points with updated classification values corresponding to either vegetation or bare-Earth.
 
-## Usage (Machine Learning):
+
+## USAGE (FOR MACHINE LEARNING PROGRAMS):
 
 The machine learning approach can be run (1) as two separate programs, one for ML model training and a second for LAS/LAZ file (re)classification, or (2) as a single program that builds and trains a ML model and then uses that model to reclassify a LAS/LAZ file.
 
@@ -157,7 +158,8 @@ Command line options are available to for both the two program and one program o
 | `-thresh`, `-threshold` | float | 0.6 | Confidence threshold used for reclassification | ML_veg_reclass, ML_vegfilter |
 | `-rad`, `-radius` | float | 0.10 | Radius used to compute geometry metrics (if specified in inputs) | ML_veg_train, ML_veg_reclass, ML_vegfilter |
 
-### Option A: Running as two separate programs
+
+### OPTION A: RUN TWO SEPARATE PROGRAMS
 If utilizing the two program approach, first build, train, and save the model (line 1). Then, reclassify a LAS/LAZ file using one or more models (line 2):
 ```
 python ML_veg_train.py
@@ -173,37 +175,69 @@ The following inputs are required for the ML_veg_train program. If any of these 
 2. The point cloud containing only bare-Earth points
 3. The output model name
 
+The ML_veg_train program will read in the two training point clouds, account for any class imbalance, build a ML model, and train the ML model.
+
 ##### Outputs:
-An output CSV file will be generated with the following naming scheme:
+All outputs will be saved in a directory with the following scheme:
 
-> {veg_filename}\_{noveg_filename}.csv
+> saved_models_{date}
 
-Where *{veg_filename}* is the file name of the point cloud containing vegetation points only and *{noveg_filename}* is the name of the point cloud containing bare-Earth points only.
+Where *{date}* is the date the model was created and is pulled from the computer clock. If this directory does not already exist then it will first be created.
 
-The output CSV will have the following attributes (columns) of information:
+The trained model will be written out as a single h5 file as well as a directory. Both the h5 file and the directory will have the same name, as specified by the user.
 
-> {vegetation_index_name}     {minimum_possible_index_value}      {maximum_possible_index_value}      {M-statistic}       {Otsu_threshold_value}
+A plot of the model will also be saved as a PNG file (see example below), and a summary text file will be written that contains the complete model summary and metadata.
 
-### Option B: Running as one single programs
+<img src='/misc/images/rgb_8_GRAPH.png' alt='R G B model with one layer of 8 nodes'>
 
 #### veg_reclass.py
 ##### Inputs:
 
-The program will automatically request the user to select 3 input files.
+The following inputs are required for the ML_veg_reclass program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
 
-1. The point cloud to be reclassified.
-2. The CSV file containing the vegetation index value ranges, M-statistics, and Otsu threshold values.
-          --> This file is automatically created when you run veg_train.py
+1. The point cloud to be reclassified
+2. The h5 model file (can be generated using the ML_veg_train program)
+
+The ML_veg_reclass program will automatically read in the model structure, weights, and required inputs (including vegetation indices and geometry metrics) and will reclassify the input point cloud.
+
+##### Outputs:
+The reclassified LAS/LAZ file will be saved in a directory with the following scheme:
+
+> results_{date}
+
+Where {date} is the date the model was created and is pulled from the computer clock. If this directory does not already exist then it will first be created.
+
+A new LAZ file will be generated in the results directory:
+
+> {filename}_{model_name}_{threshold_value}.laz
+
+Where *{filename}* is the original point cloud file name, *{model_name}* is the name of the model used to reclassify the input point cloud, and *{threshold_value}* is the threshold value used to segment vegetation from bare-Earth.
+
+
+### OPTION B: RUN A SINGLE PROGRAM
+
+#### ML_vegfilter.py
+
+The ML_vegfilter program will use the two training point clouds to generate a machine learning model with the user-specified arguments, and then use this model to reclassify the specified point cloud. The significant advantage of using a single program is eliminating the need to read the model file for reclassification.
+
+##### Inputs:
+
+The following inputs are required for the ML_vegfilter program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
+
+1. The point cloud containing vegetation points only
+2. The point cloud containing only bare-Earth points
+3. The output model name
+4. The point cloud to be reclassified
 
 ##### Outputs:
 
-A new LAZ file will be generated with the following naming scheme:
+The model will be saved as a h5 file and a directory, as well as a PNG of the model structure and a detailed metadata summary text file. The model and all it's associated files (graph as PNG and summary metadata file) will be saved in a *saved_models_{date}* folder, where {date} is the date the model was created.
 
-> {filename}\_reclass\_{vegetation_index_name}\_veg\_noveg.las
+The reclassified point cloud will be saved in the *results_{date}* folder as:
 
-Where *{filename}* is the original point cloud file name and *{vegetation_index_name}* is the name of the vegetation index determined or selected to differentiate vegetation from bare-Earth using Otsu's thresholding approach.
+> {filename}_{model_name}_{threshold_value}.laz
 
-The output LAZ file will be saved in the same directory as the input file and will contain all the original points with updated classification values corresponding to either vegetation or bare-Earth.
+Where *{filename}* is the original point cloud file name, *{model_name}* is the name of the model used to reclassify the input point cloud, and *{threshold_value}* is the threshold value used to segment vegetation from bare-Earth.
 
 # FEEDBACK
 **If you have any questions about how to implement the code, suggestions for improvements, or feedback, please leave a comment or report the issue with as much detail as possible.**
