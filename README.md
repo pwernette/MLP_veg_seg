@@ -150,11 +150,26 @@ The following inputs are required for the ML_veg_train program:
 3. The output model name
 
 Additional command line options are available to cut down on pop-up windows and to aid in batch scripting:
-| Command line option | Default value(s) | Option description/function(s) |
-| --- | --- | --- |
-| `-v`, `-veg` | NA | Point cloud containing vegetation points only |
-| `-g`, `-ground` | NA | Point cloud containing ground points only |
-
+| Option | Option type(s) | Default value(s) | Option description/function(s) |
+| --- | --- | --- | --- |
+| `-v`, `-veg` | str | NA | Point cloud containing vegetation points only |
+| `-g`, `-ground` | str | NA | Point cloud containing ground points only |
+| `-m`, `-name` | str | NA | ML model name |
+| `-vi`, `-index` | str | rgb | Vegetation index or indices to be calculated |
+| `-mi`, `-inputs` | list-str | r,g,b | Model inputs (will be used in conjuction with `-index` flag options) |
+| `-mn`, `-nodes` | list-int | 8,8,8 | Number of nodes per model layer (by default specifies the number of layers) |
+| `-md`, `-dropout` | float | 0.2 | Probability of model layer dropout (used to avoid overfitting) |
+| `-mes`, `-earlystop` | list-int,float | 5,0.001 | Early stop criteria ([patience],[change_threshold]) |
+| `-te`, `-epochs` | int | 100 | Number of training epochs (maximum number) |
+| `-tb`, `-batch` | int | 100 | Batch size |
+| `-tc`, `-cache` | bool | True | Cache batches (improves training time) |
+| `-tp`, `-prefetch` | bool | True | Prefetch batches (significantly improves training time) |
+| `-tsh`, `-shuffle` | bool | True | Shuffle inputs (use only for training to avoid overfitting) |
+| `-tsp`, `-split` | float | 0.7 | Data split for model training (remainder will be used for model validation) |
+| `-tci`, `-imbalance` | bool | True | Adjust data inputs for class imbalance (will use lowest number of inputs) |
+|`-tdr`, `-reduction` | float | 0.0 | Data reduction as proportion of 1.0 (useful if working with limited computing resources) |
+| `-thresh`, `-threshold` | float | 0.6 | Confidence threshold used for reclassification |
+| `-rad`, `-radius` | float | 0.10 | Radius used to compute geometry metrics (if specified in inputs) |
 
 ##### Outputs:
 An output CSV file will be generated with the following naming scheme:
