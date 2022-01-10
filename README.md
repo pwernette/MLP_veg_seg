@@ -1,6 +1,14 @@
 # Programs for Segmenting Vegetation from Point Clouds
 
-These programs are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other. There are two approaches:
+These programs are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other. The programs are meant to reclassify large and dense point clouds, similar to the following:
+
+<img src='/misc/images/FIGURE_20200508_RGB.png' alt='R G B color model of a coastal bluff near Port Angeles, WA' height=50% width=50%>
+
+And reclassify the points, similar to the following:
+<img src='/misc/images/FIGURE_20200508_RGB_16.png' alt='model of a coastal bluff colored by classification' height=50% width=50%>
+Green points represent 'vegetation' and brown points represent 'bare-Earth'.
+
+There are two approaches:
 
 1. The non-machine learning approach utilizes a vegetation index and Otsu's thresholding method. This approach is more computationally demanding and the appropriate vegetation index and threshold value are likely to vary by location and application.
 2. The machine learning approach utilizes the Tensorflow API. This approach is more efficient, less subjective, and more robust across geographies and applications. Although it is faster with access to a GPU, a CPU can also be used. *(Note: The code is not optimized for use with multiple GPUs.)*
