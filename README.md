@@ -191,7 +191,7 @@ A plot of the model will also be saved as a PNG file (see example below), and a 
 
 <img src='/misc/images/rgb_8_GRAPH.png' alt='R G B model with one layer of 8 nodes' height=50% width=50%>
 
-## veg_reclass.py
+## ML_veg_reclass.py
 ### Inputs:
 
 The following inputs are required for the ML_veg_reclass program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
@@ -245,7 +245,6 @@ Where *{filename}* is the original point cloud file name, *{model_name}* is the 
 **If you have any questions about how to implement the code, suggestions for improvements, or feedback, please leave a comment or report the issue with as much detail as possible.**
 
 # REFERENCES
-
 [^1]: Meyer, G.E.; Neto, J.C. 2008. Verification of color vegetation indices for automated crop imaging applications. Comput. Electron. Agric. 63, 282–293.
 [^2]: Woebbecke, D.M.; Meyer, G.E.; Von Bargen, K.; Mortensen, D.A. 1995. Color Indices forWeed Identification Under Various Soil, Residue, and Lighting Conditions. Trans. ASAE, 38, 259–269.
 [^3]: Mao, W.; Wang, Y.;Wang, Y. 2003. Real-time detection of between-row weeds using machine vision. In Proceedings of the 2003 ASAE Annual Meeting; American Society of Agricultural and Biological Engineers, Las Vegas, NV, USA, 27–30 July 2003.
