@@ -17,27 +17,18 @@ There are two approaches:
 
 These programs compute the following vegetation indicies, their M-statistics, and Otsu threshold values:
 
-- Excess Red (exr)
-- Excess Green (exg)
-- Excess Green-Red (exgr)
-- Excess Blue (exb)
-- Normal Green-Red Difference Index (ngrdi)
-- Modified Green Red Vegetation Index (mgrvi)
-- Green Leaf Index (gli)
-- Red Green Blue Veggetation Index (rgbvi)
-- Kawashima Index (ikaw)
-- Green Lead Algorithm (gla)
-- Visible Atmospherically Resistant Index (vari)*
-- Woebbecke Index (wi)*
-- Color Index of Vegetation Extraction (cive)*
-- Vegetation (vega)*
-- Combined Vegetation Index (com)*
-  --> This index is a combination of (1) exg, (2) exgr, (3) cive, and (4) vega
-
-*Asterisk denotes vegetation indicies that appear to be **unstable in simulated values** (i.e. their values are not properly constrained).*
+- Excess Red (exr)[^1]
+- Excess Green (exg)[^2]
+- Excess Green-Red (exgr)[^3]
+- Excess Blue (exb)[^4]
+- Normal Green-Red Difference Index (ngrdi)[^5]
+- Modified Green Red Vegetation Index (mgrvi)[^5]
+- Green Leaf Index (gli)[^6]
+- Red Green Blue Veggetation Index (rgbvi)[^7]
+- Kawashima Index (ikaw)[^8]
+- Green Lead Algorithm (gla)[^6]
 
 Each of the vegetation indices only requires some combination of the red, green, and blue color bands. No NIR, SWIR, or other band is required.
-Citations for each of the vegetation indices are included in the vegidx() function of the code.
 
 The following Python modules are required:
 
@@ -251,3 +242,12 @@ Where *{filename}* is the original point cloud file name, *{model_name}* is the 
 
 # FEEDBACK
 **If you have any questions about how to implement the code, suggestions for improvements, or feedback, please leave a comment or report the issue with as much detail as possible.**
+
+[^1]: Meyer, G.E.; Neto, J.C. 2008. Verification of color vegetation indices for automated crop imaging applications. Comput. Electron. Agric. 63, 282–293.
+[^2]: Woebbecke, D.M.; Meyer, G.E.; Von Bargen, K.; Mortensen, D.A. 1995. Color Indices forWeed Identification Under Various Soil, Residue, and Lighting Conditions. Trans. ASAE, 38, 259–269.
+[^3]: Mao, W.; Wang, Y.;Wang, Y. 2003. Real-time detection of between-row weeds using machine vision. In Proceedings of the 2003 ASAE Annual Meeting; American Society of Agricultural and Biological Engineers, Las Vegas, NV, USA, 27–30 July 2003.
+[^4]: Neto, J.C. 2004. A combined statistical-soft computing approach for classification and mapping weed species in minimum -tillage systems. Ph.D. Thesis, University of Nebraska – Lincoln, Lincoln, NE, USA, August 2004.
+[^5]: Tucker, C.J. Red and photographic infrared linear combinations for monitoring vegetation. Remote Sens. Environ. 8, 127–150.
+[^6]: Louhaichi, M.; Borman, M.M.; Johnson, D.E. 2001. Spatially located platform and aerial photography for documentation of grazing impacts on wheat. Geocarto Int. 16, 65–70.
+[^7]: Bendig, J.; Yu, K.; Aasen, H.; Bolten, A.; Bennertz, S.; Broscheit, J.; Gnyp, M.L.; Bareth, G. 2015. Combining UAV-based plant height from crop surface models, visible, and near infrared vegetation indices for biomass monitoring in barley. Int. J. Appl. Earth Obs. Geoinf. 39, 79–87.
+[^7]: Kawashima, S.; Nakatani, M. 1998. An algorithm for estimating chlorophyll content in leaves using a video camera. Ann. Bot. 81, 49–54.
