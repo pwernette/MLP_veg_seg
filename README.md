@@ -2,10 +2,12 @@
 
 These programs are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other. The programs are meant to reclassify large and dense point clouds, similar to the following:
 
-<img src='/misc/images/FIGURE_20200508_RGB.png' alt='R G B color model of a coastal bluff near Port Angeles, WA' height=50% width=50%>
+<img src='/misc/images/FIGURE_20200508_RGB.png' alt='R G B color model of a coastal bluff near Port Angeles, WA'>
 
 And reclassify the points, similar to the following:
-<img src='/misc/images/FIGURE_20200508_RGB_16.png' alt='model of a coastal bluff colored by classification' height=50% width=50%>
+
+<img src='/misc/images/FIGURE_20200508_RGB_16.png' alt='model of a coastal bluff colored by classification'>
+
 Green points represent 'vegetation' and brown points represent 'bare-Earth'.
 
 There are two approaches:
