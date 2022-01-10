@@ -253,4 +253,4 @@ Where *{filename}* is the original point cloud file name, *{model_name}* is the 
 [^5]: Tucker, C.J. Red and photographic infrared linear combinations for monitoring vegetation. Remote Sens. Environ. 8, 127–150.
 [^6]: Louhaichi, M.; Borman, M.M.; Johnson, D.E. 2001. Spatially located platform and aerial photography for documentation of grazing impacts on wheat. Geocarto Int. 16, 65–70.
 [^7]: Bendig, J.; Yu, K.; Aasen, H.; Bolten, A.; Bennertz, S.; Broscheit, J.; Gnyp, M.L.; Bareth, G. 2015. Combining UAV-based plant height from crop surface models, visible, and near infrared vegetation indices for biomass monitoring in barley. Int. J. Appl. Earth Obs. Geoinf. 39, 79–87.
-[^7]: Kawashima, S.; Nakatani, M. 1998. An algorithm for estimating chlorophyll content in leaves using a video camera. Ann. Bot. 81, 49–54.
+[^8]: Kawashima, S.; Nakatani, M. 1998. An algorithm for estimating chlorophyll content in leaves using a video camera. Ann. Bot. 81, 49–54.
