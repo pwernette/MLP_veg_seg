@@ -12,8 +12,8 @@ Green points represent 'vegetation' and brown points represent 'bare-Earth'.
 
 There are two approaches:
 
-1. The non-machine learning approach utilizes a vegetation index and Otsu's thresholding method. This approach is more computationally demanding and the appropriate vegetation index and threshold value are likely to vary by location and application.
-2. The machine learning approach utilizes the Tensorflow API. This approach is more efficient, less subjective, and more robust across geographies and applications. Although it is faster with access to a GPU, a CPU can also be used. *(Note: The code is not optimized for use with multiple GPUs.)*
+1. The [non-machine learning approach](#usage-programs-without-machine-learning) utilizes a vegetation index and Otsu's thresholding method. This approach is more computationally demanding and the appropriate vegetation index and threshold value are likely to vary by location and application.
+2. The [machine learning approach](#usage-for-machine-learning-programs) utilizes the Tensorflow API. This approach is more efficient, less subjective, and more robust across geographies and applications. Although it is faster with access to a GPU, a CPU can also be used. *(Note: The code is not optimized for use with multiple GPUs.)*
 
 These programs compute the following vegetation indicies, their M-statistics, and Otsu threshold values:
 
@@ -133,7 +133,7 @@ The output LAZ file will be saved in the same directory as the input file and wi
 
 # USAGE (FOR MACHINE LEARNING PROGRAMS):
 
-The machine learning approach can be run (1) as two separate programs, one for ML model training and a second for LAS/LAZ file (re)classification, or (2) as a single program that builds and trains a ML model and then uses that model to reclassify a LAS/LAZ file.
+The machine learning approach can be run [(1) as two separate programs](#option-a-run-two-separate-programs), one for ML model training and a second for LAS/LAZ file (re)classification, or [(2) as a single program](#option-b-run-a-single-program) that builds and trains a ML model and then uses that model to reclassify a LAS/LAZ file.
 
 Command line options are available to for both the two program and one program options to cut down on pop-up windows and aid in batch scripting:
 | Argument | Type(s) | Default value(s) | Description/Function | Program |
