@@ -15,6 +15,23 @@ There are two approaches:
 1. The [non-machine learning approach](#usage-programs-without-machine-learning) utilizes a vegetation index and Otsu's thresholding method. This approach is more computationally demanding and the appropriate vegetation index and threshold value are likely to vary by location and application.
 2. The [machine learning approach](#usage-for-machine-learning-programs) utilizes the Tensorflow API. This approach is more efficient, less subjective, and more robust across geographies and applications. Although it is faster with access to a GPU, a CPU can also be used. *(Note: The code is not optimized for use with multiple GPUs.)*
 
+# Contents
+
+1. [Vegetation Indices Included](#vegetation-indices-ncluded)
+2. [Installation](#installation)
+3. [Non-Machine Learning Approach](#usage-programs-without-machine-learning)
+4. [Machine Learning Approach](#usage-for-machine-learning-programs)
+          a. [Command Line Arguments](#command-line-arguments)
+          b. [Option A: Two Separate Programs](#option-a-run-two-separate-programs)
+                    i. [ML_veg_train.py](#ml_veg_trainpy)
+                    ii. [ML_veg_reclass.py](#ml_veg_reclasspy)
+          c. [Option B: One Single Program](#option-b-run-a-single-program)
+                    i. [ML_vegfilter.py](#ml_vegfilterpy)
+5. [Feedback](#feedback)
+6. [References](#references)
+
+## Vegetation Indices Included
+
 These programs compute the following vegetation indicies, their M-statistics, and Otsu threshold values:
 
 - Excess Red (exr)[^1]
@@ -134,6 +151,8 @@ The output LAZ file will be saved in the same directory as the input file and wi
 # USAGE (FOR MACHINE LEARNING PROGRAMS):
 
 The machine learning approach can be run [(1) as two separate programs](#option-a-run-two-separate-programs), one for ML model training and a second for LAS/LAZ file (re)classification, or [(2) as a single program](#option-b-run-a-single-program) that builds and trains a ML model and then uses that model to reclassify a LAS/LAZ file.
+
+### Command Line Arguments
 
 Command line options are available to for both the two program and one program options to cut down on pop-up windows and aid in batch scripting:
 | Argument | Type(s) | Default value(s) | Description/Function | Program |
