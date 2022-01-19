@@ -73,29 +73,6 @@ class App(tk.Tk):
         lab.grid(column=0, columnspan=3, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
         rowplacement += 1
 
-        # ground points training file
-        lab = Label(self, text='Ground Only Point Cloud (Training)')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        filein_ground = Text(self, height=1, width=50)
-        filein_ground.insert(tk.END, default_arguments_obj.filein_ground)
-        filein_ground.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # create a browse files button to get input
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(filein_ground, 'Select NON-vegetation point cloud'))
-        button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # vegetation points training file
-        lab = Label(self, text='Vegetation Only Point Cloud (Training)')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        filein_vegetation = Text(self, height=1, width=50)
-        filein_vegetation.insert(tk.END, default_arguments_obj.filein_vegetation)
-        filein_vegetation.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(filein_vegetation, 'Select vegetation point cloud'))
-        button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        rowplacement += 1
-
         # point cloud to reclassify
         lab = Label(self, text='Point Cloud to Reclassify')
         lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
@@ -110,196 +87,19 @@ class App(tk.Tk):
         lab.grid(column=0, columnspan=3, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
         rowplacement += 1
 
-        # saved h5 model file
-        lab = Label(self, text='Model File')
+        # input model file
+        lab = Label(self, text='Saved h5 Model File')
         lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
         model_file = Text(self, height=1, width=50)
         model_file.insert(tk.END, default_arguments_obj.model_file)
         model_file.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(model_file))
+        button_explore = Button(self, text='Browse', command=lambda:browseFiles(model_file, 'Select saved h5 model file'))
         button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
         rowplacement += 1
 
-        # model name
-        lab = Label(self, text='Model Name')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        model_output_name = Text(self, height=1, width=50)
-        if default_arguments_obj.model_output_name == 'NA':
-            model_output_name.insert(tk.END, 'model_'+default_arguments_obj.model_vegetation_indices+'_'+str(default_arguments_obj.model_nodes).replace(',','_').replace(' ','').replace('[','').replace(']',''))
-        else:
-            model_output_name.insert(tk.END, default_arguments_obj.model_output_name)
-        model_output_name.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # model inputs
-        lab = Label(self, text='Model Inputs')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        model_inputs = Text(self, height=1, width=50)
-        model_inputs.insert(tk.END, str(default_arguments_obj.model_inputs).replace(' ','').replace('[','').replace(']',''))
-        model_inputs.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # vegetation indices
-        lab = Label(self, text='Vegetation Indices')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        model_vegetation_indices = Text(self, height=1, width=50)
-        model_vegetation_indices.insert(tk.END, default_arguments_obj.model_vegetation_indices)
-        model_vegetation_indices.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # model nodes
-        lab = Label(self, text='Model Nodes')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        model_nodes = Text(self, height=1, width=50)
-        model_nodes.insert(tk.END, str(default_arguments_obj.model_nodes).replace(' ','').replace('[','').replace(']',''))
-        model_nodes.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # model dropout
-        lab = Label(self, text='Model Dropout')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        model_dropout = Text(self, height=1, width=50)
-        model_dropout.insert(tk.END, default_arguments_obj.model_dropout)
-        model_dropout.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # geometry radius
-        lab = Label(self, text='Geometry Radius (opt)')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        geometry_radius = Text(self, height=1, width=50)
-        geometry_radius.insert(tk.END, default_arguments_obj.geometry_radius)
-        geometry_radius.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        ''' training parameters '''
-        lab = Label(self, text='TRAINING PARAMETERS:')
+        ''' predicting parameters '''
+        lab = Label(self, text='RECLASSIFICATION PARAMETERS:')
         lab.grid(column=0, columnspan=3, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        rowplacement += 1
-
-        # training epochs
-        lab = Label(self, text='Training Epochs')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        training_epoch = Text(self, height=1, width=50)
-        training_epoch.insert(tk.END, default_arguments_obj.training_epoch)
-        training_epoch.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # training batch size
-        lab = Label(self, text='Training Batch Size')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        training_batch_size = Text(self, height=1, width=50)
-        training_batch_size.insert(tk.END, default_arguments_obj.training_batch_size)
-        training_batch_size.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # training caching
-        lab = Label(self, text='Training Caching')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        training_cache = Text(self, height=1, width=50)
-        training_cache.insert(tk.END, str(default_arguments_obj.training_cache))
-        training_cache.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # training prefetching
-        lab = Label(self, text='Training Prefetching')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        training_prefetch = Text(self, height=1, width=50)
-        training_prefetch.insert(tk.END, str(default_arguments_obj.training_prefetch))
-        training_prefetch.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # training shuffle
-        lab = Label(self, text='Training Shuffle')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        training_shuffle = Text(self, height=1, width=50)
-        training_shuffle.insert(tk.END, str(default_arguments_obj.training_shuffle))
-        training_shuffle.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # training split
-        lab = Label(self, text='Training Split')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        training_split = Text(self, height=1, width=50)
-        training_split.insert(tk.END, default_arguments_obj.training_split)
-        training_split.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # class imbalance correction
-        lab = Label(self, text='Class Imbalance Correction')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        training_class_imbalance_corr = Text(self, height=1, width=50)
-        training_class_imbalance_corr.insert(tk.END, str(default_arguments_obj.training_class_imbalance_corr))
-        training_class_imbalance_corr.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # data reduction
-        lab = Label(self, text='Proportion of Data to Use')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        training_data_reduction = Text(self, height=1, width=50)
-        training_data_reduction.insert(tk.END, default_arguments_obj.training_data_reduction)
-        training_data_reduction.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # early stop patience
-        lab = Label(self, text='Early Stop Patience')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        model_early_stop_patience = Text(self, height=1, width=50)
-        model_early_stop_patience.insert(tk.END, default_arguments_obj.model_early_stop_patience)
-        model_early_stop_patience.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        # early stop delta
-        lab = Label(self, text='Early Stop Delta')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        model_early_stop_delta = Text(self, height=1, width=50)
-        model_early_stop_delta.insert(tk.END, default_arguments_obj.model_early_stop_delta)
-        model_early_stop_delta.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
-        ''' additional parameters '''
-        lab = Label(self, text='ADDITIONAL PARAMETERS:')
-        lab.grid(column=0, columnspan=3, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        rowplacement += 1
-
-        # plot direction
-        lab = Label(self, text='Plot Direction')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        plotdir = Text(self, height=1, width=50)
-        plotdir.insert(tk.END, default_arguments_obj.plotdir)
-        plotdir.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
         rowplacement += 1
 
         # reclassification threshold(s)
@@ -312,87 +112,48 @@ class App(tk.Tk):
         # increase the row by 1
         rowplacement += 1
 
+        # training batch size
+        lab = Label(self, text='Batch Size')
+        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        # get variable input
+        training_batch_size = Text(self, height=1, width=50)
+        training_batch_size.insert(tk.END, default_arguments_obj.training_batch_size)
+        training_batch_size.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # increase the row by 1
+        rowplacement += 1
+
+        # training caching
+        lab = Label(self, text='Caching')
+        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        # get variable input
+        training_cache = Text(self, height=1, width=50)
+        training_cache.insert(tk.END, str(default_arguments_obj.training_cache))
+        training_cache.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # increase the row by 1
+        rowplacement += 1
+
+        # training prefetching
+        lab = Label(self, text='Prefetching')
+        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        # get variable input
+        training_prefetch = Text(self, height=1, width=50)
+        training_prefetch.insert(tk.END, str(default_arguments_obj.training_prefetch))
+        training_prefetch.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # increase the row by 1
+        rowplacement += 1
+
         def getinput(self, default_arguments_obj):
             ''' sub-function to get inputs from GUI widget '''
-            # input ground points file
-            default_arguments_obj.filein_ground = filein_ground.get('1.0','end-1c').split('\n')[0]
-            # inputs vegetation points file
-            default_arguments_obj.filein_vegetation = filein_vegetation.get('1.0','end-1c').split('\n')[0]
             # input reclassification file
             default_arguments_obj.reclassfile = reclassfile.get('1.0','end-1c').split('\n')[0]
-            # input saved model file
-            # default_arguments_obj.model_file = model_file.get('1.0','end-1c').split('\n')[0]
-            # model name
-            if " " in model_output_name.get('1.0','end-1c'):
-                default_arguments_obj.model_output_name = model_output_name.get('1.0','end-1c').replace(' ','_').split('\n')[0]
-                default_arguments_obj.model_output_name = [x.strip(' ') for x in default_arguments_obj.model_output_name]
-            elif not " " in model_output_name.get('1.0','end-1c'):
-                default_arguments_obj.model_output_name = model_output_name.get('1.0','end-1c').split('\n')[0]
-            # model inputs
-            if " " in model_inputs.get('1.0','end-1c'):
-                default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split())
-                default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
-            elif "," in model_inputs.get('1.0','end-1c'):
-                default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split(','))
-                default_arguments_obj.model_inputs = [x.replace("'",'') for x in default_arguments_obj.model_inputs]
-                default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
-            # vegetation indices
-            default_arguments_obj.model_vegetation_indices = list(model_inputs.get('1.0','end-1c').replace("'",'').split('\n')[0].split(','))
-            if 'rgb' in default_arguments_obj.model_vegetation_indices:
-                (default_arguments_obj.model_vegetation_indices).remove('rgb')
-                simplelist = ['r','g','b']
-                for s in simplelist:
-                    if not s in default_arguments_obj.model_inputs:
-                        default_arguments_obj.model_inputs = [s] + default_arguments_obj.model_inputs
-                default_arguments_obj.model_vegetation_indices = 'rgb'
-            if 'simple' in default_arguments_obj.model_inputs:
-                (default_arguments_obj.model_inputs).remove('simple')
-                simplelist = ['r','g','b','exr','exg','exb','exgr']
-                for s in simplelist:
-                    if not s in default_arguments_obj.model_inputs:
-                        default_arguments_obj.model_inputs = [s] + default_arguments_obj.model_inputs
-                default_arguments_obj.model_vegetation_indices = 'simple'
-            if 'all' in default_arguments_obj.model_inputs:
-                (default_arguments_obj.model_inputs).remove('all')
-                alllist = ['r','g','b','exr','exg','exb','exgr','ngrdi','mgrvi','gli','rgbvi','ikaw','gla']
-                for a in alllist:
-                    if not a in default_arguments_obj.model_inputs:
-                        default_arguments_obj.model_inputs = [a] + default_arguments_obj.model_inputs
-                default_arguments_obj.model_vegetation_indices = 'all'
-            # model nodes
-            if " " in model_nodes.get('1.0','end-1c'):
-                default_arguments_obj.model_nodes = list(map(int,(model_nodes.get('1.0','end-1c').split('\n')[0].split())))
-                # default_arguments_obj.model_nodes = [x.strip(' ') for x in default_arguments_obj.model_nodes]
-            elif "," in model_nodes.get('1.0','end-1c'):
-                default_arguments_obj.model_nodes = list(map(int,(model_nodes.get('1.0','end-1c').split('\n')[0].split(','))))
-                # default_arguments_obj.model_nodes = [x.strip(' ') for x in default_arguments_obj.model_nodes]
-            # model dropout
-            if 0.0 > float(model_dropout.get('1.0','end-1c').split('\n')[0]) and float(model_dropout.get('1.0','end-1c').split('\n')[0]) < 1.0:
-                default_arguments_obj.model_dropout = float(model_dropout.get('1.0','end-1c').replace(' ','').split('\n')[0])
-            elif not 0.0 > float(model_dropout.get('1.0','end-1c').split('\n')[0]) or not float(model_dropout.get('1.0','end-1c').split('\n')[0]) < 1.0:
-                default_arguments_obj.model_dropout = 0.2
-            # geometry radius
-            default_arguments_obj.geometry_radius = float(geometry_radius.get('1.0','end-1c').strip().split('\n')[0])
-            # early stop - patience
-            default_arguments_obj.model_early_stop_patience = int(model_early_stop_patience.get('1.0','end-1c').split('\n')[0])
-            # early stop - delta
-            default_arguments_obj.model_early_stop_delta = float(model_early_stop_delta.get('1.0','end-1c').split('\n')[0])
-            # training epochs
-            default_arguments_obj.training_epoch = int(training_epoch.get('1.0','end-1c').strip().split('\n')[0])
-            # training batch size
+            # input model file
+            default_arguments_obj.model_file = model_file.get('1.0','end-1c').split('\n')[0]
+            # batch size
             default_arguments_obj.training_batch_size = int(training_batch_size.get('1.0','end-1c').strip().split('\n')[0])
-            # training cache
+            # cache
             default_arguments_obj.training_cache = str_to_bool(training_cache.get('1.0','end-1c').strip().split('\n')[0])
-            # training prefetch
+            # prefetch
             default_arguments_obj.training_prefetch = str_to_bool(training_prefetch.get('1.0','end-1c').strip().split('\n')[0])
-            # training split
-            default_arguments_obj.training_split = float(training_split.get('1.0','end-1c').strip().split('\n')[0])
-            # class imbalance correction
-            default_arguments_obj.training_class_imbalance_corr = str_to_bool(training_class_imbalance_corr.get('1.0','end-1c').strip().split('\n')[0])
-            # data reduction
-            default_arguments_obj.training_data_reduction = float(training_data_reduction.get('1.0','end-1c').strip().split('\n')[0])
-            # plot direction
-            default_arguments_obj.plotdir = plotdir.get('1.0','end-1c').split('\n')[0]
             # reclassification threshold(s)
             if " " in reclass_thresholds.get('1.0','end-1c'):
                 default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split())))
@@ -429,7 +190,7 @@ class Args():
         self.filein_ground = 'NA'
         self.reclassfile = 'NA'
         # model file used for reclassification
-        # self.model_file = 'NA'
+        self.model_file = 'NA'
         # model name:
         self.model_output_name = 'NA'
         # model inputs and vegetation indices of interest:
@@ -488,7 +249,7 @@ class Args():
         psr.add_argument('-v','-veg','--vegfile')
         psr.add_argument('-g','-ground','--groundfile')
         psr.add_argument('-r','-reclass','--reclassfile')
-        # psr.add_argument('-h5','-mfile','-model','--modelfile')
+        psr.add_argument('-h5','-mfile','-model','--modelfile')
         psr.add_argument('-m','-mname','--modelname')
         psr.add_argument('-vi','-index','--vegindex')
         psr.add_argument('-mi','-inputs','--modelinputs')
@@ -530,10 +291,10 @@ class Args():
             # input file to reclassify
             self.reclassfile = str(args.reclassfile)
             optionsargs['reclassify file'] = str(self.reclassfile)
-        # if args.modelfile:
-        #     # model filename
-        #     self.model_file = str(args.modelfile)
-        #     optionsargs['model file'] = str(self.model_file)
+        if args.modelfile:
+            # model filename
+            self.model_file = str(args.modelfile)
+            optionsargs['model file'] = str(self.model_file)
         if args.modelname:
             # model output name (used to save the model)
             self.model_output_name = str(args.modelname)

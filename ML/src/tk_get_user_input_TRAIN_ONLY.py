@@ -96,28 +96,8 @@ class App(tk.Tk):
         button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
         rowplacement += 1
 
-        # point cloud to reclassify
-        lab = Label(self, text='Point Cloud to Reclassify')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        reclassfile = Text(self, height=1, width=50)
-        reclassfile.insert(tk.END, default_arguments_obj.reclassfile)
-        reclassfile.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(reclassfile, 'Select point cloud to reclassify'))
-        button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        rowplacement += 1
-
         lab = Label(self, text='MODEL PARAMETERS:')
         lab.grid(column=0, columnspan=3, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        rowplacement += 1
-
-        # saved h5 model file
-        lab = Label(self, text='Model File')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        model_file = Text(self, height=1, width=50)
-        model_file.insert(tk.END, default_arguments_obj.model_file)
-        model_file.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(model_file))
-        button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
         rowplacement += 1
 
         # model name
@@ -302,26 +282,12 @@ class App(tk.Tk):
         # increase the row by 1
         rowplacement += 1
 
-        # reclassification threshold(s)
-        lab = Label(self, text='Reclassification Threshold(s)')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        reclass_thresholds = Text(self, height=1, width=50)
-        reclass_thresholds.insert(tk.END, default_arguments_obj.reclass_thresholds)
-        reclass_thresholds.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
-
         def getinput(self, default_arguments_obj):
             ''' sub-function to get inputs from GUI widget '''
             # input ground points file
             default_arguments_obj.filein_ground = filein_ground.get('1.0','end-1c').split('\n')[0]
             # inputs vegetation points file
             default_arguments_obj.filein_vegetation = filein_vegetation.get('1.0','end-1c').split('\n')[0]
-            # input reclassification file
-            default_arguments_obj.reclassfile = reclassfile.get('1.0','end-1c').split('\n')[0]
-            # input saved model file
-            # default_arguments_obj.model_file = model_file.get('1.0','end-1c').split('\n')[0]
             # model name
             if " " in model_output_name.get('1.0','end-1c'):
                 default_arguments_obj.model_output_name = model_output_name.get('1.0','end-1c').replace(' ','_').split('\n')[0]
@@ -393,11 +359,6 @@ class App(tk.Tk):
             default_arguments_obj.training_data_reduction = float(training_data_reduction.get('1.0','end-1c').strip().split('\n')[0])
             # plot direction
             default_arguments_obj.plotdir = plotdir.get('1.0','end-1c').split('\n')[0]
-            # reclassification threshold(s)
-            if " " in reclass_thresholds.get('1.0','end-1c'):
-                default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split())))
-            elif "," in reclass_thresholds.get('1.0','end-1c'):
-                default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(','))))
             # after getting all values, destroy the window
             self.destroy()
         # create, define, and place submit button
@@ -427,9 +388,6 @@ class Args():
         # but required.
         self.filein_vegetation = 'NA'
         self.filein_ground = 'NA'
-        self.reclassfile = 'NA'
-        # model file used for reclassification
-        # self.model_file = 'NA'
         # model name:
         self.model_output_name = 'NA'
         # model inputs and vegetation indices of interest:
@@ -475,9 +433,6 @@ class Args():
         # for plotting:
         #   plotdir: plotting direction (horizontal (h) or vertical (v))
         self.plotdir = 'v'
-        # for reclassification
-        #   reclass_thresholds: list of thresholds used for reclassification
-        self.reclass_thresholds = [0.6]
     def parse_cmd_arguments(self):
         ''' function to update default values with any command line arguments '''
         # initialize parser
@@ -487,8 +442,6 @@ class Args():
         psr.add_argument('-gui','--gui')
         psr.add_argument('-v','-veg','--vegfile')
         psr.add_argument('-g','-ground','--groundfile')
-        psr.add_argument('-r','-reclass','--reclassfile')
-        # psr.add_argument('-h5','-mfile','-model','--modelfile')
         psr.add_argument('-m','-mname','--modelname')
         psr.add_argument('-vi','-index','--vegindex')
         psr.add_argument('-mi','-inputs','--modelinputs')
@@ -504,7 +457,6 @@ class Args():
         psr.add_argument('-tci','-imbalance','--classimbalance')
         psr.add_argument('-tdr','-reduction','--datareduction')
         psr.add_argument('-plotdir','--plotdir')
-        psr.add_argument('-thresh','-threshold','--reclassthresholds')
         psr.add_argument('-rad','-radius','--geometryradius')
 
         # parse arguments
@@ -526,14 +478,6 @@ class Args():
             # input bare-Earth only dense cloud/point cloud
             self.filein_ground = str(args.groundfile)
             optionsargs['bare-Earth file'] = str(args.groundfile)
-        if args.reclassfile:
-            # input file to reclassify
-            self.reclassfile = str(args.reclassfile)
-            optionsargs['reclassify file'] = str(self.reclassfile)
-        # if args.modelfile:
-        #     # model filename
-        #     self.model_file = str(args.modelfile)
-        #     optionsargs['model file'] = str(self.model_file)
         if args.modelname:
             # model output name (used to save the model)
             self.model_output_name = str(args.modelname)
@@ -646,12 +590,6 @@ class Args():
                 print('Invalid plot direction. Defaulting to vertical model plot.')
                 self.plotdir = 'TB'
             optionsargs['plot direction'] = self.plotdir
-        if args.reclassthresholds:
-            # because the input argument is handled as a single string, we need
-            # to strip the brackets, split by the delimeter, and then re-form it
-            # as a list of characters/strings
-            self.reclass_thresholds = list(str(args.reclassthresholds).split(','))
-            optionsargs['reclassification thresholds'] = self.reclass_thresholds
 
         if len(optionsargs)>0:
             print('Command line parameters:')

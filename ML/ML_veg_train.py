@@ -25,71 +25,21 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 # import functions from other files
 from src.fileio import *
-from src.argument_parsing import *
+from src.tk_get_user_input_TRAIN_ONLY import *
 from src.vegindex import *
 from src.miscfx import *
 from src.modelbuilder import *
 
-class Args():
-    def __init__(self, cname):
-        self.name = cname
-    ''' simple class to hold arguments '''
-    pass
-defs = Args('defs')
 
-# define default values/settings
-# input files:
-#   vegetation: input LAS or LAZ file containing only vegetation points
-#   ground: input LAS or LAZ file containing only bare Earth points
-defs.filein_vegetation = 'NA'
-defs.filein_ground = 'NA'
-# NOTE: If no filein_vegetation or filein_ground is/are specified, then the
-# program will default to requesting the one or both files that are missing
-# but required.
+def main(default_values, verbose=True):
+    # parse any command line arguments (if present)
+    default_values.parse_cmd_arguments()
 
-# model name:
-defs.model_output_name = 'NA'
+    if default_values.gui:
+        request_window = App()
+        request_window.create_widgets(default_values)
+        request_window.mainloop()
 
-# model inputs and vegetation indices of interest:
-defs.model_inputs = ['r','g','b']
-defs.model_vegetation_indices = 'rgb'
-defs.model_nodes = [8,8,8]
-defs.model_dropout = 0.2
-
-# for early stopping:
-#   delta: The minmum change required to continue training beyond the number
-#          of epochs specified by patience.
-#   patience: The number of epochs to monitor change. If there is no improvement
-#          greater than the value specified by delta, then training will stop.
-defs.model_early_stop_patience = 5
-defs.model_early_stop_delta = 0.001
-
-# for training:
-#   epoch: number of training epochs
-#   batch size: how many records should be aggregated (i.e. batched) together
-#   prefetch: option to prefetch batches (may speed up training time)
-#   cache: option to cache batches ahead of time (speeds up training time)
-#   shuffle: option to shuffle input data (good practice)
-#   training split: proportion of the data to use for training (remainder will
-#                   be used for testing of the model performance)
-#   class imbalance corr: option to correct for class size imbalance
-#   data reduction: setting this to a number between 0 and 1 will reduce the
-#                   overall volume of data used for training and validation
-defs.training_epoch = 100
-defs.training_batch_size = 100
-defs.training_cache = True
-defs.training_prefetch = True
-defs.training_shuffle = True
-defs.training_split = 0.7
-defs.training_class_imbalance_corr = True
-defs.training_data_reduction = 1.0
-
-# for plotting:
-#   plotdir: plotting direction (horizontal (h) or vertical (v))
-defs.plotdir = 'v'
-
-def main(default_values,
-            verbose=True):
     # print info about TF and laspy packages
     print("Tensorflow Information:")
     # print tensorflow version
@@ -101,18 +51,6 @@ def main(default_values,
     print("laspy Information:")
     # print laspy version installed and configured
     print("   laspy Version: {}\n".format(laspy.__version__))
-
-    # parse any command line arguments (if present)
-    parse_cmd_arguments(default_values)
-
-    # if no bare Earth or vegetation point clouds have been specified in the
-    # user command line args, then request an input LAS/LAZ file for each
-    if default_values.filein_ground == 'NA':
-        default_values.filein_ground = getfile(window_title='Specitfy input BARE-EARTH (GROUND) point cloud')
-    if default_values.filein_vegetation == 'NA':
-        default_values.filein_vegetation = getfile(window_title='Specify input VEGETATION point cloud')
-    while default_values.model_output_name == 'NA':
-        default_values.model_output_name = getmodelname()
 
     # the las2split() function performs the following actions:
     #   1) import training point cloud files
@@ -210,4 +148,6 @@ def main(default_values,
     plot_model(mod, to_file=(os.path.join('saved_models_'+tdate,str(default_values.model_output_name)+'_GRAPH.png')), rankdir=default_values.plotdir, dpi=300)
 
 if __name__ == '__main__':
+    defs = Args('defs')
+
     main(default_values=defs)

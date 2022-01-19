@@ -25,13 +25,10 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 # import functions from other files
 from src.fileio import *
-# from src.argument_parsing import *
 from src.tk_get_user_input import *
 from src.vegindex import *
 from src.miscfx import *
 from src.modelbuilder import *
-
-
 
 def main(default_values, verbose=True):
     # list of acceptable geometric metrics to calculate
