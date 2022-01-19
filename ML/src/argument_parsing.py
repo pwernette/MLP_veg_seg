@@ -1,4 +1,49 @@
 import argparse
+import sys
+import tkinter as tk
+from tkinter import ttk
+
+# class App(tk.Tk):
+#     def __init__(self, dvs):
+#         # initialize the window
+#         super().__init__()
+#
+#         # give the window a title
+#         self.title('Input Parameters')
+#
+#         # create the entries
+#         self.create_widgets(inlist)
+#
+#     def create_widgets(self, inlist):
+#         def getinputs(self, inlist):
+#             for i in inlist:
+#                 # global modelname
+#                 globals()[i[0]] = var_inpt.get('1.0','end-1c').split('\n')[0]
+#                 print(globals()[i[0]])
+#                 self.destroy()
+#                 # return modelname
+#
+#         def cancel_and_exit(self):
+#             self.destroy()
+#             sys.exit('No model name specified. Exiting program.')
+#
+#         rowplacement = 0
+#         for l in inlist:
+#             lab = Label(self, text=(l[0].replace('_',' ')))
+#             lab.grid(column=0, row=rowplacement, sticky=W, padx=5, pady=5)
+#
+#             var_inpt = Text(self, height=1, width=50)
+#             var_inpt.grid(column=1, row=rowplacement, sticky=E, padx=5, pady=5)
+#
+#             globals()[l[0]] = var_inpt.get('1.0','end-1c').split('\n')[0]
+#             rowplacement += 1
+#
+#         # login button
+#         login_button = Button(self, text="Submit", command=lambda:getinputs(self, inlist))
+#         login_button.grid(column=1, row=rowplacement, sticky=E, padx=5, pady=5)
+#
+#         self.bind('<Return>', lambda event:getinputs(self, inlist))
+#         self.bind('<Escape>', lambda event:cancel_and_exit(self))
 
 def str_to_bool(s):
     '''
@@ -42,11 +87,12 @@ def parse_cmd_arguments(default_vals):
     psr = argparse.ArgumentParser()
 
     # add arguments
+    psr.add_argument('-gui','--gui')
     psr.add_argument('-v','-veg','--vegfile')
     psr.add_argument('-g','-ground','--groundfile')
     psr.add_argument('-r','-reclass','--reclassfile')
-    psr.add_argument('-h5','-mf','-model','--modelfile')
-    psr.add_argument('-m','-name','--modelname')
+    psr.add_argument('-h5','-mfile','-model','--modelfile')
+    psr.add_argument('-m','-mname','--modelname')
     psr.add_argument('-vi','-index','--vegindex')
     psr.add_argument('-mi','-inputs','--modelinputs')
     psr.add_argument('-mn','-nodes','--modelnodes')
@@ -71,6 +117,10 @@ def parse_cmd_arguments(default_vals):
     optionsargs = {}
 
     # parse command line arguments
+    if args.gui:
+        # graphic user interface option
+        default_vals.gui = str_to_bool(args.gui)
+        optionsargs['graphic user interface'] = default_vals.gui
     if args.vegfile:
         # input vegetation only dense cloud/point cloud
         default_vals.filein_vegetation = str(args.vegfile)
@@ -103,7 +153,18 @@ def parse_cmd_arguments(default_vals):
         # because the input argument is handled as a single string, we need
         # to strip the brackets, split by the delimeter, and then re-form it
         # as a list of characters/strings
-        default_vals.model_inputs = str(args.modelinputs).split(',')
+        default_vals.model_inputs = list(str(args.modelinputs).split(','))
+        ######### TESTING #########
+        ######### TESTING #########
+        if 'rgb' in default_vals.model_inputs:
+            (default_vals.model_inputs).remove('rgb')
+            simplelist = ['r','g','b']
+            for s in simplelist:
+                if not s in default_vals.model_inputs:
+                    default_vals.model_inputs = [s] + default_vals.model_inputs
+            default_vals.model_vegetation_indices = 'rgb'
+        ######### TESTING #########
+        ######### TESTING #########
         if 'simple' in default_vals.model_inputs:
             (default_vals.model_inputs).remove('simple')
             simplelist = ['exr','exg','exb','exgr']

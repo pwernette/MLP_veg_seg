@@ -31,9 +31,11 @@ from src.miscfx import *
 from src.modelbuilder import *
 
 class Args():
+    def __init__(self, cname):
+        self.name = cname
     ''' simple class to hold arguments '''
     pass
-defs = Args()
+defs = Args('defs')
 
 # define default values/settings
 # input files:
