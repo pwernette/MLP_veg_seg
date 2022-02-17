@@ -55,9 +55,10 @@ def vegidx(lasfileobj, geom_metrics=[], indices=['rgb'], colordepth=8, geom_radi
 
     References:
         Excess Red (ExR)
-            Meyer, G.E.; Neto, J.C. 2008. Verification of color vegetation
-            indices for automated crop imaging applications. Comput.
-            Electron. Agric. 63, 282–293.
+            Meyer, G. E., Hindman, T. W., and Laksmi, K. (1999). Machine vision
+            detection parameters for plant species identification. in, eds.
+            G. E. Meyer and J. A. DeShazer (Boston, MA), 327–335.
+            doi:10.1117/12.336896.
         Excess Green (ExG)
             Woebbecke, D.M.; Meyer, G.E.; Von Bargen, K.; Mortensen, D.A.
             1995. Color Indices forWeed Identification Under Various Soil,
@@ -73,8 +74,11 @@ def vegidx(lasfileobj, geom_metrics=[], indices=['rgb'], colordepth=8, geom_radi
             systems. Ph.D. Thesis, University of Nebraska – Lincoln, Lincoln,
             NE, USA, August 2004.
         Normal Green-Red Difference Index (NGRDI)
-            Tucker, C.J. Red and photographic infrared linear combinations
-            for monitoring vegetation. Remote Sens. Environ. 8, 127–150.
+            Hunt, E. R., Cavigelli, M., Daughtry, C. S. T., Mcmurtrey, J. E.,
+            and Walthall, C. L. (2005). Evaluation of Digital Photography from
+            Model Aircraft for Remote Sensing of Crop Biomass and Nitrogen
+            Status. Precision Agriculture 6, 359–378.
+            doi:10.1007/s11119-005-2324-5.
         Modified Green Red Vegetation Index (MGRVI)
             Tucker, C.J. Red and photographic infrared linear combinations
             for monitoring vegetation. Remote Sens. Environ. 8, 127–150.
