@@ -55,21 +55,6 @@ def main(default_values, verbose=True):
     # print laspy version installed and configured
     print("   laspy Version: {}\n".format(laspy.__version__))
 
-    # parse any command line arguments (if present)
-    # parse_cmd_arguments(default_values)
-
-    # if no bare Earth or vegetation point clouds have been specified in the
-    # user command line args, then request an input LAS/LAZ file for each
-    # if default_values.filein_ground == 'NA':
-    #     default_values.filein_ground = getfile(window_title='Specitfy input BARE-EARTH (GROUND) point cloud')
-    # if default_values.filein_vegetation == 'NA':
-    #     default_values.filein_vegetation = getfile(window_title='Specify input VEGETATION point cloud')
-    # if default_values.model_output_name == 'NA':
-    #     default_values.model_output_name = getmodelname()
-    # # get the input dense cloud
-    # if default_values.reclassfile == 'NA':
-    #     default_values.reclassfile = getfile(window_title='Select point cloud to reclassify')
-
     # the las2split() function performs the following actions:
     #   1) import training point cloud files
     #   2) compute vegetation indices
@@ -129,7 +114,7 @@ def main(default_values, verbose=True):
                         earlystopping=[default_values.model_early_stop_patience,default_values.model_early_stop_delta],
                         dotrain=True,
                         dotrain_epochs=default_values.training_epoch,
-                        verbose=True)
+                        verbose=default_values.verbose_run)
 
     # evaluate the model
     print('\nEvaluating model with validation set...')
@@ -141,6 +126,36 @@ def main(default_values, verbose=True):
     # check if saved model dir already exists (create if not present)
     if not os.path.isdir('saved_models_'+tdate):
         os.makedirs('saved_models_'+tdate)
+
+    if default_values.training_plot:
+        # print('\nPlotting model...')
+        # plot the model as a PNG
+        plot_model(mod, to_file=('saved_models_'+tdate+'/PLOT_'+model_name+'.png'), dpi=300)
+
+        # set default matplotlib parameters similar to IPython
+        mpl.rcParams['figure.figsize'] = (12.0,6.0)
+        mpl.rcParams['font.size'] = 11
+        mpl.rcParams['savefig.dpi'] = 300
+        mpl.rcParams['figure.subplot.bottom'] = 0.125
+
+        # create the figure
+        fig,(f1,f2) = plt.subplots(1,2)
+        fig.suptitle(model_name+' Training History')
+
+        # plot accuracy
+        f1.plot(mod.history['accuracy'])
+        f1.plot(mod.history['val_accuracy'])
+        f1.set_title('Model Accuracy')
+        f1.set(xlabel='epoch', ylabel='accuracy')
+        f1.legend(['train','test'], loc='right')
+
+        # plot loss
+        f2.plot(mod.history['loss'])
+        f2.plot(mod.history['val_loss'])
+        f2.set_title('Model Loss')
+        f2.set(xlabel='epoch', ylabel='loss')
+        f2.legend(['train','test'], loc='right')
+        fig.savefig('saved_models_'+tdate+'/PLOT_TRAINING_'+model_name+'.png')
 
     print('\nWriting summary log file')
     # write model information and metadata to output txt file
@@ -161,10 +176,6 @@ def main(default_values, verbose=True):
     mod.save(os.path.join('saved_models_'+tdate,default_values.model_output_name))
     # save the model weights as H5 file
     mod.save(os.path.join('saved_models_'+tdate,(default_values.model_output_name+'.h5')))
-
-    print('\nPlotting model')
-    # plot the model as a PNG
-    plot_model(mod, to_file=(os.path.join('saved_models_'+tdate,str(default_values.model_output_name)+'_GRAPH.png')), rankdir=default_values.plotdir, dpi=300)
 
     ## RECLASSIFY A FilE USING TRAINED MODEL FILE
     print('\n\nRECLASSIFYING FILE...')

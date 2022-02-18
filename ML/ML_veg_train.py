@@ -97,7 +97,7 @@ def main(default_values, verbose=True):
         print("\nModel inputs:\n   {}".format(list(train_ins)))
 
     # build and train model
-    mod,tt = build_model(model_name=default_values.model_output_name,
+    mod,history,tt = build_model(model_name=default_values.model_output_name,
                         model_inputs=train_ins,
                         input_feature_layer=train_lyr,
                         training_tf_dataset=train_ds,
@@ -110,7 +110,7 @@ def main(default_values, verbose=True):
                         earlystopping=[default_values.model_early_stop_patience,default_values.model_early_stop_delta],
                         dotrain=True,
                         dotrain_epochs=default_values.training_epoch,
-                        verbose=True)
+                        verbose=default_values.verbose_run)
 
     # evaluate the model
     print('\nEvaluating model with validation set...')
@@ -122,6 +122,36 @@ def main(default_values, verbose=True):
     # check if saved model dir already exists (create if not present)
     if not os.path.isdir('saved_models_'+tdate):
         os.makedirs('saved_models_'+tdate)
+
+    if default_values.training_plot:
+        print('\nPlotting model...')
+        # plot the model as a PNG
+        plot_model(mod, to_file=(os.path.join('saved_models_'+tdate,str(default_values.model_output_name)+'_TRAINING_GRAPH.png')), rankdir=default_values.plotdir, dpi=300)
+
+        # set default matplotlib parameters similar to IPython
+        mpl.rcParams['figure.figsize'] = (12.0,6.0)
+        mpl.rcParams['font.size'] = 11
+        mpl.rcParams['savefig.dpi'] = 300
+        mpl.rcParams['figure.subplot.bottom'] = 0.125
+
+        # create the figure
+        fig,(f1,f2) = plt.subplots(1,2)
+        fig.suptitle(default_values.model_output_name+' Training History')
+
+        # plot accuracy
+        f1.plot(history.history['accuracy'])
+        f1.plot(history.history['val_accuracy'])
+        f1.set_title('Model Accuracy')
+        f1.set(xlabel='epoch', ylabel='accuracy')
+        f1.legend(['train','test'], loc='right')
+
+        # plot loss
+        f2.plot(history.history['loss'])
+        f2.plot(history.history['val_loss'])
+        f2.set_title('Model Loss')
+        f2.set(xlabel='epoch', ylabel='loss')
+        f2.legend(['train','test'], loc='right')
+        fig.savefig('saved_models_'+tdate+'/PLOT_TRAINING_'+default_values.model_output_name+'.png')
 
     print('\nWriting summary log file...')
     # write model information and metadata to output txt file
@@ -142,10 +172,6 @@ def main(default_values, verbose=True):
     mod.save(os.path.join('saved_models_'+tdate,default_values.model_output_name))
     # save the model weights as H5 file
     mod.save(os.path.join('saved_models_'+tdate,(default_values.model_output_name+'.h5')))
-
-    print('\nPlotting model...')
-    # plot the model as a PNG
-    plot_model(mod, to_file=(os.path.join('saved_models_'+tdate,str(default_values.model_output_name)+'_GRAPH.png')), rankdir=default_values.plotdir, dpi=300)
 
 if __name__ == '__main__':
     defs = Args('defs')

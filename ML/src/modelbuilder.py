@@ -1,6 +1,7 @@
 import time
 
 # load plotting module
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from IPython.display import clear_output
 
@@ -8,11 +9,11 @@ from IPython.display import clear_output
 import tensorflow as tf
 from tensorflow import feature_column
 from tensorflow.keras import datasets, layers, models
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping, Callback, History
 from tensorflow.keras.utils import plot_model
 from IPython.display import clear_output
 
-class PlotLearning(tf.keras.callbacks.Callback):
+class PlotLearning(Callback):
     """
     Callback to plot the learning curves of the model during training.
     """
@@ -50,7 +51,7 @@ class PlotLearning(tf.keras.callbacks.Callback):
         plt.tight_layout()
         plt.show()
 
-def build_model(model_name, model_inputs, input_feature_layer, training_tf_dataset, validation_tf_dataset, nodes=[16,16,16], activation_fx='relu', dropout_rate=0.2, loss_metric='mean_squared_error', model_optimizer='adam', earlystopping=[], dotrain=True, dotrain_epochs=1000, verbose=True, plotmodel=True):
+def build_model(model_name, model_inputs, input_feature_layer, training_tf_dataset, validation_tf_dataset, nodes=[16,16,16], activation_fx='relu', dropout_rate=0.2, loss_metric='mean_squared_error', model_optimizer='adam', earlystopping=[], dotrain=True, dotrain_epochs=1000, verbose=True):
     print('Building {} model...'.format(model_name))
     # the first layer should take the input features as its input
     input_layer = input_feature_layer(model_inputs)
@@ -82,12 +83,10 @@ def build_model(model_name, model_inputs, input_feature_layer, training_tf_datas
     if verbose:
         print(mod.summary())
 
-    # # plot the model as a PNG
-    # if plotmodel:
-    #     plot_model(mod, to_file=('PLOT_'+model_name+'.png'), dpi=300)
-
+    # create history callback
+    hist = History()
     if dotrain:
-        call_list = []
+        call_list = [hist]
         if earlystopping:
             call_list.append(EarlyStopping(
                     monitor='accuracy',
@@ -107,4 +106,4 @@ def build_model(model_name, model_inputs, input_feature_layer, training_tf_datas
         print("Train time = {}s".format(train_time))
 
     # return the model
-    return mod,train_time
+    return mod,hist,train_time

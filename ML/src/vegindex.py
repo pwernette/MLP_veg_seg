@@ -3,7 +3,7 @@ import time
 import numpy as np
 from .miscfx import *
 
-def vegidx(lasfileobj, geom_metrics=[], indices=['rgb'], colordepth=8, geom_radius=0.10):
+def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radius=0.10):
     '''
     Compute specified vegetation indices and/or geometric values.
 
@@ -13,6 +13,9 @@ def vegidx(lasfileobj, geom_metrics=[], indices=['rgb'], colordepth=8, geom_radi
         :param numpy.array g: Array of normalized green values
         :param numpy.array b: Array of normalized blue values
         :param str indices: Vegetation indices to be computed.
+            'rgb' --> only RGB values (no veg indices or geom values)
+            'coords' --> include XYZ coordinates in output
+            'simple' --> RGB values and ExR, ExG, ExB, ExGR veg indices
             'all' --> all vegetation indices
             'exr' --> extra red index
             'exg' --> extra green index
@@ -29,9 +32,9 @@ def vegidx(lasfileobj, geom_metrics=[], indices=['rgb'], colordepth=8, geom_radi
     Returns:
         (1) An n-dimensional array with vegetation index values
             (* denotes optional indices):
-              x (:py:class:`float`)
-              y (:py:class:`float`)
-              z (:py:class:`float`)
+            * x (:py:class:`float`)
+            * y (:py:class:`float`)
+            * z (:py:class:`float`)
               r (:py:class:`float`)
               g (:py:class:`float`)
               b (:py:class:`float`)

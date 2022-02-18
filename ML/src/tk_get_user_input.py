@@ -111,14 +111,14 @@ class App(tk.Tk):
         rowplacement += 1
 
         # saved h5 model file
-        lab = Label(self, text='Model File')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        model_file = Text(self, height=1, width=50)
-        model_file.insert(tk.END, default_arguments_obj.model_file)
-        model_file.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(model_file))
-        button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        rowplacement += 1
+        # lab = Label(self, text='Model File')
+        # lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        # model_file = Text(self, height=1, width=50)
+        # model_file.insert(tk.END, default_arguments_obj.model_file)
+        # model_file.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # button_explore = Button(self, text='Browse', command=lambda:browseFiles(model_file))
+        # button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # rowplacement += 1
 
         # model name
         lab = Label(self, text='Model Name')
@@ -247,6 +247,16 @@ class App(tk.Tk):
         # increase the row by 1
         rowplacement += 1
 
+        # plot during training
+        lab = Label(self, text='Plot Training Epochs')
+        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        # get variable input
+        training_plot = Text(self, height=1, width=50)
+        training_plot.insert(tk.END, str(default_arguments_obj.training_plot))
+        training_plot.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # increase the row by 1
+        rowplacement += 1
+
         # class imbalance correction
         lab = Label(self, text='Class Imbalance Correction')
         lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
@@ -290,6 +300,16 @@ class App(tk.Tk):
         ''' additional parameters '''
         lab = Label(self, text='ADDITIONAL PARAMETERS:')
         lab.grid(column=0, columnspan=3, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        rowplacement += 1
+
+        # run in verbose mode
+        lab = Label(self, text='Run in Verbose Mode')
+        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        # get variable input
+        verbose_run = Text(self, height=1, width=50)
+        verbose_run.insert(tk.END, str(default_arguments_obj.verbose_run))
+        verbose_run.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # increase the row by 1
         rowplacement += 1
 
         # plot direction
@@ -391,8 +411,12 @@ class App(tk.Tk):
             default_arguments_obj.training_class_imbalance_corr = str_to_bool(training_class_imbalance_corr.get('1.0','end-1c').strip().split('\n')[0])
             # data reduction
             default_arguments_obj.training_data_reduction = float(training_data_reduction.get('1.0','end-1c').strip().split('\n')[0])
+            # plot training
+            default_arguments_obj.training_plot = str_to_bool(training_plot.get('1.0','end-1c').strip().split('\n')[0])
             # plot direction
             default_arguments_obj.plotdir = plotdir.get('1.0','end-1c').split('\n')[0]
+            # verbose mode run
+            default_arguments_obj.verbose_run = str_to_bool(verbose_run.get('1.0','end-1c').strip().split('\n')[0])
             # reclassification threshold(s)
             if " " in reclass_thresholds.get('1.0','end-1c'):
                 default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split())))
@@ -475,9 +499,13 @@ class Args():
         # for plotting:
         #   plotdir: plotting direction (horizontal (h) or vertical (v))
         self.plotdir = 'v'
+        self.training_plot = True
         # for reclassification
         #   reclass_thresholds: list of thresholds used for reclassification
         self.reclass_thresholds = [0.6]
+        # general parameters
+        #   verbose run
+        self.verbose_run = True
     def parse_cmd_arguments(self):
         ''' function to update default values with any command line arguments '''
         # initialize parser
@@ -503,9 +531,11 @@ class Args():
         psr.add_argument('-tsp','-split','--trainingsplit')
         psr.add_argument('-tci','-imbalance','--classimbalance')
         psr.add_argument('-tdr','-reduction','--datareduction')
+        psr.add_argument('-plottr','-trainingplot','-trainplot','--plottraining')
         psr.add_argument('-plotdir','--plotdir')
         psr.add_argument('-thresh','-threshold','--reclassthresholds')
         psr.add_argument('-rad','-radius','--geometryradius')
+        psr.add_argument('-verb','-verbose_run','--verbose')
 
         # parse arguments
         args = psr.parse_args()
@@ -636,6 +666,10 @@ class Args():
             # reduce data volume
             self.training_data_reduction = float(args.datareduction)
             optionsargs['data reduction'] = self.training_data_reduction
+        if args.plottraining:
+            # plot model training
+            self.training_plot = str_to_bool(args.plottraining)
+            optionsargs['plot during training'] = self.training_plot
         if args.plotdir:
             # plot model direction
             if args.plotdir in ['h','horizontal']:
@@ -652,6 +686,10 @@ class Args():
             # as a list of characters/strings
             self.reclass_thresholds = list(str(args.reclassthresholds).split(','))
             optionsargs['reclassification thresholds'] = self.reclass_thresholds
+        if args.verbose:
+            # plot model training
+            self.verbose_run = str_to_bool(args.verbose)
+            optionsargs['run in verbose mode'] = self.verbose_run
 
         if len(optionsargs)>0:
             print('Command line parameters:')

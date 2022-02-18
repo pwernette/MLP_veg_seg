@@ -86,7 +86,7 @@ def getmodelname():
     return(mname)
 
 def las2split(infile_ground_pc, infile_veg_pc,
-                veg_indices=[], geometry_metrics=[],
+                veg_indices=['rgb'], geometry_metrics=[],
                 training_split=0.7, class_imbalance_corr=True,
                 data_reduction=1.0, verbose=True):
     '''
@@ -246,10 +246,10 @@ def df_to_dataset(dataframe, targetcolname='', shuffle=False, prefetch=False, ca
     else:
         ds = tf.data.Dataset.from_tensor_slices(dict(dataframe))
     ds = ds.batch(batch_size)
-    if prefetch:
-        ds = ds.prefetch(tf.data.experimental.AUTOTUNE)
     if cache_ds:
         ds = ds.cache()
+    if prefetch:
+        ds = ds.prefetch(tf.data.experimental.AUTOTUNE)
     return ds
 
 
