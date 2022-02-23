@@ -138,7 +138,7 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
     if 'sd' in geom_metrics:
         # compute 3D standard deviation
         starttime = time.time()
-        sd3d = calc_3d_sd(np.array([xs, ys, zs]).transpose(), rad=0.10)
+        sd3d = calc_3d_sd(np.array([xs, ys, zs]).transpose(), rad=geom_radius)
         print("Time to compute SD = {}".format(time.time()-starttime))
         # append 3D sd to output array
         pdindex = np.append(pdindex, [sd3d], axis=0)
