@@ -185,12 +185,7 @@ def normdat(inarr, minval=0, maxval=65536, normrange=[0,1]):
         minval = np.amin(inarr)
     if maxval!=65536:
         maxval = np.amax(inarr)
-    norminarr = (normrange[1] - normrange[0])
-                  *  np.divide((inarr - minval),
-                            (maxval - minval),
-                            out=np.zeros_like(inarr),
-                            where=(maxval - minval)!=0)
-                 - normrange[0]
+    norminarr = (normrange[1]-normrange[0])*np.divide((inarr-minval), (maxval-minval), out=np.zeros_like(inarr), where=(maxval-minval)!=0)-normrange[0]
     return np.asarray(norminarr)
 
 

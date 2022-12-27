@@ -12,9 +12,13 @@ dependencies:
  - pip
  - pip:
    - sklearn
+   - scikit-learn
+   - scikit-image
    - pandas
+   - geopandas
+   - scipy
    - numpy
    - pydot
-   - laspy==2.0.3
+   - laspy==2
    - lazrs
-   - tensorflow-gpu==2.6.2
+   - tensorflow-gpu==2.9

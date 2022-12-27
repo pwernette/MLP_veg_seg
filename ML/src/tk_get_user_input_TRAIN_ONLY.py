@@ -402,7 +402,7 @@ class Args():
         self.name = cname
         # define default values/settings
         # to enable a graphic user interface, enable the 'gui' option
-        self.gui = False
+        self.gui = True
         # input files:
         #   vegetation: input LAS/LAZ file containing only vegetation points
         #   ground: input LAS/LAZ file containing only bare Earth points

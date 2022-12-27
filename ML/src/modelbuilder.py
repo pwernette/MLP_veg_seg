@@ -89,7 +89,7 @@ def build_model(model_name, model_inputs, input_feature_layer, training_tf_datas
         call_list = [hist]
         if earlystopping:
             call_list.append(EarlyStopping(
-                    monitor='accuracy',
+                    monitor='val_loss',
                     patience=earlystopping[0],
                     min_delta=earlystopping[1],
                     mode='max'))

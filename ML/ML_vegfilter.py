@@ -43,17 +43,18 @@ def main(default_values, verbose=True):
         request_window.create_widgets(default_values)
         request_window.mainloop()
 
-    # print info about TF and laspy packages
-    print("Tensorflow Information:")
-    # print tensorflow version
-    print("   TF Version: {}".format(tf.__version__))
-    print("   Eager mode: {}".format(tf.executing_eagerly()))
-    print("   GPU name: {}".format(tf.config.experimental.list_physical_devices('GPU')))
-    # list all available GPUs
-    print("   Num GPUs Available: {}\n".format(len(tf.config.experimental.list_physical_devices('GPU'))))
-    print("laspy Information:")
-    # print laspy version installed and configured
-    print("   laspy Version: {}\n".format(laspy.__version__))
+    if verbose:
+        # print info about TF and laspy packages
+        print("Tensorflow Information:")
+        # print tensorflow version
+        print("   TF Version: {}".format(tf.__version__))
+        print("   Eager mode: {}".format(tf.executing_eagerly()))
+        print("   GPU name: {}".format(tf.config.experimental.list_physical_devices('GPU')))
+        # list all available GPUs
+        print("   Num GPUs Available: {}\n".format(len(tf.config.experimental.list_physical_devices('GPU'))))
+        print("laspy Information:")
+        # print laspy version installed and configured
+        print("   laspy Version: {}\n".format(laspy.__version__))
 
     # the las2split() function performs the following actions:
     #   1) import training point cloud files
