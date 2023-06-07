@@ -207,12 +207,12 @@ def las2split(infile_ground_pc, infile_veg_pc,
         print('  {} test examples'.format(len(testout)))
 
     # return the train, test, and validationn objects
-    # all outputs are pandas.DataFrame objects
+    # all outputs are pandas.DataFrame objects WITH an additional veglab attribute
     return trainout,testout,valout
 
 
 # A utility method to create a tf.data dataset from a Pandas Dataframe
-def df_to_dataset(dataframe, targetcolname='', shuffle=False, prefetch=False, cache_ds=False, batch_size=32):
+def df_to_dataset(dataframe, targetcolname='', shuffle=False, prefetch=False, cache_ds=False, batch_size=32, verbose=0):
     '''
     Read a pandas.DataFrame object and convert to tf.data object.
 
@@ -240,97 +240,24 @@ def df_to_dataset(dataframe, targetcolname='', shuffle=False, prefetch=False, ca
     dataframe = dataframe.copy()
     if shuffle:
         dataframe = dataframe.sample(frac=1).reset_index(drop=True)
+        if verbose > 0:
+            print(dataframe.head())
     if not targetcolname == '':
         labels = dataframe.pop(targetcolname)
-        ds = tf.data.Dataset.from_tensor_slices((dict(dataframe), labels))
+        ds_inputs = tf.convert_to_tensor(dataframe)
+        ds = tf.data.Dataset.from_tensor_slices((ds_inputs, labels))
+        if verbose > 0:
+            print(ds)
+        ds = ds.batch(batch_size, drop_remainder=True, num_parallel_calls=tf.data.AUTOTUNE)
+        if cache_ds:
+            ds = ds.cache()
+        if prefetch:
+            ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     else:
-        ds = tf.data.Dataset.from_tensor_slices(dict(dataframe))
-    ds = ds.batch(batch_size)
-    if cache_ds:
-        ds = ds.cache()
-    if prefetch:
-        ds = ds.prefetch(tf.data.experimental.AUTOTUNE)
+        ds = tf.convert_to_tensor(dataframe)
+    if verbose > 0:
+        print(ds)
     return ds
-
-
-def pd2fl(input_pd_dat,
-            col_names=['r','g','b'],
-            targetcol='',
-            dat_type='float32',
-            shuf=False,
-            batch_sz=32,
-            ds_prefetch=False,
-            ds_cache=False,
-            verbose=False):
-    '''
-    Read a pandas.DataFrame object and (1) convert to tf.data object, (2) return
-    a list of column names from the pd.DataFrame, and (3) return a
-    tf.DenseFeatures layer.
-
-    Inputs:
-
-    :param pandas.DataFrame input_pd_dat: Input pandas DataFrame
-    :param list col_names: Column names of interest from input_pd_dat
-    :param string targetcol: Target column to use for training
-    :param string dat_type: Data format to coerce input data to
-    :param bool shuf: Optional argument to shuffle input pd.DataFrame
-    :param int batch_sz: Optional argument to specify batch size
-    :param bool ds_prefetch: Optional argument to prefetch batches
-        (This MAY speed up training where fetching takes a long time)
-    :param bool ds_cache: Optional argument to cache batches
-        (In cases where fetching takes a long time, this may speed up training)
-        however, it will likely use more temporary memory for caching)
-    :param bool verbose: Optional argument to print information to console
-
-    Returns:
-
-        * dset (:py:class:`tf.Dataset`)
-        * inpts (:py:class:`list`)
-        * lyr (:py:class:`tf.DenseFeatures`)
-    '''
-    # special use cases:
-    #  CASE 1: use all vegetation indices
-    if col_names == 'all':
-        col_names.remove('all')
-        col_names = list(input_pd_dat.columns)
-    #  CASE 2: use RGB and "simple" vegetation indices
-    if 'simple' in col_names:
-        col_names.remove('simple')
-        col_names = ['r','g','b','exr','exg','exb','exgr'] + col_names
-
-    if targetcol == '' and 'veglab' in col_names:
-        targetcol = 'veglab'
-
-    # print(col_names)
-    dset = df_to_dataset(input_pd_dat[col_names].astype(dat_type),
-                                 targetcolname=targetcol,
-                                 shuffle=shuf,
-                                 prefetch=ds_prefetch,
-                                 batch_size=batch_sz,
-                                 cache_ds=ds_cache)
-    # need to drop 'veglab' from the column names, if present
-    if 'veglab' in col_names:
-        col_names.remove('veglab')
-
-    # create a list of feature columns
-    feat_cols = []
-    for header in col_names:
-        feat_cols.append(feature_column.numeric_column(header))
-    # option to print feature columns to console
-    if verbose:
-        for i in feat_cols:
-            print(i)
-
-    # create tf.DenseFeatures layer from feature columns
-    feat_lyr = tf.keras.layers.DenseFeatures(feat_cols)
-
-    # create dictionary to associate column names with column values
-    inpts = {}
-    for i in feat_cols:
-        inpts[i.key] = tf.keras.Input(shape=(1,), name=i.key)
-
-    # convert feat_cols to a single tensor layer
-    return dset,inpts,feat_lyr
 
 def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_cache, geo_metrics=[], geom_rad=0.10, verbose_output=2):
     '''
@@ -385,7 +312,9 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
     print('List of models for reclassification: {}'.format(modnamelist))
 
     # figure out what vegetation indices to compute
-    indiceslist = ['x','y','z','r','g','b']
+    indiceslist = ['r','g','b']
+    if any('xyzrgb' in m for m in modnamelist):
+        indiceslist.extend('xyz')
     if any('sdrgb' in m for m in modnamelist):
         indiceslist.extend('sd')
     if any('all' in m for m in modnamelist):
@@ -422,8 +351,8 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
         del(rgb_df)
 
     del(indat)
-    # odir = os.path.split(incloudname)[0]
-    ofname = os.path.split(incloudname)[1].split('.')[0]
+    odir,ofname = os.path.split(incloudname)
+    ofname = ofname.split('.')[0]
     print('Output file base name: {}'.format(ofname))
 
     rdate = str(date.today()).replace('-','')
@@ -456,8 +385,8 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
             # open the output file (laspy version dependent)
             try:
                 if int(laspy.__version__.split('.')[0]) == 1:
-                    print('Writing LAS file: {}'.format('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_val).replace('.','')))
-                    outfile = file.File(('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_val).replace('.','') + '.las'), mode='w', header=incloud.header)
+                    print('Writing LAS file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.las')))
+                    outfile = file.File((os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.las')), mode='w', header=incloud.header)
                 elif int(laspy.__version__.split('.')[0]) == 2:
                     outfile = laspy.LasData(header=incloud.header)
             except Exception as e:
@@ -474,11 +403,11 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
                 # the following functions use the subprocess module to call commands outside of Python.
                 # use lastools outside of program to convert las to laz file
                 subprocess.call(['las2las',
-                                '-i', ('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_val).replace('.','') + '.las'),
-                                '-o', ('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_val).replace('.','') + '.laz')])
+                                '-i', (os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.las')),
+                                '-o', (os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz'))])
                 # remove las output file (after compressed to laz)
                 subprocess.call(['rm',
                                 ('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_val).replace('.','') + '.las')])
             elif int(laspy.__version__.split('.')[0]) == 2:
-                print('Writing LAZ file: {}'.format('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_val).replace('.','')))
-                outfile.write(('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_val).replace('.','') + '.laz'))
+                print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz')))
+                outfile.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz'))

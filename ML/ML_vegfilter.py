@@ -102,7 +102,7 @@ def main(default_values, verbose=True):
         print("\nModel inputs:\n   {}".format(list(train_ins)))
 
     # build and train model
-    mod,tt = build_model(model_name=str(default_values.model_output_name),
+    mod,hist,tt = build_model(model_name=str(default_values.model_output_name),
                         model_inputs=train_ins,
                         input_feature_layer=train_lyr,
                         training_tf_dataset=train_ds,
@@ -110,7 +110,7 @@ def main(default_values, verbose=True):
                         nodes=default_values.model_nodes,
                         activation_fx='relu',
                         dropout_rate=default_values.model_dropout,
-                        loss_metric='mean_squared_error',
+                        loss_metric=tf.keras.losses.MeanSquaredError(),
                         model_optimizer='adam',
                         earlystopping=[default_values.model_early_stop_patience,default_values.model_early_stop_delta],
                         dotrain=True,
@@ -144,15 +144,15 @@ def main(default_values, verbose=True):
         fig.suptitle(model_name+' Training History')
 
         # plot accuracy
-        f1.plot(mod.history['accuracy'])
-        f1.plot(mod.history['val_accuracy'])
+        f1.plot(hist.history['accuracy'])
+        f1.plot(hist.history['val_accuracy'])
         f1.set_title('Model Accuracy')
         f1.set(xlabel='epoch', ylabel='accuracy')
         f1.legend(['train','test'], loc='right')
 
         # plot loss
-        f2.plot(mod.history['loss'])
-        f2.plot(mod.history['val_loss'])
+        f2.plot(hist.history['loss'])
+        f2.plot(hist.history['val_loss'])
         f2.set_title('Model Loss')
         f2.set(xlabel='epoch', ylabel='loss')
         f2.legend(['train','test'], loc='right')

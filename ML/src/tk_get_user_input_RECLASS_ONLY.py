@@ -159,6 +159,10 @@ class App(tk.Tk):
                 default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split())))
             elif "," in reclass_thresholds.get('1.0','end-1c'):
                 default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(','))))
+            elif ";" in reclass_thresholds.get('1.0','end-1c'):
+                default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(';'))))
+            else:
+                default_arguments_obj.reclass_thresholds = float(reclass_thresholds.get('1.0','get-1c').split('\n')[0])
             # after getting all values, destroy the window
             self.destroy()
         # create, define, and place submit button
@@ -192,7 +196,7 @@ class Args():
         # model file used for reclassification
         self.model_file = 'NA'
         # model name:
-        self.model_output_name = 'NA'
+        self.model_name = 'NA'
         # model inputs and vegetation indices of interest:
         #   model_inputs: list of input variables for model training and prediction
         #   model_vegetation_indices: list of vegetation indices to calculate

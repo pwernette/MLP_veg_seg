@@ -107,17 +107,17 @@ def main(default_values, verbose=True):
     # else if the reclass model is not a list of models, then convert it to a
     # list for use in the predict_reclass_write() function
     elif not isinstance(reclassmodel, list):
-        try:
-            predict_reclass_write(default_values.reclassfile,
-                                    [reclassmodel],
-                                    threshold_vals=default_values.reclass_thresholds,
-                                    batch_sz=default_values.training_batch_size,
-                                    ds_cache=default_values.training_cache,
-                                    geo_metrics=geomet,
-                                    geom_rad=default_values.geometry_radius)
-        except Exception as e:
-            print('ERROR: Unable to reclassify the input file. See below for specific error:')
-            sys.exit(e)
+        #try:
+        predict_reclass_write(default_values.reclassfile,
+                                [reclassmodel],
+                                threshold_vals=default_values.reclass_thresholds,
+                                batch_sz=default_values.training_batch_size,
+                                ds_cache=default_values.training_cache,
+                                geo_metrics=geomet,
+                                geom_rad=default_values.geometry_radius)
+        #except Exception as e:
+        #    print('ERROR: Unable to reclassify the input file. See below for specific error:')
+        #    sys.exit(e)
 
     # get the model inputs from the loaded file
 if __name__ == '__main__':

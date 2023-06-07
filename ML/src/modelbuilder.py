@@ -7,10 +7,11 @@ from IPython.display import clear_output
 
 # load Tensorflow modules
 import tensorflow as tf
-from tensorflow import feature_column
-from tensorflow.keras import datasets, layers, models
-from tensorflow.keras.callbacks import EarlyStopping, Callback, History
-from tensorflow.keras.utils import plot_model
+from tensorflow.keras.layers import *
+from tensorflow.keras import datasets
+from tensorflow.keras.callbacks import *
+from tensorflow.keras.models import *
+from tensorflow.keras.utils import *
 from IPython.display import clear_output
 
 class PlotLearning(Callback):
@@ -51,28 +52,40 @@ class PlotLearning(Callback):
         plt.tight_layout()
         plt.show()
 
-def build_model(model_name, model_inputs, input_feature_layer, training_tf_dataset, validation_tf_dataset, nodes=[16,16,16], activation_fx='relu', dropout_rate=0.2, loss_metric='mean_squared_error', model_optimizer='adam', earlystopping=[], dotrain=True, dotrain_epochs=1000, verbose=True):
+def build_model(model_name, training_tf_dataset, validation_tf_dataset, nodes=[8,8,8], activation_fx='relu', dropout_rate=0.2, loss_metric='mean_squared_error', model_optimizer='adam', earlystopping=[], dotrain=True, dotrain_epochs=1000, verbose=True):
     print('Building {} model...'.format(model_name))
     # the first layer should take the input features as its input
-    input_layer = input_feature_layer(model_inputs)
-    # l = layers.Dense(nodes[0], activation=activation_fx)(input_feat_layer)
-    if len(nodes)<1:
-        print('No nodes specified, defaulting to 3 layers with 16 nodes each.')
-        nodes = [16,16,16]
-    l = layers.Dense(nodes[0], activation=activation_fx, name=('L0_'+str(nodes[0])+'_nodes'))(input_layer)
+    #input_layer = input_feature_layer(model_inputs)
+    print(training_tf_dataset.element_spec[0].shape[1:])
+    input_layer = Input(shape=training_tf_dataset.element_spec[0].shape[1:], name='input_points')
+    # l = Dense(nodes[0], activation=activation_fx)(input_feat_layer)
+    if isinstance(nodes,list):
+        if len(nodes)<1:
+            print('No nodes specified, defaulting to 3 layers with 8 nodes each.')
+            nodes = [8,8,8]
+        l = Dense(nodes[0], activation=activation_fx, name=('L0_'+str(nodes[0])+'_nodes'))(input_layer)
+    else:
+        l = Dense(nodes, activation=activation_fx, name=('L0_'+str(nodes)+'_nodes'))(input_layer)
     # each subsequent layer (if present) should take the preceeding layer as its input
-    if len(nodes)>1:
-        for c,n in enumerate(nodes[1:]):
-            l = layers.Dense(n, activation=activation_fx, name=('L'+str(c+1)+'_'+str(n)+'_nodes'))(l)
+    if isinstance(nodes,list):
+        if len(nodes)>1:
+            for c,n in enumerate(nodes[1:]):
+                l = Dense(n, activation=activation_fx, name=('L'+str(c+1)+'_'+str(n)+'_nodes'))(l)
     # add a dropout layer to reduce the chance of overfitting
-    l = layers.Dropout(dropout_rate, name='Dropout')(l)
+    l = Dropout(dropout_rate, name='Dropout')(l)
     # flatten the output to a single Dense layer
-    out = layers.Dense(1, name='Output')(l)
+    out = Dense(1, name='Final_Dense')(l)
+    #l = Dense(2, name='Final_Dense')(l)
+    # Simplify output layer to a single label
+    #out = Activation('sigmoid', dtype='float32', name='Output')(l)
 
     # build the model
-    mod = tf.keras.Model(inputs=model_inputs, outputs=out, name=model_name)
+    mod = Model(inputs=input_layer, outputs=out, name=model_name)
+    #mod = Model(inputs=model_inputs, outputs=out, name=model_name)
     # compile the model
     try:
+        #mod.compile(loss=loss_metric,
+        #              optimizer=model_optimizer)
         mod.compile(loss=loss_metric,
                       optimizer=model_optimizer,
                       metrics=['accuracy'])
@@ -88,11 +101,16 @@ def build_model(model_name, model_inputs, input_feature_layer, training_tf_datas
     if dotrain:
         call_list = [hist]
         if earlystopping:
-            call_list.append(EarlyStopping(
-                    monitor='val_loss',
-                    patience=earlystopping[0],
-                    min_delta=earlystopping[1],
-                    mode='max'))
+            call_list.append(EarlyStopping(monitor='val_loss',
+                                           patience=earlystopping[0],
+                                           min_delta=earlystopping[1],
+                                           mode='max'))
+        call_list.append(ReduceLROnPlateau(monitor='val_loss', 
+                                           factor=0.5, 
+                                           patience=10, 
+                                           min_delta=1e-4, 
+                                           mode='max', 
+                                           verbose=1))
         # if verbose:
         #     call_list.append(PlotLearning())
         start_time = time.time()
