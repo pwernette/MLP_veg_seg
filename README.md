@@ -1,4 +1,5 @@
-# Programs for Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds
+# Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds using Machine Learning
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10966854.svg)](https://doi.org/10.5281/zenodo.10966854)
 
 These programs are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other. The programs are meant to reclassify large and dense point clouds, similar to the following:
 
@@ -31,7 +32,8 @@ Wernette, Phillipe A. (in reivew) Vegetation Filtering of Coastal Cliff and Bluf
    - [Option B: One Single Program](#option-b-run-a-single-program)
      - [ML_vegfilter.py](#ml_vegfilterpy)
 5. [Feedback](#feedback)
-6. [References](#references)
+6. [Citation](#citation)
+7. [References](#references)
 
 ## Vegetation Indices Included
 
@@ -265,6 +267,18 @@ Where *{filename}* is the original point cloud file name, *{model_name}* is the 
 # FEEDBACK
 
 **If you have any questions about how to implement the code, suggestions for improvements, or feedback, please leave a comment or report the issue with as much detail as possible.**
+
+# CITATION
+Wernette, Phillipe A. 2024. Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds using Machine Learning. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10966854.svg)](https://doi.org/10.5281/zenodo.10966854)
+```
+@software{hadoop,
+  author = {{Wernette, Phillipe A.}},
+  title = {Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds using Machine Learning},
+  url = {https://10.5281/zenodo.10966854},
+  version = {1.00},
+  date = {2024-04-12},
+}
+```
 
 # REFERENCES
 [^1]: Meyer, G.E.; Neto, J.C. 2008. Verification of color vegetation indices for automated crop imaging applications. Comput. Electron. Agric. 63, 282–293.
