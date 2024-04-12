@@ -1,4 +1,4 @@
-# Programs for Segmenting Vegetation from Point Clouds
+# Programs for Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds
 
 These programs are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other. The programs are meant to reclassify large and dense point clouds, similar to the following:
 
@@ -14,6 +14,9 @@ There are two approaches:
 
 1. The [non-machine learning approach](#usage-programs-without-machine-learning) utilizes a vegetation index and Otsu's thresholding method. This approach is more computationally demanding and the appropriate vegetation index and threshold value are likely to vary by location and application.
 2. The [machine learning approach](#usage-for-machine-learning-programs) utilizes the Tensorflow API. This approach is more efficient, less subjective, and more robust across geographies and applications. Although it is faster with access to a GPU, a CPU can also be used. *(Note: The code is not optimized for use with multiple GPUs.)*
+
+The full paper describing this approach is currently in review by *Remote Sensing*:
+Wernette, Phillipe A. (in reivew) Vegetation Filtering of Coastal Cliff and Bluff Point Clouds with MLP. Submitted to *Remote Sensing*.
 
 # Contents
 
