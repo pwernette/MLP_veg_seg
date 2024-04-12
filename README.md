@@ -271,7 +271,7 @@ Where *{filename}* is the original point cloud file name, *{model_name}* is the 
 # CITATION
 Wernette, Phillipe A. 2024. Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds using Machine Learning. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10966854.svg)](https://doi.org/10.5281/zenodo.10966854)
 ```
-@software{hadoop,
+@software{Wernette2024,
   author = {{Wernette, Phillipe A.}},
   title = {Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds using Machine Learning},
   url = {https://10.5281/zenodo.10966854},
