@@ -158,7 +158,9 @@ def main(default_values, verbose=True):
         f2.set_title('Model Loss')
         f2.set(xlabel='epoch', ylabel='loss')
         f2.legend(['train','test'], loc='right')
-        fig.savefig(os.path.join(default_values.rootdir,'saved_models_'+tdate,'/PLOT_TRAINING_'+default_values.model_name+'.png'))
+
+        # save the figure
+        fig.savefig(os.path.join(default_values.rootdir,'saved_models_'+tdate,default_values.model_name+'_PLOT_TRAINING.png'))
 
     print('\nWriting summary log file...')
     # write model information and metadata to output txt file
@@ -177,7 +179,7 @@ def main(default_values, verbose=True):
     print('\nSaving model as .h5 and sub-directory in {}...'.format(os.path.join(default_values.rootdir,'saved_models_'+tdate)))
     # save the complete model (will create a new folder with the saved model)
     #mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,default_values.model_name))
-    # save the model weights as H5 file
+    # save the model and model weights as H5 files
     mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_FULL_MODEL.h5')))
     mod.save_weights(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_MODEL_WEIGHTS.h5')))
 

@@ -80,6 +80,7 @@ def main(default_values, verbose=True):
     ''' LOOK AT COMBINING MODEL_NAME WITH MODEL_FILE'''
 
     # get model inputs from the loaded file
+    print(reclassmodel.inputs)
     default_values.model_inputs = [f.name for f in reclassmodel.inputs]
     if verbose:
         print(default_values.model_inputs)

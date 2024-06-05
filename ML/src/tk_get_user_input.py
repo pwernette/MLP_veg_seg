@@ -22,10 +22,10 @@ def str_to_bool(s):
         # remove quotes, commas, and case from s
         sf = s.lower().replace('"', '').replace("'", '').replace(',', '')
         # True
-        if sf in ['t', 'true']:
+        if sf in ['t','true']:
             out_boolean = True
         # False
-        elif sf in ['f', 'false']:
+        elif sf in ['f','false']:
             out_boolean = False
         # Unexpected arg
         else:
@@ -506,36 +506,129 @@ class Args():
         # general parameters
         #   verbose run
         self.verbose_run = True
+    
     def parse_cmd_arguments(self):
         ''' function to update default values with any command line arguments '''
         # initialize parser
         psr = argparse.ArgumentParser()
 
         # add arguments
-        psr.add_argument('-gui','--gui')
-        psr.add_argument('-v','-veg','--vegfile')
-        psr.add_argument('-g','-ground','--groundfile')
-        psr.add_argument('-r','-reclass','--reclassfile')
-        # psr.add_argument('-h5','-mfile','-model','--modelfile')
-        psr.add_argument('-m','-mname','--modelname')
-        psr.add_argument('-vi','-index','--vegindex')
-        psr.add_argument('-mi','-inputs','--modelinputs')
-        psr.add_argument('-mn','-nodes','--modelnodes')
-        psr.add_argument('-md','-dropout','--modeldropout')
-        psr.add_argument('-mes','-earlystop','--modelearlystop')
-        psr.add_argument('-te','-epochs','--trainingepochs')
-        psr.add_argument('-tb','-batch','--trainingbatchsize')
-        psr.add_argument('-tc','-cache','--trainingcache')
-        psr.add_argument('-tp','-prefetch','--trainingprefetch')
-        psr.add_argument('-tsh','-shuffle','--trainingshuffle')
-        psr.add_argument('-tsp','-split','--trainingsplit')
-        psr.add_argument('-tci','-imbalance','--classimbalance')
-        psr.add_argument('-tdr','-reduction','--datareduction')
-        psr.add_argument('-plottr','-trainingplot','-trainplot','--plottraining')
-        psr.add_argument('-plotdir','--plotdir')
-        psr.add_argument('-thresh','-threshold','--reclassthresholds')
-        psr.add_argument('-rad','-radius','--geometryradius')
-        psr.add_argument('-verb','-verbose_run','--verbose')
+        psr.add_argument('-gui', 
+                         dest='gui', 
+                         type=str,
+                         choices=['true','True','false','False','t','f'], 
+                         default='true', 
+                         help='Initialize the graphical user interface [default = true]')
+        psr.add_argument('-v','-veg','-vegfile',
+                         dest='vegfile',
+                         type=str,
+                         help='Point cloud containing vegetation points only')
+        psr.add_argument('-g','-ground','-noveg','-groundfile',
+                         dest='groundfile',
+                         type=str,
+                         help='Point cloud containing bare-Earth points only')
+        psr.add_argument('-r','-reclass','-reclassfile',
+                         dest='reclassfile',
+                         type=str,
+                         help='Point cloud to be reclassified using the new trained model')
+        psr.add_argument('-m','-mname','-modelname',
+                         dest='modelname',
+                         type=str,
+                         default='NA',
+                         help='(optional) Specify the output model file name')
+        psr.add_argument('-vi','-index','-vegindex',
+                         dest='vegindex',
+                         type=str,
+                         default='rgb',
+                         help='(optional) Which vegetation indices should be included in the model [default = rgb]')
+        psr.add_argument('-mi','-inputs','-modelinputs',
+                         dest='modelinputs',
+                         type=str,
+                         help='(optional) What are the model inputs')
+        psr.add_argument('-mn','-nodes','-modelnodes',
+                         dest='modelnodes',
+                         type=str,
+                         default='16,16,16',
+                         help='(optional) List of integers representing the number of nodes for each layer [default = 16,16,16]')
+        psr.add_argument('-md','-dropout','-modeldropout',
+                         dest='modeldropout',
+                         type=float,
+                         default=0.2,
+                         help='(optional) Probabilty of node dropout in the model [default = 0.2]')
+        psr.add_argument('-mes','-earlystop','-modelearlystop',
+                         dest='modelearlystop',
+                         help='(optional) Early stopping criteria (can reduce training time and minimize overfitting)')
+        psr.add_argument('-te','-epochs','-trainingepochs',
+                         dest='trainingepochs',
+                         type=int,
+                         default=100,
+                         help='(optional) Number of epochs to train the model [default = 100]')
+        psr.add_argument('-tb','-batch','-trainingbatchsize',
+                         dest='trainingbatchsize',
+                         type=int,
+                         default=1000,
+                         help='(optional) Batch size to use during model training [default = 1000]')
+        psr.add_argument('-tc','-cache','-trainingcache',
+                         dest='trainingcache',
+                         type=str,
+                         choices=['true','True','false','False','t','f'],
+                         default='false',
+                         help='(optional) Cache data in RAM to reduce training time (WARNING: May run into OOM errors) [deafult = false]')
+        psr.add_argument('-tp','-prefetch','-trainingprefetch',
+                         dest='trainingprefetch',
+                         type=str,
+                         choices=['true','True','false','False','t','f'],
+                         default='true',
+                         help='(optional) Prefetch data during training to reduce training time [default = true]')
+        psr.add_argument('-tsh','-shuffle','-trainingshuffle',
+                         dest='trainingshuffle',
+                         type=str,
+                         choices=['true','True','false','False','t','f'],
+                         default='true',
+                         help='(optional) Shuffle training data (HIGHLY RECOMMENDED) [default = true]')
+        psr.add_argument('-tsp','-split','-trainingsplit',
+                         dest='trainingsplit',
+                         type=float,
+                         default=0.7,
+                         help='(optional) Training split (i.e., proportion of the data used for training the model) [default = 0.7]')
+        psr.add_argument('-tci','-imbalance','-classimbalance',
+                         dest='classimbalance',
+                         type=str,
+                         choices=['true','True','false','False','t','f'],
+                         default='true',
+                         help='(optional) Undersample minority class to equalize class representation [default = true]')
+        psr.add_argument('-tdr','-reduction','-datareduction',
+                         dest='datareduction',
+                         type=float,
+                         default=1.0,
+                         help='(optional) Use this proportion of the data total [default = 1.0]')
+        psr.add_argument('-thresh','-threshold','-reclassthresholds',
+                         dest='reclassthresholds',
+                         type=float,
+                         default=0.6,
+                         help='Confidence threshold value or list of threshold values (as floats) to use for segmenting vegetation points [default = 0.6]')
+        psr.add_argument('-rad','-radius','-geometryradius',
+                         dest='geometryradius',
+                         type=float,
+                         default=1.00,
+                         help='(optional) Spherical radius over which to compute the 3D standard deviation [default = 1.00m]')
+        psr.add_argument('-ptrain','-plot','-plot_train','-plottrain','-plottr','-trainingplot','-trainplot','-plottraining',
+                         dest='plottraining',
+                         type=str,
+                         choices=['true','True','false','False','t','f'],
+                         default='true',
+                         help='(optional) Plot training history [default = true]')
+        psr.add_argument('-plotdir','-plotdir',
+                         dest='plotdir',
+                         type=str,
+                         choices=['h','horizontal','v','vertical'],
+                         default='v',
+                         help='(optional) Direction to orient plots [default = v (vertical)]')
+        psr.add_argument('-verb','-verbose_run','-verbose',
+                         dest='verbose',
+                         type=str,
+                         choices=['true','True','false','False','t','f'],
+                         help='(optional) Run model in verbose mode (will print more information to the console and run slower) [default = false]')
 
         # parse arguments
         args = psr.parse_args()
@@ -564,10 +657,6 @@ class Args():
         #     # model filename
         #     self.model_file = str(args.modelfile)
         #     optionsargs['model file'] = str(self.model_file)
-        if args.modelname:
-            # model output name (used to save the model)
-            self.model_output_name = str(args.modelname)
-            optionsargs['model name'] = str(args.modelname)
         if args.vegindex:
             # because the input argument is handled as a single string, we need
             # to strip the brackets, split by the delimeter, and then re-form it
@@ -581,8 +670,6 @@ class Args():
             # to strip the brackets, split by the delimeter, and then re-form it
             # as a list of characters/strings
             self.model_inputs = list(str(args.modelinputs).split(','))
-            ######### TESTING #########
-            ######### TESTING #########
             if 'rgb' in self.model_inputs:
                 (self.model_inputs).remove('rgb')
                 simplelist = ['r','g','b']
@@ -590,8 +677,6 @@ class Args():
                     if not s in self.model_inputs:
                         self.model_inputs = [s] + self.model_inputs
                 self.model_vegetation_indices = 'rgb'
-            ######### TESTING #########
-            ######### TESTING #########
             if 'simple' in self.model_inputs:
                 (self.model_inputs).remove('simple')
                 simplelist = ['exr','exg','exb','exgr']
@@ -613,6 +698,13 @@ class Args():
             # to an integer, and then re-map the converted integers to a list
             self.model_nodes = list(map(int, str(args.modelnodes).split(',')))
             optionsargs['model nodes'] = self.model_nodes
+        if args.modelname:
+            # model output name (used to save the model)
+            if args.modelname == 'NA':
+                self.model_name = 'model_'+str(args.vegindex)+'_'+str(args.modelnodes).replace(',','_').replace(' ','').replace('[','').replace(']','')
+            else:
+                self.model_name = str(args.modelname)
+            optionsargs['model name'] = str(args.modelname)
         if args.modeldropout:
             dval = float(args.modeldropout)
             # model dropout value must be within 0.0 and 1.0
@@ -684,7 +776,7 @@ class Args():
             # because the input argument is handled as a single string, we need
             # to strip the brackets, split by the delimeter, and then re-form it
             # as a list of characters/strings
-            self.reclass_thresholds = list(str(args.reclassthresholds).split(','))
+            self.reclass_thresholds = list(map(float, str(args.reclassthresholds).split(',')))
             optionsargs['reclassification thresholds'] = self.reclass_thresholds
         if args.verbose:
             # plot model training
