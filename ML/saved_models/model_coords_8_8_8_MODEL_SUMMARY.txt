@@ -1,0 +1,28 @@
+Model: "model_coords_8_8_8"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ input_points (InputLayer)   [(None, 3)]               0         
+                                                                 
+ L0_8_nodes (Dense)          (None, 8)                 32        
+                                                                 
+ L1_8_nodes (Dense)          (None, 8)                 72        
+                                                                 
+ L2_8_nodes (Dense)          (None, 8)                 72        
+                                                                 
+ Dropout (Dropout)           (None, 8)                 0         
+                                                                 
+ Final_Dense (Dense)         (None, 1)                 9         
+                                                                 
+=================================================================
+Total params: 185
+Trainable params: 185
+Non-trainable params: 0
+_________________________________________________________________
+created: 20240606
+bare-Earth file: J:/WA_Elwha/training_point_clouds/training_noveg_UPDATED_20210825.laz
+vegetation file: J:/WA_Elwha/training_point_clouds/training_veg_UPDATED_20210825.laz
+model inputs: ['r', 'g', 'b', 'veglab']
+validation accuracy: 0.5000002980232239
+validation loss: 0.2500000298023224
+train time: 0:08:16.352233

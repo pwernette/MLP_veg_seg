@@ -1,0 +1,30 @@
+Model: "model_rgb_16_32_64_128"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ input_points (InputLayer)   [(None, 3)]               0         
+                                                                 
+ L0_16_nodes (Dense)         (None, 16)                64        
+                                                                 
+ L1_32_nodes (Dense)         (None, 32)                544       
+                                                                 
+ L2_64_nodes (Dense)         (None, 64)                2112      
+                                                                 
+ L3_128_nodes (Dense)        (None, 128)               8320      
+                                                                 
+ Dropout (Dropout)           (None, 128)               0         
+                                                                 
+ Final_Dense (Dense)         (None, 1)                 129       
+                                                                 
+=================================================================
+Total params: 11,169
+Trainable params: 11,169
+Non-trainable params: 0
+_________________________________________________________________
+created: 20240606
+bare-Earth file: J:/WA_Elwha/training_point_clouds/training_noveg_UPDATED_20210825.laz
+vegetation file: J:/WA_Elwha/training_point_clouds/training_veg_UPDATED_20210825.laz
+model inputs: ['r', 'g', 'b', 'veglab']
+validation accuracy: 0.9405374526977539
+validation loss: 0.046059880405664444
+train time: 1:37:01.682326

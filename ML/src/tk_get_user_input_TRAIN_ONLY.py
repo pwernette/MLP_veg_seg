@@ -655,6 +655,8 @@ class Args():
                 self.model_name = 'model_'+str(args.vegindex)+'_'+str(args.modelnodes).replace(',','_').replace(' ','').replace('[','').replace(']','')
             else:
                 self.model_name = str(args.modelname)
+            # replace commas with underscores
+            self.model_name = self.model_name.replace(',','_')
             optionsargs['model name'] = str(args.modelname)
         if args.modeldropout:
             dval = float(args.modeldropout)

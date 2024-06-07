@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, math
 import numpy as np
 import pandas as pd
 import laspy

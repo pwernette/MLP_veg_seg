@@ -120,24 +120,27 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
     pdindex = np.empty(shape=(0,(len(r[0]))), dtype=np.float32)
     pdindexnames = np.empty(shape=(0,0))
     # scale x, y, and z coordinates
-    if ('x' in indices) or ('sd' in indices) or ('coords' in indices) or ('all' in indices):
+    if ('x' in indices) or ('coords' in indices):
         xs = scale_dims(lasfileobj)[0]
         pdindex = np.append(pdindex, [xs], axis=0)
         pdindexnames = np.append(pdindexnames, 'x')
-    if ('y' in indices) or ('sd' in indices) or ('coords' in indices) or ('all' in indices):
+    if ('y' in indices) or ('coords' in indices):
         ys = scale_dims(lasfileobj)[1]
         pdindex = np.append(pdindex, [ys], axis=0)
         pdindexnames = np.append(pdindexnames, 'y')
-    if ('z' in indices) or ('sd' in indices) or ('coords' in indices) or ('all' in indices):
+    if ('z' in indices) or ('coords' in indices):
         zs = scale_dims(lasfileobj)[2]
         pdindex = np.append(pdindex, [zs], axis=0)
         pdindexnames = np.append(pdindexnames, 'z')
     # if standard deviation is specified as a geometric metric, then
     # compute the sd using a pointwise approach
     # NOTE: This computation is very time and resource expensive.
-    if 'sd' in geom_metrics:
+    if ('sd' in geom_metrics) or ('sd' in indices):
         # compute 3D standard deviation
         starttime = time.time()
+        xs = scale_dims(lasfileobj)[0]
+        ys = scale_dims(lasfileobj)[1]
+        zs = scale_dims(lasfileobj)[2]
         sd3d = calc_3d_sd(np.array([xs, ys, zs]).transpose(), rad=geom_radius)
         print("Time to compute SD = {}".format(time.time()-starttime))
         # append 3D sd to output array
@@ -157,9 +160,9 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
         pdindex = np.append(pdindex, b, axis=0)
         pdindexnames = np.append(pdindexnames, 'b')
     # option to include intensty as a variable
-    if ('intensity' in indices) or ('all' in indices):
-        pdindex = np.append(pdindex, lasfileobj.intensity, axis=0)
-        pdindexnames = np.append(pdindexnames, 'intensity')
+    # if ('intensity' in indices) or ('all' in indices):
+    #     pdindex = np.append(pdindex, lasfileobj.intensity, axis=0)
+    #     pdindexnames = np.append(pdindexnames, 'intensity')
     '''
     Compute vegetation indices based on user specifications
 

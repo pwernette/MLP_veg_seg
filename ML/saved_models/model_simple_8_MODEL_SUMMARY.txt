@@ -1,0 +1,24 @@
+Model: "model_simple_8"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ input_points (InputLayer)   [(None, 7)]               0         
+                                                                 
+ L0_8_nodes (Dense)          (None, 8)                 64        
+                                                                 
+ Dropout (Dropout)           (None, 8)                 0         
+                                                                 
+ Final_Dense (Dense)         (None, 1)                 9         
+                                                                 
+=================================================================
+Total params: 73
+Trainable params: 73
+Non-trainable params: 0
+_________________________________________________________________
+created: 20240606
+bare-Earth file: J:/WA_Elwha/training_point_clouds/training_noveg_UPDATED_20210825.laz
+vegetation file: J:/WA_Elwha/training_point_clouds/training_veg_UPDATED_20210825.laz
+model inputs: ['r', 'g', 'b', 'veglab']
+validation accuracy: 0.9272274971008301
+validation loss: 0.07194886356592178
+train time: 1:02:24.434190
