@@ -125,7 +125,7 @@ class App(tk.Tk):
         lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
         model_output_name = Text(self, height=1, width=50)
         if default_arguments_obj.model_output_name == 'NA':
-            model_output_name.insert(tk.END, 'model_'+default_arguments_obj.model_vegetation_indices+'_'+str(default_arguments_obj.model_nodes).replace(',','_').replace(' ','').replace('[','').replace(']',''))
+            model_output_name.insert(tk.END, 'model_'+str(default_arguments_obj.model_vegetation_indices).replace(' ','').replace('[','').replace(']','').replace("'","")+'_'+str(default_arguments_obj.model_nodes).replace(',','_').replace(' ','').replace('[','').replace(']',''))
         else:
             model_output_name.insert(tk.END, default_arguments_obj.model_output_name)
         model_output_name.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)

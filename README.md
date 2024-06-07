@@ -1,15 +1,17 @@
 # Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds using Machine Learning
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10966854.svg)](https://doi.org/10.5281/zenodo.10966854)
 
-These programs are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other. The programs are meant to reclassify large and dense point clouds, similar to the following:
+These programs are modelled after work originally presented by myself at the AGU Fall Meeting in December 2021 (recording can be found [HERE](https://youtu.be/k1ors_mKxlo)) and supplementary to the manuscript in review in *Remote Sensing*. They are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other by colour alone. The programs are meant to reclassify large and dense point clouds very efficiently, similar to the following (green points represent 'vegetation' and brown points represent 'bare-Earth'):
 
-<img src='/misc/images/FIGURE_20200508_RGB.png' alt='R G B color model of a coastal bluff near Port Angeles, WA'>
+<img src='/misc/images/FIGURE_20200508_RGB.png' alt='RGB color model of a coastal bluff near Port Angeles, WA'>
 
-And reclassify the points, similar to the following:
+<img src='/misc/images/FIGURE_20200508_RGB_16.png' alt='model of a coastal bluff coloured by classification'>
 
-<img src='/misc/images/FIGURE_20200508_RGB_16.png' alt='model of a coastal bluff colored by classification'>
+The out-of-the-box direct transferrability of the pre-trained ML models is further demonstrated using a point cloud for Chimney Bluffs, NY (along Lake Ontario) previously published by the USGS (yellow points represent 'vegetation' and blue points represent 'bare-Earth'):
 
-Green points represent 'vegetation' and brown points represent 'bare-Earth'.
+<img src='/misc/images/color_rgb_16_16_16.png' alt='RGB color model of a coastal bluff near Chimney Bluffs, NY'>
+
+<img src='/misc/images/reclassified_rgb_16_16_16.png' alt='model of a coastal bluff coloured by classification'>
 
 There are two approaches:
 
@@ -192,15 +194,20 @@ python ML_veg_reclass.py
 ```
 
 ## ML_veg_train.py
+
+The `ML_veg_train.py` program will read in the two training point clouds, account for any class imbalance, build a ML model, and train the ML model.
+
+Running `ML_veg_train.py` without any command line argument will automatically enable a simple graphical interface similar to this:
+
+<img src='/misc/images/gui_screenshot_veg_train.png' alt='screenshot of the graphical interface for the ML_veg_train program'>
+
 ### Inputs:
 
-The following inputs are required for the ML_veg_train program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
+The following inputs are required for the `ML_veg_train.py` program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
 
 1. The point cloud containing vegetation points only
 2. The point cloud containing only bare-Earth points
 3. The output model name
-
-The ML_veg_train program will read in the two training point clouds, account for any class imbalance, build a ML model, and train the ML model.
 
 ### Outputs:
 All outputs will be saved in a directory with the following scheme:
@@ -216,23 +223,24 @@ A plot of the model will also be saved as a PNG file (see example below), and a 
 <img src='/misc/images/rgb_8_GRAPH.png' alt='R G B model with one layer of 8 nodes' height=50% width=50%>
 
 ## ML_veg_reclass.py
+
+The `ML_veg_reclass.py` program will automatically read in the model structure, weights, and required inputs (including vegetation indices and geometry metrics) and will reclassify the input point cloud.
+
+Running `ML_veg_reclass.py` without any command line argument will automatically enable a simple graphical interface similar to this:
+
+<img src='/misc/images/gui_screenshot_veg_reclass.png' alt='screenshot of the graphical interface for the ML_veg_reclass program'>
+
 ### Inputs:
 
-The following inputs are required for the ML_veg_reclass program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
+The following inputs are required for the `ML_veg_reclass.py` program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
 
 1. The point cloud to be reclassified
-2. The h5 model file (can be generated using the ML_veg_train program)
-
-The ML_veg_reclass program will automatically read in the model structure, weights, and required inputs (including vegetation indices and geometry metrics) and will reclassify the input point cloud.
+2. The h5 model file (can be generated using the `ML_veg_train.py` program)
 
 ### Outputs:
-The reclassified LAS/LAZ file will be saved in a directory with the following scheme:
+The reclassified LAS/LAZ file will be saved in the same directory as the original point cloud.
 
-> results_{date}
-
-Where {date} is the date the model was created and is pulled from the computer clock. If this directory does not already exist then it will first be created.
-
-A new LAZ file will be generated in the results directory:
+A new LAZ file will be generated in with the following syntax:
 
 > {filename}_{model_name}_{threshold_value}.laz
 
@@ -243,11 +251,15 @@ Where *{filename}* is the original point cloud file name, *{model_name}* is the 
 
 ## ML_vegfilter.py
 
-The ML_vegfilter program will use the two training point clouds to generate a machine learning model with the user-specified arguments, and then use this model to reclassify the specified point cloud. The significant advantage of using a single program is eliminating the need to read the model file for reclassification.
+The `ML_vegfilter.py` program will use the two training point clouds to generate a machine learning model with the user-specified arguments, and then use this model to reclassify the specified point cloud. The significant advantage of using a single program is eliminating the need to read the model file for reclassification.
+
+Running `ML_vegfilter.py` without any command line argument will automatically enable a simple graphical interface similar to this:
+
+<img src='/misc/images/gui_screenshot_vegfilter.png' alt='screenshot of the graphical interface for the ML_vegfilter program'>
 
 ### Inputs:
 
-The following inputs are required for the ML_vegfilter program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
+The following inputs are required for the `ML_vegfilter.py` program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
 
 1. The point cloud containing vegetation points only
 2. The point cloud containing only bare-Earth points
@@ -279,6 +291,15 @@ Wernette, Phillipe A. 2024. Segmenting Vegetation from bare-Earth in High-relief
   date = {2024-04-12},
 }
 ```
+
+# OTHER PUBLICATIONS AND INFORMATION
+Click [HERE](https://youtu.be/k1ors_mKxlo) to watch my completely original presentation at the American Geophysicl Union Fall Meeting in 2021 (New Orleans, LA).
+
+My manuscript in *Remote Sensing* is based on this original research and is currently available via Preprints.org:
+> Wernette, P. Machine Learning Vegetation Filtering of Coastal Cliff and Bluff Point Clouds. Preprints 2024, 2024041387. https://doi.org/10.20944/preprints202404.1387.v1
+
+Point clouds for coastal bluffs near the Elwha River mouth near Port Angeles, WA can be found [HERE](https://doi.org/10.5061/dryad.8pk0p2nww).
+> Wernette, Phillipe (2024). Coastal bluff point clouds derived from SfM near Elwha River mouth, Washington from 2016-04-18 to 2020-05-08 [Dataset]. Dryad. https://doi.org/10.5061/dryad.8pk0p2nww
 
 # REFERENCES
 [^1]: Meyer, G.E.; Neto, J.C. 2008. Verification of color vegetation indices for automated crop imaging applications. Comput. Electron. Agric. 63, 282–293.
