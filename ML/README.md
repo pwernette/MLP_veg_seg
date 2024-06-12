@@ -293,7 +293,7 @@ Wernette, Phillipe A. 2024. Segmenting Vegetation from bare-Earth in High-relief
 ```
 
 # OTHER PUBLICATIONS AND INFORMATION
-Click [HERE](https://youtu.be/k1ors_mKxlo) to watch my completely original presentation at the American Geophysicl Union Fall Meeting in 2021 (New Orleans, LA).
+Click [HERE](https://youtu.be/k1ors_mKxlo) to watch my original presentation at the American Geophysicl Union Fall Meeting in 2021 (New Orleans, LA). Abstract can be found [HERE](https://agu.confex.com/agu/fm21/meetingapp.cgi/Paper/863844).
 
 My manuscript in *Remote Sensing* is based on this original research and is currently available via Preprints.org:
 > Wernette, P. Machine Learning Vegetation Filtering of Coastal Cliff and Bluff Point Clouds. Preprints 2024, 2024041387. https://doi.org/10.20944/preprints202404.1387.v1
