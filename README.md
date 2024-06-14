@@ -1,7 +1,7 @@
 # Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds using Machine Learning
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10966854.svg)](https://doi.org/10.5281/zenodo.10966854)
 
-These programs are modelled after work originally presented by myself at the AGU Fall Meeting in December 2021 (recording can be found [HERE](https://youtu.be/k1ors_mKxlo)) and supplementary to the manuscript in review in *Remote Sensing*. They are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other by colour alone. The programs are meant to reclassify large and dense point clouds very efficiently, similar to the following (green points represent 'vegetation' and brown points represent 'bare-Earth'):
+These programs are modelled after work originally presented by myself at the AGU Fall Meeting in December 2021 ([abstract][https://agu.confex.com/agu/fm21/meetingapp.cgi/Paper/863844] and [recording](https://youtu.be/k1ors_mKxlo)) and supplementary to the manuscript in review in *Remote Sensing*. They are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other by colour alone. The programs are meant to reclassify large and dense point clouds very efficiently, similar to the following (green points represent 'vegetation' and brown points represent 'bare-Earth'):
 
 <img src='/misc/images/FIGURE_20200508_RGB.png' alt='RGB color model of a coastal bluff near Port Angeles, WA'>
 
@@ -293,9 +293,9 @@ Wernette, Phillipe A. 2024. Segmenting Vegetation from bare-Earth in High-relief
 ```
 
 # OTHER PUBLICATIONS AND INFORMATION
-Click [HERE](https://youtu.be/k1ors_mKxlo) to watch my original presentation at the American Geophysicl Union Fall Meeting in 2021 (New Orleans, LA). Abstract can be found [HERE](https://agu.confex.com/agu/fm21/meetingapp.cgi/Paper/863844).
+This work follows my original presentation at the 2021 AGU Fall Meeting in New Orleans, LA. My abstract can be found [HERE](https://agu.confex.com/agu/fm21/meetingapp.cgi/Paper/863844), and my recorded presentation can be found [HERE](https://youtu.be/k1ors_mKxlo).
 
-My manuscript in *Remote Sensing* is based on this original research and is currently available via Preprints.org:
+My manuscript in *Remote Sensing* is also based on this original research and is currently available via Preprints.org:
 > Wernette, P. Machine Learning Vegetation Filtering of Coastal Cliff and Bluff Point Clouds. Preprints 2024, 2024041387. https://doi.org/10.20944/preprints202404.1387.v1
 
 Point clouds for coastal bluffs near the Elwha River mouth near Port Angeles, WA can be found [HERE](https://doi.org/10.5061/dryad.8pk0p2nww).
