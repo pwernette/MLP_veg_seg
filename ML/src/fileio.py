@@ -24,7 +24,7 @@ import tkinter as tk
 from tkinter import *
 
 # load custom modules
-from .vegindex import vegidx
+from .vegindex import vegidx, veg_rgb
 from .miscfx import *
 from .modelbuilder import *
 
@@ -85,7 +85,7 @@ def getmodelname():
         mname = modelname
     return(mname)
 
-def las2split(infile_ground_pc, infile_veg_pc,
+def las2split(infile_pcs,
                 veg_indices=['rgb'], geometry_metrics=[],
                 training_split=0.7, class_imbalance_corr=True,
                 data_reduction=1.0, verbose=True):
@@ -120,58 +120,60 @@ def las2split(infile_ground_pc, infile_veg_pc,
     '''
     laspy_majorversion = int(laspy.__version__.split('.')[0])
     # open both ground and vegetation files
-    if laspy_majorversion == 1:
-        try:
-            fground = file.File(infile_ground_pc,mode='r')
-            fveg = file.File(infile_veg_pc,mode='r')
-        except Exception as e:
-            sys.exit(e)
-    elif laspy_majorversion == 2:
-        try:
-            fground  =laspy.read(infile_ground_pc)
-            fveg = laspy.read(infile_veg_pc)
-        except Exception as e:
-            sys.exit(e)
 
-    # compute vegetation indices
-    print('Read {}'.format(infile_ground_pc))
-    names_ground,dat_ground = vegidx(fground, indices=veg_indices, geom_metrics=geometry_metrics)
-    print('Read {}'.format(infile_veg_pc))
-    names_veg,dat_veg = vegidx(fveg, indices=veg_indices, geom_metrics=geometry_metrics)
+    input_files = []
+    names_list = []
+    dat_list = []
+    min_pts = 999999999999999
 
-    # transpose the output objects
-    ground_sample = np.transpose(dat_ground)
-    veg_sample = np.transpose(dat_veg)
+    try:
+        for ifile in infile_pcs:
+            input_files.append(ifile)
+            if laspy_majorversion == 1:
+                inlas = file.File(ifile, mode='r')
+            elif laspy_majorversion == 2:
+                inlas = laspy.read(ifile)
+            print('Read {} using laspy major version: {}'.format(ifile, laspy_majorversion))
 
-    # clean up memory
-    del(dat_ground,dat_veg)
+            # compute vegetation indices
+            if veg_indices=='rgb' or veg_indices is None:
+                globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = veg_rgb(inlas)
+            else:
+                globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = vegidx(inlas, indices=veg_indices, geom_metrics=geometry_metrics)
+            
+            names_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_names')
+            dat_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_dat')
 
-    # add a "veglab" column to represent vegetation labels
-    names_ground = np.append(names_ground, 'veglab')
-    names_veg = np.append(names_veg, 'veglab')
+            # transpose the data
+            globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = np.transpose(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'])
 
-    # clean up workspace/memory
-    if laspy_majorversion == 1:
-        try:
-            fground.close()
-            fveg.close()
-        except Exception as e:
-            print(e)
-            pass
+            # populate the dictionary of point counts
+            if globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'].shape[0] < min_pts:
+                min_pts = globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'].shape[0]
+
+            # append the names with the vegetation label column name
+            globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'] = np.append(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], 'veglab')
+
+            if laspy_majorversion == 1:
+                inlas.close()
+                print('\n\nERROR: Unable to close {}\n\n'.format(inlas))
+    except Exception as e:
+        sys.exit(e)
 
     # OPTIONAL: print number of points in each input dense point cloud
     if verbose:
-        print('# of ground points     = {}'.format(ground_sample.shape))
-        print('# of vegetation points = {}'.format(veg_sample.shape))
+        [print('{} contains {} points'.format(input_files[i], v.shape)) for i,v in enumerate(dat_list)]
 
-    # sample larger dat to match size of smaller dat
-    if class_imbalance_corr:
-        if ground_sample.shape[0]>veg_sample.shape[0]:
-            ground_sample = train_test_split(ground_sample, train_size=veg_sample.shape[0]/ground_sample.shape[0], random_state=42)[0]
-        elif veg_sample.shape[0]>ground_sample.shape[0]:
-            veg_sample = train_test_split(veg_sample, train_size=ground_sample.shape[0]/veg_sample.shape[0], random_state=42)[0]
+    for d in dat_list:
+        # sample larger dat to match size of smaller dat
+        if class_imbalance_corr:
+            if globals()[d].shape[0] > min_pts:
+                globals()[d] = train_test_split(globals()[d], train_size=globals()[d].shape[0]/min_pts, random_state=42)[0]
+        # sub-sample the data to cut the data volume
+        if data_reduction < 1.0:
+            globals()[d] = train_test_split(globals()[d], train_size=data_reduction, random_state=42)[0]  # sub-sample no-veg points
 
-    # sub-sample the vegetation and no-vegetation data to cut the data volume
+    
     if data_reduction<1.0:
         # data reduction to the user-specified proportion
         ground_sample = train_test_split(ground_sample, train_size=data_reduction_percent, random_state=42)[0]  # sub-sample no-veg points
