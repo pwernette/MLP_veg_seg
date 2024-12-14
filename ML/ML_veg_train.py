@@ -1,6 +1,7 @@
 # basic libraries
 import os, sys, time, datetime
 from datetime import date
+import traceback
 
 # import laspy
 import laspy
@@ -47,24 +48,24 @@ def main(default_values, verbose=True):
     #   1) import training point cloud files
     #   2) compute vegetation indices
     #   3) split point clouds into training, testing, and validation sets
-    if 'sd' in default_values.model_inputs:
-        train_ds,test_ds,val_ds = las2split(default_values.filein_ground,
-                               default_values.filein_vegetation,
-                               veg_indices=default_values.model_vegetation_indices,
-                               class_imbalance_corr=default_values.training_class_imbalance_corr,
-                               training_split=default_values.training_split,
-                               data_reduction=default_values.training_data_reduction,
-                               geom_metrics='sd')
-    else:
-        train_ds,test_ds,val_ds = las2split(default_values.filein_ground,
-                               default_values.filein_vegetation,
-                               veg_indices=default_values.model_vegetation_indices,
-                               class_imbalance_corr=default_values.training_class_imbalance_corr,
-                               training_split=default_values.training_split,
-                               data_reduction=default_values.training_data_reduction)
+    # if 'sd' in default_values.model_inputs:
+    #     train_ds,test_ds,val_ds = las2split(default_values.filesin,
+    #                            veg_indices=default_values.model_vegetation_indices,
+    #                            class_imbalance_corr=default_values.training_class_imbalance_corr,
+    #                            training_split=default_values.training_split,
+    #                            data_reduction=default_values.training_data_reduction,
+    #                            geom_metrics='sd')
+    # else:
+    train_ds,val_ds,eval_ds,class_dat = las2split(default_values.filesin,
+                            veg_indices=default_values.model_vegetation_indices,
+                            class_imbalance_corr=default_values.training_class_imbalance_corr,
+                            training_split=default_values.training_split,
+                            data_reduction=default_values.training_data_reduction)
+    print('\nClass dictionary:')
+    [print(i,v) for i,v in enumerate(class_dat)]
 
     # get root directory
-    default_values.rootdir = os.path.split(os.path.split(default_values.filein_ground)[0])[0]
+    default_values.rootdir = os.path.split(os.path.split(default_values.filesin[0])[0])[0]
 
     # append columns/variables of interest list
     default_values.model_inputs.append('veglab')
@@ -80,30 +81,11 @@ def main(default_values, verbose=True):
                              cache_ds=default_values.training_cache,
                              prefetch=default_values.training_prefetch,
                              batch_size=default_values.training_batch_size)
-    test_ds = df_to_dataset(test_ds, 'veglab',
+    eval_ds = df_to_dataset(eval_ds, 'veglab',
                              shuffle=default_values.training_shuffle,
                              cache_ds=default_values.training_cache,
                              prefetch=default_values.training_prefetch,
                              batch_size=default_values.training_batch_size)
-    #train_ds,train_ins,train_lyr = pd2fl(train, default_values.model_inputs,
-    #                                        shuf=default_values.training_shuffle,
-    #                                        ds_prefetch=default_values.training_prefetch,
-    #                                        batch_sz=default_values.training_batch_size,
-    #                                        ds_cache=default_values.training_cache)
-    #val_ds,_,_ = pd2fl(val, default_values.model_inputs,
-    #                                        shuf=default_values.training_shuffle,
-    #                                        ds_prefetch=default_values.training_prefetch,
-    #                                        batch_sz=default_values.training_batch_size,
-    #                                        ds_cache=default_values.training_cache)
-    #test_ds,_,_ = pd2fl(test, default_values.model_inputs,
-    #                                        shuf=default_values.training_shuffle,
-    #                                        ds_prefetch=default_values.training_prefetch,
-    #                                        batch_sz=default_values.training_batch_size,
-    #                                        ds_cache=default_values.training_cache)
-
-    # print model input attributes
-    #if verbose:
-    #    print("\nModel inputs:\n   {}".format(list(train_ins)))
 
     # build and train model
     mod,history,tt = build_model(model_name=default_values.model_name,
@@ -121,7 +103,7 @@ def main(default_values, verbose=True):
 
     # evaluate the model
     print('\nEvaluating model with validation set...')
-    model_eval = mod.evaluate(test_ds, verbose=2)
+    model_eval = mod.evaluate(eval_ds, verbose=2)
 
     # get today's date as string
     tdate = str(date.today()).replace('-','')
@@ -169,8 +151,7 @@ def main(default_values, verbose=True):
         # Pass the file handle in as a lambda function to make it callable
         mod.summary(print_fn=lambda x: fh.write(x+'\n'))
         fh.write('created: {}\n'.format(tdate))
-        fh.write('bare-Earth file: {}\n'.format(default_values.filein_ground))
-        fh.write('vegetation file: {}\n'.format(default_values.filein_vegetation))
+        fh.write('input point cloud files: {}\n'.format(default_values.filesin))
         fh.write('model inputs: {}\n'.format(list(default_values.model_inputs)))
         fh.write('validation accuracy: {}\n'.format(model_eval[1]))
         fh.write('validation loss: {}\n'.format(model_eval[0]))
@@ -192,4 +173,7 @@ if __name__ == '__main__':
         foo.create_widgets(defs)
         foo.mainloop()
 
-    main(default_values=defs)
+    try:
+        main(default_values=defs)
+    except:
+        traceback.print_exc()

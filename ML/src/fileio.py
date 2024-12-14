@@ -86,9 +86,12 @@ def getmodelname():
     return(mname)
 
 def las2split(infile_pcs,
-                veg_indices=['rgb'], geometry_metrics=[],
-                training_split=0.7, class_imbalance_corr=True,
-                data_reduction=1.0, verbose=True):
+                veg_indices=['rgb'], 
+                geometry_metrics=[],
+                training_split=0.7, 
+                class_imbalance_corr=True,
+                data_reduction=1.0, 
+                verbose=True):
     '''
     Read two LAS/LAZ point clouds representing a sample of ground and vegetation
     points. If vegetation indices are specified by veg_indices, then the defined
@@ -128,6 +131,7 @@ def las2split(infile_pcs,
 
     try:
         for ifile in infile_pcs:
+            print(ifile)
             input_files.append(ifile)
             if laspy_majorversion == 1:
                 inlas = file.File(ifile, mode='r')
@@ -153,64 +157,73 @@ def las2split(infile_pcs,
 
             # append the names with the vegetation label column name
             globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'] = np.append(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], 'veglab')
-
+            
+            print(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'])
             if laspy_majorversion == 1:
                 inlas.close()
                 print('\n\nERROR: Unable to close {}\n\n'.format(inlas))
+            del(inlas)
     except Exception as e:
         sys.exit(e)
 
     # OPTIONAL: print number of points in each input dense point cloud
     if verbose:
-        [print('{} contains {} points'.format(input_files[i], v.shape)) for i,v in enumerate(dat_list)]
+        print('\nPoint cloud counts:')
+        [print('{} contains {} points'.format(input_files[i], globals()[v].shape)) for i,v in enumerate(dat_list)]
 
-    for d in dat_list:
+    dat_dict = {}
+
+    for i,d in enumerate(dat_list):
+        print('\nSplitting {}:'.format(input_files[i]))
         # sample larger dat to match size of smaller dat
         if class_imbalance_corr:
             if globals()[d].shape[0] > min_pts:
-                globals()[d] = train_test_split(globals()[d], train_size=globals()[d].shape[0]/min_pts, random_state=42)[0]
+                globals()[d] = train_test_split(globals()[d], train_size=min_pts/globals()[d].shape[0], random_state=42)[0]
+        
         # sub-sample the data to cut the data volume
         if data_reduction < 1.0:
-            globals()[d] = train_test_split(globals()[d], train_size=data_reduction, random_state=42)[0]  # sub-sample no-veg points
+            globals()[d] = train_test_split(globals()[d], train_size=data_reduction, random_state=42)[0]
+        
+        # convert the samples to Pandas DataFrame objects
+        globals()[d] = pd.DataFrame(globals()[d].astype('float32'), columns=globals()[names_list[i]][:-1])
+        globals()[d]['veglab'] = np.full(shape=globals()[d].shape[0], fill_value=i, dtype=np.float32)
 
-    
-    if data_reduction<1.0:
-        # data reduction to the user-specified proportion
-        ground_sample = train_test_split(ground_sample, train_size=data_reduction_percent, random_state=42)[0]  # sub-sample no-veg points
-        veg_sample = train_test_split(veg_sample, train_size=data_reduction_percent, random_state=42)[0]  # sub-sample veg points
+        # write dictionary of data name and corresponding numerical value
+        dat_dict[input_files[i]] = i
 
-    # convert each of the samples to pandas.DataFrame objects for subsampling
-    pd_ground = pd.DataFrame(ground_sample.astype('float32'), columns=names_veg[:-1])
-    pd_veg = pd.DataFrame(veg_sample.astype('float32'), columns=names_veg[:-1])
+        # split the data to training, validation, and evaluation
+        traind,evald = train_test_split(globals()[d], train_size=training_split, random_state=42)
+        traind,vald = train_test_split(traind, train_size=training_split, random_state=42)
 
-    # append vegetation label column to pd.DataFrame
-    pd_ground['veglab'] = np.full(shape=veg_sample.shape[0], fill_value=0, dtype=np.float32)
-    pd_veg['veglab'] = np.full(shape=ground_sample.shape[0], fill_value=1, dtype=np.float32)
+        # concatenate new training data to dataframe
+        if not 'trainout' in globals():
+            globals()['trainout'] = traind
+        else:
+            globals()['trainout'] = pd.concat([globals()['trainout'],traind], ignore_index=True)
+        
+        # concatenate new validation data to dataframe
+        if not 'valout' in globals():
+            globals()['valout'] = vald
+        else:
+            globals()['valout'] = pd.concat([globals()['valout'],vald], ignore_index=True)
+        
+        # concatenate new evaluation data to dataframe
+        if not 'evalout' in globals():
+            globals()['evalout'] = vald
+        else:
+            globals()['evalout'] = pd.concat([globals()['evalout'],evald], ignore_index=True)
 
-    # clean up memory/workspace
-    del(ground_sample, veg_sample)
+        if verbose:
+            print('    {} training points'.format(len(traind)))
+            print('    {} validation points'.format(len(vald)))
+            print('    {} evaluation points'.format(len(evald)))
 
-    # training, testing, and validation splitting
-    train_g,test_g,train_v,test_v = train_test_split(pd_ground, pd_veg, train_size=training_split, random_state=42)
-    train_g,val_g,train_v,val_v = train_test_split(train_g, train_v, train_size=training_split, random_state=42)
+        # clean up memory
+        del(traind,vald,evald)
 
-    # concatenate ground and veg pd.DataFrame objects
-    trainout = pd.concat([train_g,train_v], ignore_index=True)
-    testout = pd.concat([test_g,test_v], ignore_index=True)
-    valout = pd.concat([val_g,val_v], ignore_index=True)
-
-    # clean up memory/workspace
-    del(train_g,train_v,test_g,test_v,val_g,val_v)
-
-    # OPTIONAL: print info about training, testing, validation split numbers
-    if verbose:
-        print('  {} train examples'.format(len(trainout)))
-        print('  {} validation examples'.format(len(valout)))
-        print('  {} test examples'.format(len(testout)))
-
-    # return the train, test, and validationn objects
+    # return the train, validation, and evaluation objects
     # all outputs are pandas.DataFrame objects WITH an additional veglab attribute
-    return trainout,testout,valout
+    return trainout, valout, evalout, dat_dict
 
 
 # A utility method to create a tf.data dataset from a Pandas Dataframe

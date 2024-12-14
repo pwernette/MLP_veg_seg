@@ -36,13 +36,13 @@ class App(tk.Tk):
             ''' sub-function to cancel and destroy the window '''
             self.destroy()
             sys.exit('No model name specified. Exiting program.')
-        def browseFiles(intextbox, desc_text="Select a File"):
+        def browseFiles(intextbox, desc_text="Select Files"):
             ''' sub-function to open a file select browsing window '''
             # open a file select dialog window
-            filename = filedialog.askopenfilename(title=desc_text)
+            filenames = filedialog.askopenfilenames(title=desc_text)
             # Change textbox contents
             intextbox.delete(1.0,"end")
-            intextbox.insert(1.0, filename)
+            intextbox.insert(1.0, filenames)
 
         # pad x and y values for all labels, fields, and buttons in the widget
         padxval = 5
@@ -61,27 +61,19 @@ class App(tk.Tk):
         lab.grid(column=0, columnspan=3, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
         rowplacement += 1
 
-        # ground points training file
-        lab = Label(self, text='Non-Vegetation Point Cloud')
+        # training point cloud files
+        lab = Label(self, text=' Training Point Clouds')
         lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        filein_ground = Text(self, height=1, width=50)
-        filein_ground.insert(tk.END, dao.filein_ground)
-        filein_ground.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # create a browse files button to get input
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(filein_ground, 'Select NON-vegetation point cloud'))
-        button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
         # increase the row by 1
         rowplacement += 1
-
-        # vegetation points training file
-        lab = Label(self, text='Vegetation Point Cloud')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        filein_vegetation = Text(self, height=1, width=50)
-        filein_vegetation.insert(tk.END, dao.filein_vegetation)
-        filein_vegetation.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(filein_vegetation, 'Select vegetation point cloud'))
+        # get variable input
+        filesin = Text(self, height=10, width=50)
+        filesin.insert(tk.END, dao.filein_ground)
+        filesin.grid(column=0, row=rowplacement, columnspan=2, sticky=W, padx=padxval, pady=padyval)
+        # create a browse files button to get input
+        button_explore = Button(self, text='Browse', command=lambda:browseFiles(filesin, 'Select point clouds'))
         button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # increase the row by 1
         rowplacement += 1
 
         lab = Label(self, text='Reclassification Point Cloud Files:')
@@ -330,12 +322,9 @@ class App(tk.Tk):
             cliargs['-gui'] = 'False'
 
             ''' sub-function to get inputs from GUI widget '''
-            # input ground points file
-            dao.filein_ground = filein_ground.get('1.0','end-1c').split('\n')[0]
-            cliargs['-g'] = str(dao.filein_ground)
-            # inputs vegetation points file
-            dao.filein_vegetation = filein_vegetation.get('1.0','end-1c').split('\n')[0]
-            cliargs['-v'] = str(dao.filein_vegetation)
+            # input point cloud files
+            dao.filesin = filesin.get('1.0','end-1c').split('\n')[0]
+            cliargs['-pcs'] = str(dao.filesin)
             # input reclassification file
             dao.reclassfile = reclassfile.get('1.0','end-1c').split('\n')[0]
             cliargs['-r'] = str(dao.reclassfile)
@@ -480,9 +469,7 @@ class Args():
         # NOTE: If no filein_vegetation or filein_ground is/are specified, then the
         # program will default to requesting the one or both files that are missing
         # but required.
-        self.n_classes = 2
-        self.filein_vegetation = 'NA'
-        self.filein_ground = 'NA'
+        self.filesin = []
         self.reclassfile = 'NA'
         # model file used for reclassification
         # self.model_file = 'NA'
@@ -555,13 +542,25 @@ class Args():
         psr = argparse.ArgumentParser()
 
         # add arguments
-        psr.add_argument('-gui','--gui')
-        psr.add_argument('-v','-veg','--vegfile')
-        psr.add_argument('-g','-ground','--groundfile')
-        psr.add_argument('-r','-reclass','--reclassfile')
+        psr.add_argument('-gui','-gui',
+                         dest='gui',
+                         type=str,
+                         choices=['t','T','true','True','f','F','false','False'],
+                         required=False,
+                         help='Initialize program GUI [default = True]')
+        psr.add_argument('-pcs','-pclouds','-point_clouds',
+                         dest='point_clouds',
+                         type=list,
+                         help='Training point clouds')
+        psr.add_argument('-r','-reclass','-reclassfile',
+                         dest='reclassfile')
         # psr.add_argument('-h5','-mfile','-model','--modelfile')
-        psr.add_argument('-m','-mname','--modelname')
-        psr.add_argument('-vi','-index','--vegindex')
+        psr.add_argument('-m','-mname','-modelname',
+                         dest='modelname',
+                         help='output model name')
+        psr.add_argument('-vi','-index','-vegindex',
+                         dest='vegindex',
+                         help='vegetation indices to use [default = rgb]')
         psr.add_argument('-mi','-inputs','--modelinputs')
         psr.add_argument('-mn','-nodes','--modelnodes')
         psr.add_argument('-md','-dropout','--modeldropout')
@@ -596,12 +595,8 @@ class Args():
             optionsargs['graphic user interface'] = self.gui
         if args.vegfile:
             # input vegetation only dense cloud/point cloud
-            self.filein_vegetation = str(args.vegfile)
-            optionsargs['vegetation file'] = str(args.vegfile)
-        if args.groundfile:
-            # input bare-Earth only dense cloud/point cloud
-            self.filein_ground = str(args.groundfile)
-            optionsargs['bare-Earth file'] = str(args.groundfile)
+            self.filesin = str(args.filesin)
+            optionsargs['input files'] = str(args.filesin)
         if args.reclassfile:
             # input file to reclassify
             self.reclassfile = str(args.reclassfile)
@@ -638,20 +633,20 @@ class Args():
                 self.model_vegetation_indices = 'rgb'
             ######### TESTING #########
             ######### TESTING #########
-            if 'simple' in self.model_inputs:
-                (self.model_inputs).remove('simple')
-                simplelist = ['exr','exg','exb','exgr']
-                for s in simplelist:
-                    if not s in self.model_inputs:
-                        self.model_inputs = [s] + self.model_inputs
-                self.model_vegetation_indices = 'simple'
-            if 'all' in self.model_inputs:
-                (self.model_inputs).remove('all')
-                alllist = ['exr','exg','exb','exgr','ngrdi','mgrvi','gli','rgbvi','ikaw','gla']
-                for a in alllist:
-                    if not a in self.model_inputs:
-                        self.model_inputs = [a] + self.model_inputs
-                self.model_vegetation_indices = 'all'
+            # if 'simple' in self.model_inputs:
+            #     (self.model_inputs).remove('simple')
+            #     simplelist = ['exr','exg','exb','exgr']
+            #     for s in simplelist:
+            #         if not s in self.model_inputs:
+            #             self.model_inputs = [s] + self.model_inputs
+            #     self.model_vegetation_indices = 'simple'
+            # if 'all' in self.model_inputs:
+            #     (self.model_inputs).remove('all')
+            #     alllist = ['exr','exg','exb','exgr','ngrdi','mgrvi','gli','rgbvi','ikaw','gla']
+            #     for a in alllist:
+            #         if not a in self.model_inputs:
+            #             self.model_inputs = [a] + self.model_inputs
+            #     self.model_vegetation_indices = 'all'
             optionsargs['model inputs'] = self.model_inputs
         if args.modelnodes:
             # because the input argument is handled as a string, we need to
