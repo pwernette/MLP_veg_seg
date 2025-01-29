@@ -250,3 +250,59 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
     return pdindexnames,pdindex
 #     indexnamesdict = dict((j,i) for i,j in enumerate(pdindexnames))
 #     return indexnamesdict,pdindex
+
+
+def veg_rgb(lasfileobj, colordepth=8):
+    '''
+    Compute specified vegetation indices and/or geometric values.
+
+    Input parameters:
+        :param numpy.array lasfileobj: LAS file object
+
+    Returns:
+        (1) An n-dimensional array with RGB values
+              r (:py:class:`float`)
+              g (:py:class:`float`)
+              b (:py:class:`float`)
+        (2) A 1D np.array with RGB names
+
+    Notes:
+        There is no need to normalize any values before passing a valid
+        las or laz file object (from laspy) to this function.
+        r, g, and b values are normalized within this updated function (20210801).
+    '''
+    # start timer
+    start_time = time.time()
+    # extract r, g, and b bands from the point cloud
+    r,g,b = lasfileobj.red,lasfileobj.green,lasfileobj.blue
+    # check for color depth
+    if np.amax(r)>256 or np.amax(g)>256 or np.amax(b)>256:
+        colordepth = 16
+    # normalize R, G, and B bands
+    # NOTE: includes conversion of r, g, b to np.float32 data type
+    r,g,b = normBands(r,g,b, depth=colordepth)
+    # use n-dimensional numpy array as a data container for
+    #  1) output values
+    #  2) output attribute names
+    pdindex = np.empty(shape=(0,(len(r[0]))), dtype=np.float32)
+    pdindexnames = np.empty(shape=(0,0))
+    # scale z coordinates
+    # zs = scale_dims(lasfileobj)[2]
+    # pdindex = np.append(pdindex, [zs], axis=0)
+    # pdindexnames = np.append(pdindexnames, 'z')
+
+    # add red values
+    pdindex = np.append(pdindex, r, axis=0)
+    pdindexnames = np.append(pdindexnames, 'r')
+    # add green values
+    pdindex = np.append(pdindex, g, axis=0)
+    pdindexnames = np.append(pdindexnames, 'g')
+    # add blue values
+    pdindex = np.append(pdindex, b, axis=0)
+    pdindexnames = np.append(pdindexnames, 'b')
+    # option to include intensty as a variable
+    # if ('intensity' in indices) or ('all' in indices):
+    #     pdindex = np.append(pdindex, lasfileobj.intensity, axis=0)
+    #     pdindexnames = np.append(pdindexnames, 'intensity')
+
+    return pdindexnames,pdindex

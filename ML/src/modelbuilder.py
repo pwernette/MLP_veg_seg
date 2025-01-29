@@ -52,7 +52,18 @@ class PlotLearning(Callback):
         plt.tight_layout()
         plt.show()
 
-def build_model(model_name, training_tf_dataset, validation_tf_dataset, nodes=[8,8,8], activation_fx='relu', dropout_rate=0.2, loss_metric='mean_squared_error', model_optimizer='adam', earlystopping=[], dotrain=True, dotrain_epochs=1000, verbose=True):
+def build_model(model_name, 
+                training_tf_dataset, 
+                validation_tf_dataset, 
+                nodes=[8,8,8], 
+                activation_fx='relu', 
+                dropout_rate=0.2, 
+                loss_metric='mean_squared_error', 
+                model_optimizer='adam', 
+                earlystopping=[], 
+                dotrain=True, 
+                dotrain_epochs=1000, 
+                verbose=True):
     print('Building {} model...'.format(model_name))
     # the first layer should take the input features as its input
     #input_layer = input_feature_layer(model_inputs)

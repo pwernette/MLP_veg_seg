@@ -24,7 +24,7 @@ import tkinter as tk
 from tkinter import *
 
 # load custom modules
-from .vegindex import vegidx
+from .vegindex import vegidx, veg_rgb
 from .miscfx import *
 from .modelbuilder import *
 
@@ -85,10 +85,13 @@ def getmodelname():
         mname = modelname
     return(mname)
 
-def las2split(infile_ground_pc, infile_veg_pc,
-                veg_indices=['rgb'], geometry_metrics=[],
-                training_split=0.7, class_imbalance_corr=True,
-                data_reduction=1.0, verbose=True):
+def las2split(infile_pcs,
+                veg_indices=['rgb'], 
+                geometry_metrics=[],
+                training_split=0.7, 
+                class_imbalance_corr=True,
+                data_reduction=1.0, 
+                verbose=True):
     '''
     Read two LAS/LAZ point clouds representing a sample of ground and vegetation
     points. If vegetation indices are specified by veg_indices, then the defined
@@ -120,95 +123,107 @@ def las2split(infile_ground_pc, infile_veg_pc,
     '''
     laspy_majorversion = int(laspy.__version__.split('.')[0])
     # open both ground and vegetation files
-    if laspy_majorversion == 1:
-        try:
-            fground = file.File(infile_ground_pc,mode='r')
-            fveg = file.File(infile_veg_pc,mode='r')
-        except Exception as e:
-            sys.exit(e)
-    elif laspy_majorversion == 2:
-        try:
-            fground  =laspy.read(infile_ground_pc)
-            fveg = laspy.read(infile_veg_pc)
-        except Exception as e:
-            sys.exit(e)
 
-    # compute vegetation indices
-    print('Read {}'.format(infile_ground_pc))
-    names_ground,dat_ground = vegidx(fground, indices=veg_indices, geom_metrics=geometry_metrics)
-    print('Read {}'.format(infile_veg_pc))
-    names_veg,dat_veg = vegidx(fveg, indices=veg_indices, geom_metrics=geometry_metrics)
+    input_files = []
+    names_list = []
+    dat_list = []
+    min_pts = 999999999999999
 
-    # transpose the output objects
-    ground_sample = np.transpose(dat_ground)
-    veg_sample = np.transpose(dat_veg)
+    try:
+        for ifile in infile_pcs:
+            print(ifile)
+            input_files.append(ifile)
+            if laspy_majorversion == 1:
+                inlas = file.File(ifile, mode='r')
+            elif laspy_majorversion == 2:
+                inlas = laspy.read(ifile)
+            print('Read {} using laspy major version: {}'.format(ifile, laspy_majorversion))
 
-    # clean up memory
-    del(dat_ground,dat_veg)
+            # compute vegetation indices
+            if veg_indices=='rgb' or veg_indices is None:
+                globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = veg_rgb(inlas)
+            else:
+                globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = vegidx(inlas, indices=veg_indices, geom_metrics=geometry_metrics)
+            
+            names_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_names')
+            dat_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_dat')
 
-    # add a "veglab" column to represent vegetation labels
-    names_ground = np.append(names_ground, 'veglab')
-    names_veg = np.append(names_veg, 'veglab')
+            # transpose the data
+            globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = np.transpose(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'])
 
-    # clean up workspace/memory
-    if laspy_majorversion == 1:
-        try:
-            fground.close()
-            fveg.close()
-        except Exception as e:
-            print(e)
-            pass
+            # populate the dictionary of point counts
+            if globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'].shape[0] < min_pts:
+                min_pts = globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'].shape[0]
+
+            # append the names with the vegetation label column name
+            globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'] = np.append(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], 'veglab')
+            
+            print(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'])
+            if laspy_majorversion == 1:
+                inlas.close()
+                print('\n\nERROR: Unable to close {}\n\n'.format(inlas))
+            del(inlas)
+    except Exception as e:
+        sys.exit(e)
 
     # OPTIONAL: print number of points in each input dense point cloud
     if verbose:
-        print('# of ground points     = {}'.format(ground_sample.shape))
-        print('# of vegetation points = {}'.format(veg_sample.shape))
+        print('\nPoint cloud counts:')
+        [print('{} contains {} points'.format(input_files[i], globals()[v].shape)) for i,v in enumerate(dat_list)]
 
-    # sample larger dat to match size of smaller dat
-    if class_imbalance_corr:
-        if ground_sample.shape[0]>veg_sample.shape[0]:
-            ground_sample = train_test_split(ground_sample, train_size=veg_sample.shape[0]/ground_sample.shape[0], random_state=42)[0]
-        elif veg_sample.shape[0]>ground_sample.shape[0]:
-            veg_sample = train_test_split(veg_sample, train_size=ground_sample.shape[0]/veg_sample.shape[0], random_state=42)[0]
+    dat_dict = {}
 
-    # sub-sample the vegetation and no-vegetation data to cut the data volume
-    if data_reduction<1.0:
-        # data reduction to the user-specified proportion
-        ground_sample = train_test_split(ground_sample, train_size=data_reduction_percent, random_state=42)[0]  # sub-sample no-veg points
-        veg_sample = train_test_split(veg_sample, train_size=data_reduction_percent, random_state=42)[0]  # sub-sample veg points
+    for i,d in enumerate(dat_list):
+        print('\nSplitting {}:'.format(input_files[i]))
+        # sample larger dat to match size of smaller dat
+        if class_imbalance_corr:
+            if globals()[d].shape[0] > min_pts:
+                globals()[d] = train_test_split(globals()[d], train_size=min_pts/globals()[d].shape[0], random_state=42)[0]
+        
+        # sub-sample the data to cut the data volume
+        if data_reduction < 1.0:
+            globals()[d] = train_test_split(globals()[d], train_size=data_reduction, random_state=42)[0]
+        
+        # convert the samples to Pandas DataFrame objects
+        globals()[d] = pd.DataFrame(globals()[d].astype('float32'), columns=globals()[names_list[i]][:-1])
+        globals()[d]['veglab'] = np.full(shape=globals()[d].shape[0], fill_value=i, dtype=np.float32)
 
-    # convert each of the samples to pandas.DataFrame objects for subsampling
-    pd_ground = pd.DataFrame(ground_sample.astype('float32'), columns=names_veg[:-1])
-    pd_veg = pd.DataFrame(veg_sample.astype('float32'), columns=names_veg[:-1])
+        # write dictionary of data name and corresponding numerical value
+        dat_dict[input_files[i]] = i
 
-    # append vegetation label column to pd.DataFrame
-    pd_ground['veglab'] = np.full(shape=veg_sample.shape[0], fill_value=0, dtype=np.float32)
-    pd_veg['veglab'] = np.full(shape=ground_sample.shape[0], fill_value=1, dtype=np.float32)
+        # split the data to training, validation, and evaluation
+        traind,evald = train_test_split(globals()[d], train_size=training_split, random_state=42)
+        traind,vald = train_test_split(traind, train_size=training_split, random_state=42)
 
-    # clean up memory/workspace
-    del(ground_sample, veg_sample)
+        # concatenate new training data to dataframe
+        if not 'trainout' in globals():
+            globals()['trainout'] = traind
+        else:
+            globals()['trainout'] = pd.concat([globals()['trainout'],traind], ignore_index=True)
+        
+        # concatenate new validation data to dataframe
+        if not 'valout' in globals():
+            globals()['valout'] = vald
+        else:
+            globals()['valout'] = pd.concat([globals()['valout'],vald], ignore_index=True)
+        
+        # concatenate new evaluation data to dataframe
+        if not 'evalout' in globals():
+            globals()['evalout'] = vald
+        else:
+            globals()['evalout'] = pd.concat([globals()['evalout'],evald], ignore_index=True)
 
-    # training, testing, and validation splitting
-    train_g,test_g,train_v,test_v = train_test_split(pd_ground, pd_veg, train_size=training_split, random_state=42)
-    train_g,val_g,train_v,val_v = train_test_split(train_g, train_v, train_size=training_split, random_state=42)
+        if verbose:
+            print('    {} training points'.format(len(traind)))
+            print('    {} validation points'.format(len(vald)))
+            print('    {} evaluation points'.format(len(evald)))
 
-    # concatenate ground and veg pd.DataFrame objects
-    trainout = pd.concat([train_g,train_v], ignore_index=True)
-    testout = pd.concat([test_g,test_v], ignore_index=True)
-    valout = pd.concat([val_g,val_v], ignore_index=True)
+        # clean up memory
+        del(traind,vald,evald)
 
-    # clean up memory/workspace
-    del(train_g,train_v,test_g,test_v,val_g,val_v)
-
-    # OPTIONAL: print info about training, testing, validation split numbers
-    if verbose:
-        print('  {} train examples'.format(len(trainout)))
-        print('  {} validation examples'.format(len(valout)))
-        print('  {} test examples'.format(len(testout)))
-
-    # return the train, test, and validationn objects
+    # return the train, validation, and evaluation objects
     # all outputs are pandas.DataFrame objects WITH an additional veglab attribute
-    return trainout,testout,valout
+    return trainout, valout, evalout, dat_dict
 
 
 # A utility method to create a tf.data dataset from a Pandas Dataframe
@@ -376,10 +391,11 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
         else:
             outdat_pred = m.predict(rgb_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
 
-        print('threshold_vals = {}'.format(threshold_vals))
+        # print('threshold_vals = {}'.format(threshold_vals))
         if not isinstance(threshold_vals, list):
-            threshold_vals = [threshold_vals]
-        for threshold_val in threshold_vals:
+            threshold_vals = [v for v in threshold_vals]
+        print('threshold_vals = {}'.format(threshold_vals))
+        for threshold_val in list(threshold_vals):
             outdat_pred_reclass = outdat_pred
             outdat_pred_reclass[(outdat_pred_reclass >= threshold_val)] = 4  # reclass veg. points
             outdat_pred_reclass[(outdat_pred_reclass < threshold_val)] = 2   # reclass no veg. points
