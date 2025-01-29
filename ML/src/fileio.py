@@ -391,10 +391,11 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
         else:
             outdat_pred = m.predict(rgb_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
 
-        print('threshold_vals = {}'.format(threshold_vals))
+        # print('threshold_vals = {}'.format(threshold_vals))
         if not isinstance(threshold_vals, list):
-            threshold_vals = [threshold_vals]
-        for threshold_val in threshold_vals:
+            threshold_vals = [v for v in threshold_vals]
+        print('threshold_vals = {}'.format(threshold_vals))
+        for threshold_val in list(threshold_vals):
             outdat_pred_reclass = outdat_pred
             outdat_pred_reclass[(outdat_pred_reclass >= threshold_val)] = 4  # reclass veg. points
             outdat_pred_reclass[(outdat_pred_reclass < threshold_val)] = 2   # reclass no veg. points

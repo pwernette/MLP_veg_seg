@@ -398,7 +398,11 @@ def main(default_values):
     
     if not 'all' in default_values.veg_index:
         print('{} points exceed threshold value ({}) for index ({})'.format(len(las_obj['classification'][las_obj[default_values.veg_index] >= float(default_values.veg_threshold)]), default_values.veg_threshold, default_values.veg_index))
-        las_obj['classification'][las_obj[default_values.veg_index] >= float(default_values.veg_threshold)] = 4
+        
+        if 'exb' in default_values.veg_index:
+            las_obj['classification'][las_obj[default_values.veg_index] <= float(default_values.veg_threshold)] = 4
+        else:
+            las_obj['classification'][las_obj[default_values.veg_index] >= float(default_values.veg_threshold)] = 4
         
         default_values.file_out = os.path.join(default_values.rootdir,os.path.basename(default_values.file_in).replace('.laz', '_'+str(default_values.veg_index)+'_'+str(default_values.veg_threshold)+'.laz'))
     else:
