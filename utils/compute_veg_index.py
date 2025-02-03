@@ -404,10 +404,10 @@ def main(default_values):
         else:
             las_obj['classification'][las_obj[default_values.veg_index] >= float(default_values.veg_threshold)] = 4
         
-        default_values.file_out = os.path.join(default_values.rootdir,os.path.basename(default_values.file_in).replace('.laz', '_'+str(default_values.veg_index)+'_'+str(default_values.veg_threshold)+'.laz'))
+        default_values.file_out = os.path.join(default_values.rootdir,os.path.basename(default_values.file_in).replace(os.path.splitext(default_values.file_in)[1], '_'+str(default_values.veg_index)+'_'+str(default_values.veg_threshold)+'.laz'))
         print('\nUpdated output filename to: {}'.format(default_values.file_out))
     else:
-        default_values.file_out = os.path.join(default_values.rootdir,os.path.basename(default_values.file_in).replace('.laz', '_all.laz'))
+        default_values.file_out = os.path.join(default_values.rootdir,os.path.basename(default_values.file_in).replace(os.path.splitext(default_values.file_in)[1], '_'+str(default_values.veg_index)+'.laz'))
         print('\nUpdated output filename to: {}'.format(default_values.file_out))
     
     # write out LAZ file
