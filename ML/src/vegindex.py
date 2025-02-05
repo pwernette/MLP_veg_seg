@@ -106,8 +106,15 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
     '''
     # start timer
     start_time = time.time()
+
+    # check that red, green, and blue data is present
+    assert 'red' in list(lasfileobj.point_format.dimension_names)
+    assert 'green' in list(lasfileobj.point_format.dimension_names)
+    assert 'blue' in list(lasfileobj.point_format.dimension_names)
+
     # extract r, g, and b bands from the point cloud
     r,g,b = lasfileobj.red,lasfileobj.green,lasfileobj.blue
+
     # check for color depth
     if np.amax(r)>256 or np.amax(g)>256 or np.amax(b)>256:
         colordepth = 16
@@ -274,7 +281,7 @@ def veg_rgb(lasfileobj, colordepth=8):
     # start timer
     start_time = time.time()
     # extract r, g, and b bands from the point cloud
-    r,g,b = lasfileobj.red,lasfileobj.green,lasfileobj.blue
+    r,g,b = lasfileobj['red'],lasfileobj['green'],lasfileobj['blue']
     # check for color depth
     if np.amax(r)>256 or np.amax(g)>256 or np.amax(b)>256:
         colordepth = 16

@@ -126,6 +126,12 @@ def calc_index(las_object, indices=['all'], colordepth=8):
     '''
     # start timer
     start_time = time.time()
+
+    # check that red, green, and blue data is present
+    assert 'red' in list(las_object.point_format.dimension_names)
+    assert 'green' in list(las_object.point_format.dimension_names)
+    assert 'blue' in list(las_object.point_format.dimension_names)
+
     # extract r, g, and b bands from the point cloud
     r,g,b = las_object.red,las_object.green,las_object.blue
     # check for color depth

@@ -173,7 +173,7 @@ if __name__ == '__main__':
         foo.create_widgets(defs)
         foo.mainloop()
 
-    try:
-        main(default_values=defs)
-    except:
-        traceback.print_exc()
+    # try:
+    main(default_values=defs)
+    # except:
+    #     traceback.print_exc()

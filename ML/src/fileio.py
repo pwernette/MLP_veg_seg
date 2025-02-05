@@ -129,42 +129,42 @@ def las2split(infile_pcs,
     dat_list = []
     min_pts = 999999999999999
 
-    try:
-        for ifile in infile_pcs:
-            print(ifile)
-            input_files.append(ifile)
-            if laspy_majorversion == 1:
-                inlas = file.File(ifile, mode='r')
-            elif laspy_majorversion == 2:
-                inlas = laspy.read(ifile)
-            print('Read {} using laspy major version: {}'.format(ifile, laspy_majorversion))
+    # try:
+    for ifile in infile_pcs:
+        print(ifile)
+        input_files.append(ifile)
+        if laspy_majorversion == 1:
+            inlas = file.File(ifile, mode='r')
+        elif laspy_majorversion == 2:
+            inlas = laspy.read(ifile)
+        print('Read {} using laspy major version: {}'.format(ifile, laspy_majorversion))
 
-            # compute vegetation indices
-            if veg_indices=='rgb' or veg_indices is None:
-                globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = veg_rgb(inlas)
-            else:
-                globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = vegidx(inlas, indices=veg_indices, geom_metrics=geometry_metrics)
-            
-            names_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_names')
-            dat_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_dat')
+        # compute vegetation indices
+        if veg_indices=='rgb' or veg_indices is None:
+            globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = veg_rgb(inlas)
+        else:
+            globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = vegidx(inlas, indices=veg_indices, geom_metrics=geometry_metrics)
+        
+        names_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_names')
+        dat_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_dat')
 
-            # transpose the data
-            globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = np.transpose(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'])
+        # transpose the data
+        globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = np.transpose(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'])
 
-            # populate the dictionary of point counts
-            if globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'].shape[0] < min_pts:
-                min_pts = globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'].shape[0]
+        # populate the dictionary of point counts
+        if globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'].shape[0] < min_pts:
+            min_pts = globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'].shape[0]
 
-            # append the names with the vegetation label column name
-            globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'] = np.append(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], 'veglab')
-            
-            print(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'])
-            if laspy_majorversion == 1:
-                inlas.close()
-                print('\n\nERROR: Unable to close {}\n\n'.format(inlas))
-            del(inlas)
-    except Exception as e:
-        sys.exit(e)
+        # append the names with the vegetation label column name
+        globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'] = np.append(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], 'veglab')
+        
+        print(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'])
+        if laspy_majorversion == 1:
+            inlas.close()
+            print('\n\nERROR: Unable to close {}\n\n'.format(inlas))
+        del(inlas)
+    # except Exception as e:
+    #     sys.exit(e)
 
     # OPTIONAL: print number of points in each input dense point cloud
     if verbose:
@@ -391,9 +391,16 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
         else:
             outdat_pred = m.predict(rgb_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
 
-        # print('threshold_vals = {}'.format(threshold_vals))
+        print('threshold_vals = {}'.format(threshold_vals))
         if not isinstance(threshold_vals, list):
-            threshold_vals = [v for v in threshold_vals]
+            try:
+                threshold_vals = [v for v in threshold_vals]
+            except:
+                try:
+                    threshold_vals = list(threshold_vals)
+                except:
+                    print('No conversion of the threshold_values object to list took place.')
+                    pass
         print('threshold_vals = {}'.format(threshold_vals))
         for threshold_val in list(threshold_vals):
             outdat_pred_reclass = outdat_pred
