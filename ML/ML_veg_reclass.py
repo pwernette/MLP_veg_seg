@@ -96,13 +96,15 @@ def main(default_values, verbose=True):
     # if default_values.reclassfile == 'NA':
     #     default_values.reclassfile = getfile(window_title='Select point cloud to reclassify')
 
+    print('\nRECLASSIFICATION THRESHOLD(S) = {}'.format(float(default_values.reclass_thresholds)))
+
     # if the reclass model is already a list of models, then proceed
     if isinstance(reclassmodel, list):
         predict_reclass_write(default_values.reclassfile,
                                 reclassmodel,
                                 threshold_vals=default_values.reclass_thresholds,
-                                batch_sz=default_values.training_batch_size,
-                                ds_cache=default_values.training_cache,
+                                # batch_sz=default_values.training_batch_size,
+                                # ds_cache=default_values.training_cache,
                                 geo_metrics=geomet,
                                 geom_rad=default_values.geometry_radius)
     # else if the reclass model is not a list of models, then convert it to a
@@ -112,8 +114,8 @@ def main(default_values, verbose=True):
         predict_reclass_write(default_values.reclassfile,
                                 [reclassmodel],
                                 threshold_vals=default_values.reclass_thresholds,
-                                batch_sz=default_values.training_batch_size,
-                                ds_cache=default_values.training_cache,
+                                # batch_sz=default_values.training_batch_size,
+                                # ds_cache=default_values.training_cache,
                                 geo_metrics=geomet,
                                 geom_rad=default_values.geometry_radius)
         #except Exception as e:

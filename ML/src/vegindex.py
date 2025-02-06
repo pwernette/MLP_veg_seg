@@ -104,13 +104,15 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
             located platform and aerial photography for documentation of
             grazing impacts on wheat. Geocarto Int. 16, 65–70.
     '''
+    dim_names = list(lasfileobj.point_format.dimension_names)
+
     # start timer
     start_time = time.time()
 
     # check that red, green, and blue data is present
-    assert 'red' in list(lasfileobj.point_format.dimension_names)
-    assert 'green' in list(lasfileobj.point_format.dimension_names)
-    assert 'blue' in list(lasfileobj.point_format.dimension_names)
+    assert 'red' in dim_names
+    assert 'green' in dim_names
+    assert 'blue' in dim_names
 
     # extract r, g, and b bands from the point cloud
     r,g,b = lasfileobj.red,lasfileobj.green,lasfileobj.blue
@@ -118,58 +120,44 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
     # check for color depth
     if np.amax(r)>256 or np.amax(g)>256 or np.amax(b)>256:
         colordepth = 16
-    # normalize R, G, and B bands
+    ''' normalize R, G, and B bands '''
+    # add extra bytes fields for normalized RGB
+    if not 'rnorm' in dim_names:
+        lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="rnorm",
+                type=np.float32,
+                description="red_normalized"
+                ))
+    if not 'gnorm' in dim_names:
+        lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="gnorm",
+                type=np.float32,
+                description="green_normalized"
+                ))
+    if not 'bnorm' in dim_names:
+        lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="bnorm",
+                type=np.float32,
+                description="blue_normalized"
+                ))
     # NOTE: includes conversion of r, g, b to np.float32 data type
-    r,g,b = normBands(r,g,b, depth=colordepth)
-    # use n-dimensional numpy array as a data container for
-    #  1) output values
-    #  2) output attribute names
-    pdindex = np.empty(shape=(0,(len(r[0]))), dtype=np.float32)
-    pdindexnames = np.empty(shape=(0,0))
-    # scale x, y, and z coordinates
-    if ('x' in indices) or ('coords' in indices):
-        xs = scale_dims(lasfileobj)[0]
-        pdindex = np.append(pdindex, [xs], axis=0)
-        pdindexnames = np.append(pdindexnames, 'x')
-    if ('y' in indices) or ('coords' in indices):
-        ys = scale_dims(lasfileobj)[1]
-        pdindex = np.append(pdindex, [ys], axis=0)
-        pdindexnames = np.append(pdindexnames, 'y')
-    if ('z' in indices) or ('coords' in indices):
-        zs = scale_dims(lasfileobj)[2]
-        pdindex = np.append(pdindex, [zs], axis=0)
-        pdindexnames = np.append(pdindexnames, 'z')
+    lasfileobj.rnorm,lasfileobj.gnorm,lasfileobj.bnorm = normBands(r,g,b, depth=colordepth)
+
     # if standard deviation is specified as a geometric metric, then
     # compute the sd using a pointwise approach
     # NOTE: This computation is very time and resource expensive.
     if ('sd' in geom_metrics) or ('sd' in indices):
         # compute 3D standard deviation
         starttime = time.time()
-        xs = scale_dims(lasfileobj)[0]
-        ys = scale_dims(lasfileobj)[1]
-        zs = scale_dims(lasfileobj)[2]
-        sd3d = calc_3d_sd(np.array([xs, ys, zs]).transpose(), rad=geom_radius)
-        print("Time to compute SD = {}".format(time.time()-starttime))
-        # append 3D sd to output array
-        pdindex = np.append(pdindex, [sd3d], axis=0)
-        # clean up workspace memory
-        del(xs,ys,zs,sd3d)
-        pdindexnames = np.append(pdindexnames, 'sd')
-    # since not all users may require R, G, B values, these are optional but
-    # default variables
-    if ('r' in indices) or ('rgb' in indices) or ('simple' in indices) or ('all' in indices):
-        pdindex = np.append(pdindex, r, axis=0)
-        pdindexnames = np.append(pdindexnames, 'r')
-    if ('g' in indices) or ('rgb' in indices) or ('simple' in indices) or ('all' in indices):
-        pdindex = np.append(pdindex, g, axis=0)
-        pdindexnames = np.append(pdindexnames, 'g')
-    if ('b' in indices) or ('rgb' in indices) or ('simple' in indices) or ('all' in indices):
-        pdindex = np.append(pdindex, b, axis=0)
-        pdindexnames = np.append(pdindexnames, 'b')
-    # option to include intensty as a variable
-    # if ('intensity' in indices) or ('all' in indices):
-    #     pdindex = np.append(pdindex, lasfileobj.intensity, axis=0)
-    #     pdindexnames = np.append(pdindexnames, 'intensity')
+        if not 'sd3d' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="sd3d",
+                type=np.float32,
+                description="standard_deviation"
+                ))
+        lasfileobj.sd3d = calc_3d_sd(np.array([lasfileobj.x, lasfileobj.y, lasfileobj.z]).transpose(), rad=geom_radius)
+        print("Time to compute 3D Standard Deviation = {}".format(time.time()-starttime))
+
     '''
     Compute vegetation indices based on user specifications
 
@@ -179,68 +167,100 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
             multidimensional array
         3) append the vegetation index name to the output array
     '''
-    if ('all' in indices) or ('exr' in indices) or ('exgr' in indices) or ('simple' in indices):
-        exr = 1.4*b-g
-        pdindex = np.append(pdindex, exr, axis=0)
-        pdindexnames = np.append(pdindexnames, 'exr')
-    if ('all' in indices) or ('exg' in indices) or ('exgr' in indices) or ('simple' in indices):
-        exg = 2*g-r-b
-        pdindex = np.append(pdindex, exg, axis=0)
-        pdindexnames = np.append(pdindexnames, 'exg')
-    if ('all' in indices) or ('exb' in indices) or ('simple' in indices):
-        exb = 1.4*r-g
-        pdindex = np.append(pdindex, exb, axis=0)
-        del(exb)
-        pdindexnames = np.append(pdindexnames, 'exb')
-    if ('all' in indices) or ('exgr' in indices) or ('simple' in indices):
-        exgr = exg-exr
-        pdindex = np.append(pdindex, exgr, axis=0)
-        del(exg,exr,exgr)
-        pdindexnames = np.append(pdindexnames, 'exgr')
+    if ('all' in indices) or ('exr' in indices):
+        if not 'exr' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="exr",
+                type=np.float32,
+                description="exr"
+                ))
+        lasfileobj.exr = 1.4*lasfileobj.bnorm-lasfileobj.gnorm
+    if ('all' in indices) or ('exg' in indices):
+        if not 'exg' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="exg",
+                type=np.float32,
+                description="exg"
+                ))
+        lasfileobj.exg = 2*lasfileobj.gnorm-lasfileobj.rnorm-lasfileobj.bnorm
+    if ('all' in indices) or ('exb' in indices):
+        if not 'exb' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="exb",
+                type=np.float32,
+                description="exb"
+                ))
+        lasfileobj.exb = 1.4*r-g
+    if ('all' in indices) or ('exgr' in indices):
+        if not 'exgr' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="exgr",
+                type=np.float32,
+                description="exgr"
+                ))
+        lasfileobj.exgr = (2*lasfileobj.gnorm-lasfileobj.rnorm-lasfileobj.bnorm)-(1.4*lasfileobj.bnorm-lasfileobj.gnorm)
     if ('all' in indices) or ('ngrdi' in indices):
-        ngrdi = np.divide((g-r), (r+g),
-                          out=np.zeros_like((g-r)),
-                          where=(g+r)!=np.zeros_like(g))
-        pdindex = np.append(pdindex, ngrdi, axis=0)
-        del(ngrdi)
-        pdindexnames = np.append(pdindexnames, 'ngrdi')
+        if not 'ngrdi' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="ngrdi",
+                type=np.float32,
+                description="ngrdi"
+                ))
+        lasfileobj.ngrdi = np.divide((lasfileobj.gnorm-lasfileobj.rnorm), (lasfileobj.rnorm+lasfileobj.gnorm),
+                          out=np.zeros_like((lasfileobj.gnorm-lasfileobj.rnorm)),
+                          where=(lasfileobj.gnorm+lasfileobj.rnorm)!=np.zeros_like(lasfileobj.gnorm))
     if ('all' in indices) or ('mgrvi' in indices):
-        mgrvi = np.divide((np.power(g,2)-np.power(r,2)),
-                          (np.power(r,2)+np.power(g,2)),
-                          out=np.zeros_like((g-r)),
-                          where=(np.power(g,2)+np.power(r,2))!=0)
-        pdindex = np.append(pdindex, mgrvi, axis=0)
-        del(mgrvi)
-        pdindexnames = np.append(pdindexnames, 'mgrvi')
+        if not 'mgrvi' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="mgrvi",
+                type=np.float32,
+                description="mgrvi"
+                ))
+        lasfileobj.mgrvi = np.divide((np.power(lasfileobj.gnorm,2)-np.power(lasfileobj.rnorm,2)),
+                          (np.power(lasfileobj.rnorm,2)+np.power(lasfileobj.gnorm,2)),
+                          out=np.zeros_like((lasfileobj.gnorm-lasfileobj.rnorm)),
+                          where=(np.power(lasfileobj.gnorm,2)+np.power(lasfileobj.rnorm,2))!=0)
     if ('all' in indices) or ('gli' in indices):
-        gli = np.divide(2*g-r-b, 2*g+r+b,
-                        out=np.zeros_like((2*g-r-b)),
-                        where=(2*g+r+b)!=0)
-        pdindex = np.append(pdindex, gli, axis=0)
-        del(gli)
-        pdindexnames = np.append(pdindexnames, 'gli')
+        if not 'gli' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="gli",
+                type=np.float32,
+                description="gli"
+                ))
+        lasfileobj.gli = np.divide(2*lasfileobj.gnorm-lasfileobj.rnorm-lasfileobj.bnorm, 2*lasfileobj.gnorm+lasfileobj.rnorm+lasfileobj.bnorm,
+                        out=np.zeros_like((2*lasfileobj.gnorm-lasfileobj.rnorm-lasfileobj.bnorm)),
+                        where=(2*lasfileobj.gnorm+lasfileobj.rnorm+lasfileobj.bnorm)!=0)
     if ('all' in indices) or ('rgbvi' in indices):
-        rgbvi = np.divide((np.power(g,2)-b*r),
-                          (np.power(g,2)+b*r),
-                          out=np.zeros_like((np.power(g,2)-b*r)),
-                          where=(np.power(g,2)+b*r)!=0)
-        pdindex = np.append(pdindex, rgbvi, axis=0)
-        del(rgbvi)
-        pdindexnames = np.append(pdindexnames, 'rgbvi')
+        if not 'rgbvi' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="rgbvi",
+                type=np.float32,
+                description="rgbvi"
+                ))
+        lasfileobj.rgbvi = np.divide((np.power(lasfileobj.gnorm,2)-lasfileobj.bnorm*lasfileobj.rnorm),
+                          (np.power(lasfileobj.gnorm,2)+lasfileobj.bnorm*lasfileobj.rnorm),
+                          out=np.zeros_like((np.power(lasfileobj.gnorm,2)-lasfileobj.bnorm*lasfileobj.rnorm)),
+                          where=(np.power(lasfileobj.gnorm,2)+lasfileobj.bnorm*lasfileobj.rnorm)!=0)
     if ('all' in indices) or ('ikaw' in indices):
-        ikaw = np.divide((r-b), (r+b),
-                         out=np.zeros_like((r-b)),
-                         where=(r+b)!=0)
-        pdindex = np.append(pdindex, ikaw, axis=0)
-        del(ikaw)
-        pdindexnames = np.append(pdindexnames, 'ikaw')
+        if not 'ikaw' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="ikaw",
+                type=np.float32,
+                description="ikaw"
+                ))
+        lasfileobj.ikaw = np.divide((lasfileobj.rnorm-lasfileobj.bnorm), (lasfileobj.rnorm+lasfileobj.bnorm),
+                         out=np.zeros_like((lasfileobj.rnorm-lasfileobj.bnorm)),
+                         where=(lasfileobj.rnorm+lasfileobj.bnorm)!=0)
     if ('all' in indices) or ('gla' in indices):
-        gla = np.divide((2*g-r-b), (2*g+r+b),
-                        out=np.zeros_like((2*g-r-b)),
-                        where=(2*g+r+b)!=0)
-        pdindex = np.append(pdindex, gla, axis=0)
-        del(gla)
-        pdindexnames = np.append(pdindexnames, 'gla')
+        if not 'gla' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="gla",
+                type=np.float32,
+                description="gla"
+                ))
+        lasfileobj.gla = np.divide((2*lasfileobj.gnorm-lasfileobj.rnorm-lasfileobj.bnorm), (2*lasfileobj.gnorm+lasfileobj.rnorm+lasfileobj.bnorm),
+                        out=np.zeros_like((2*lasfileobj.gnorm-lasfileobj.rnorm-lasfileobj.bnorm)),
+                        where=(2*lasfileobj.gnorm+lasfileobj.rnorm+lasfileobj.bnorm)!=0)
     '''
     Use vegetation indices names index to generate a dictionary
     (indexnamesdict) that can be used to reference the appropriate
@@ -252,11 +272,10 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
         following to access the X coordinates:
             pdindex[indexnames['x']]
     '''
-    print('Computed indices: {}'.format(pdindexnames))
+    print('Computed indices: {}'.format(indices))
     print('  Computation time: {}s'.format((time.time()-start_time)))
-    return pdindexnames,pdindex
-#     indexnamesdict = dict((j,i) for i,j in enumerate(pdindexnames))
-#     return indexnamesdict,pdindex
+    
+    return lasfileobj
 
 
 def veg_rgb(lasfileobj, colordepth=8):
@@ -278,38 +297,39 @@ def veg_rgb(lasfileobj, colordepth=8):
         las or laz file object (from laspy) to this function.
         r, g, and b values are normalized within this updated function (20210801).
     '''
+    dim_names = list(lasfileobj.point_format.dimension_names)
+
     # start timer
     start_time = time.time()
+
+    # check that red, green, and blue data is present
+    assert 'red' in dim_names
+    assert 'green' in dim_names
+    assert 'blue' in dim_names
+
     # extract r, g, and b bands from the point cloud
-    r,g,b = lasfileobj['red'],lasfileobj['green'],lasfileobj['blue']
+    r,g,b = lasfileobj.red,lasfileobj.green,lasfileobj.blue
     # check for color depth
     if np.amax(r)>256 or np.amax(g)>256 or np.amax(b)>256:
         colordepth = 16
-    # normalize R, G, and B bands
+    ''' normalize R, G, and B bands '''
+    # add extra bytes fields for normalized RGB
+    lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+            name="rnorm",
+            type=np.float32,
+            description="red_normalized"
+            ))
+    lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+            name="gnorm",
+            type=np.float32,
+            description="green_normalized"
+            ))
+    lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+            name="bnorm",
+            type=np.float32,
+            description="blue_normalized"
+            ))
     # NOTE: includes conversion of r, g, b to np.float32 data type
-    r,g,b = normBands(r,g,b, depth=colordepth)
-    # use n-dimensional numpy array as a data container for
-    #  1) output values
-    #  2) output attribute names
-    pdindex = np.empty(shape=(0,(len(r[0]))), dtype=np.float32)
-    pdindexnames = np.empty(shape=(0,0))
-    # scale z coordinates
-    # zs = scale_dims(lasfileobj)[2]
-    # pdindex = np.append(pdindex, [zs], axis=0)
-    # pdindexnames = np.append(pdindexnames, 'z')
+    lasfileobj.rnorm,lasfileobj.gnorm,lasfileobj.bnorm = normBands(lasfileobj.red,lasfileobj.green,lasfileobj.blue, depth=colordepth)
 
-    # add red values
-    pdindex = np.append(pdindex, r, axis=0)
-    pdindexnames = np.append(pdindexnames, 'r')
-    # add green values
-    pdindex = np.append(pdindex, g, axis=0)
-    pdindexnames = np.append(pdindexnames, 'g')
-    # add blue values
-    pdindex = np.append(pdindex, b, axis=0)
-    pdindexnames = np.append(pdindexnames, 'b')
-    # option to include intensty as a variable
-    # if ('intensity' in indices) or ('all' in indices):
-    #     pdindex = np.append(pdindex, lasfileobj.intensity, axis=0)
-    #     pdindexnames = np.append(pdindexnames, 'intensity')
-
-    return pdindexnames,pdindex
+    return lasfileobj

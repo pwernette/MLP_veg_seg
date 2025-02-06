@@ -366,7 +366,6 @@ def calc_index(las_object, indices=['all'], colordepth=8):
     '''
     # print('Values and indices: {}'.format(pdindexnames))
     # print('    Computation time: {}s'.format((time.time()-start_time)))
-    # return pdindexnames,pdindex
     
     return las_object
 

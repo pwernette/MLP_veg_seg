@@ -74,7 +74,7 @@ class App(tk.Tk):
         rowplacement += 1
 
         # ground points training file
-        lab = Label(self, text='Trainin Point Clouds')
+        lab = Label(self, text='Training Point Clouds')
         lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
         # increase the row by 1
         rowplacement += 1
@@ -104,15 +104,15 @@ class App(tk.Tk):
         # increase the row by 1
         rowplacement += 1
 
-        # model inputs
-        lab = Label(self, text='Model Inputs')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        model_inputs = Text(self, height=1, width=50)
-        model_inputs.insert(tk.END, str(default_arguments_obj.model_inputs).replace(' ','').replace('[','').replace(']',''))
-        model_inputs.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
+        # # model inputs
+        # lab = Label(self, text='Model Inputs')
+        # lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        # # get variable input
+        # model_inputs = Text(self, height=1, width=50)
+        # model_inputs.insert(tk.END, str(default_arguments_obj.model_inputs).replace(' ','').replace('[','').replace(']',''))
+        # model_inputs.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # # increase the row by 1
+        # rowplacement += 1
 
         # vegetation indices
         lab = Label(self, text='Vegetation Indices')
@@ -296,7 +296,7 @@ class App(tk.Tk):
 
         def getinput(self, default_arguments_obj):
             ''' sub-function to get inputs from GUI widget '''
-            # input ground points file
+            # input point cloud files
             print(filesin.get('1.0','end-1c'))
             if " " in filesin.get('1.0','end-1c'):
                 default_arguments_obj.filesin = list(filesin.get('1.0','end-1c').split('\n')[0].split(' '))
@@ -316,20 +316,21 @@ class App(tk.Tk):
                 default_arguments_obj.model_name = [x.strip(' ') for x in default_arguments_obj.model_name]
             elif not " " in model_name.get('1.0','end-1c'):
                 default_arguments_obj.model_name = model_name.get('1.0','end-1c').split('\n')[0]
-            # model inputs
-            if " " in model_inputs.get('1.0','end-1c'):
-                default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split())
-                default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
-            elif "," in model_inputs.get('1.0','end-1c'):
-                default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split(','))
-                default_arguments_obj.model_inputs = [x.replace("'",'') for x in default_arguments_obj.model_inputs]
-                default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
-            elif ";" in model_inputs.get('1.0','end-1c'):
-                default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split(';'))
-                default_arguments_obj.model_inputs = [x.replace("'",'') for x in default_arguments_obj.model_inputs]
-                default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
+            # # model inputs
+            # if " " in model_inputs.get('1.0','end-1c'):
+            #     default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split())
+            #     default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
+            # elif "," in model_inputs.get('1.0','end-1c'):
+            #     default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split(','))
+            #     default_arguments_obj.model_inputs = [x.replace("'",'') for x in default_arguments_obj.model_inputs]
+            #     default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
+            # elif ";" in model_inputs.get('1.0','end-1c'):
+            #     default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split(';'))
+            #     default_arguments_obj.model_inputs = [x.replace("'",'') for x in default_arguments_obj.model_inputs]
+            #     default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
+            
             # vegetation indices
-            default_arguments_obj.model_vegetation_indices = list(model_inputs.get('1.0','end-1c').replace("'",'').split('\n')[0].split(','))
+            default_arguments_obj.model_vegetation_indices = list(model_vegetation_indices.get('1.0','end-1c').replace("'",'').split('\n')[0].split(','))
             if 'rgb' in default_arguments_obj.model_vegetation_indices:
                 (default_arguments_obj.model_vegetation_indices).remove('rgb')
                 simplelist = ['r','g','b']
@@ -337,6 +338,21 @@ class App(tk.Tk):
                     if not s in default_arguments_obj.model_inputs:
                         default_arguments_obj.model_inputs = [s] + default_arguments_obj.model_inputs
                 default_arguments_obj.model_vegetation_indices = 'rgb'
+            if 'simple' in default_arguments_obj.model_inputs:
+                (default_arguments_obj.model_inputs).remove('simple')
+                simplelist = ['r','g','b','exr','exg','exb','exgr']
+                for s in simplelist:
+                    if not s in default_arguments_obj.model_inputs:
+                        default_arguments_obj.model_inputs = [s] + default_arguments_obj.model_inputs
+                default_arguments_obj.model_vegetation_indices = 'simple'
+            if 'all' in default_arguments_obj.model_inputs:
+                (default_arguments_obj.model_inputs).remove('all')
+                alllist = ['r','g','b','exr','exg','exb','exgr','ngrdi','mgrvi','gli','rgbvi','ikaw','gla']
+                for a in alllist:
+                    if not a in default_arguments_obj.model_inputs:
+                        default_arguments_obj.model_inputs = [a] + default_arguments_obj.model_inputs
+                default_arguments_obj.model_vegetation_indices = 'all'
+            
             # model nodes
             if " " in model_nodes.get('1.0','end-1c'):
                 default_arguments_obj.model_nodes = list(map(int,(model_nodes.get('1.0','end-1c').split('\n')[0].split(' '))))
@@ -415,7 +431,7 @@ class Args():
         #          8,16 --> 2 layer model with 8 nodes (L1) and 16 nodes (L2)
         #   model_dropout: probability of dropping out (i.e. not using) any node
         #   geometry_radius: 3D radius used to compute geometry information over
-        self.model_inputs = ['r','g','b']
+        self.model_inputs = []
         self.model_vegetation_indices = 'rgb'
         self.model_nodes = [8,8,8]
         self.model_dropout = 0.2
@@ -478,7 +494,7 @@ class Args():
                          type=str,
                          default='NA',
                          help='(optional) Specify the output model file name')
-        psr.add_argument('-vi','-index','-vegindex',
+        psr.add_argument('-v','-vi','-index','-vegindex',
                          dest='vegindex',
                          type=str,
                          default='rgb',
@@ -579,12 +595,8 @@ class Args():
             optionsargs['graphic user interface'] = self.gui
         if args.filesin:
             # input vegetation only dense cloud/point cloud
-            self.filesin = str(args.filesin)
+            self.filesin = list(map(str,str(args.filesin).replace(' ','').split(',')))
             optionsargs['training point cloud files'] = str(args.filesin)
-        if args.groundfile:
-            # input bare-Earth only dense cloud/point cloud
-            self.filein_ground = str(args.groundfile)
-            optionsargs['bare-Earth file'] = str(args.groundfile)
         if args.vegindex:
             # because the input argument is handled as a single string, we need
             # to strip the brackets, split by the delimeter, and then re-form it

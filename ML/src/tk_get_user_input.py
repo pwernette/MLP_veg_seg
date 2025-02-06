@@ -55,7 +55,7 @@ class App(tk.Tk):
         def browseFiles(intextbox, desc_text="Select a File"):
             ''' sub-function to open a file select browsing window '''
             # open a file select dialog window
-            filename = filedialog.askopenfilename(title=desc_text)
+            filename = filedialog.askopenfilenames(title=desc_text)
             # Change textbox contents
             intextbox.delete(1.0,"end")
             intextbox.insert(1.0, filename)
@@ -73,28 +73,20 @@ class App(tk.Tk):
         lab.grid(column=0, columnspan=3, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
         rowplacement += 1
 
-        # ground points training file
-        lab = Label(self, text='Ground Only Point Cloud (Training)')
+        # point cloud training files
+        lab = Label(self, text='Training Point Clouds')
         lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        filein_ground = Text(self, height=1, width=50)
-        filein_ground.insert(tk.END, default_arguments_obj.filein_ground)
-        filein_ground.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # create a browse files button to get input
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(filein_ground, 'Select NON-vegetation point cloud'))
-        button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
         # increase the row by 1
         rowplacement += 1
-
-        # vegetation points training file
-        lab = Label(self, text='Vegetation Only Point Cloud (Training)')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        filein_vegetation = Text(self, height=1, width=50)
-        filein_vegetation.insert(tk.END, default_arguments_obj.filein_vegetation)
-        filein_vegetation.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(filein_vegetation, 'Select vegetation point cloud'))
+        # get variable input
+        filesin = Text(self, height=10, width=50)
+        filesin.insert(tk.END, default_arguments_obj.filesin)
+        filesin.grid(column=0, row=rowplacement, columnspan=2, rowspan=10, sticky=W, padx=padxval, pady=padyval)
+        # create a browse files button to get input
+        button_explore = Button(self, text='Browse', command=lambda:browseFiles(filesin, 'Select training point clouds'))
         button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        rowplacement += 1
+        # increase the row by 1
+        rowplacement += 11
 
         # point cloud to reclassify
         lab = Label(self, text='Point Cloud to Reclassify')
@@ -124,23 +116,23 @@ class App(tk.Tk):
         lab = Label(self, text='Model Name')
         lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
         model_output_name = Text(self, height=1, width=50)
-        if default_arguments_obj.model_output_name == 'NA':
+        if default_arguments_obj.model_name == 'NA':
             model_output_name.insert(tk.END, 'model_'+str(default_arguments_obj.model_vegetation_indices).replace(' ','').replace('[','').replace(']','').replace("'","")+'_'+str(default_arguments_obj.model_nodes).replace(',','_').replace(' ','').replace('[','').replace(']',''))
         else:
-            model_output_name.insert(tk.END, default_arguments_obj.model_output_name)
+            model_output_name.insert(tk.END, default_arguments_obj.model_name)
         model_output_name.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
         # increase the row by 1
         rowplacement += 1
 
-        # model inputs
-        lab = Label(self, text='Model Inputs')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        model_inputs = Text(self, height=1, width=50)
-        model_inputs.insert(tk.END, str(default_arguments_obj.model_inputs).replace(' ','').replace('[','').replace(']',''))
-        model_inputs.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
+        # # model inputs
+        # lab = Label(self, text='Model Inputs')
+        # lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        # # get variable input
+        # model_inputs = Text(self, height=1, width=50)
+        # model_inputs.insert(tk.END, str(default_arguments_obj.model_inputs).replace(' ','').replace('[','').replace(']',''))
+        # model_inputs.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # # increase the row by 1
+        # rowplacement += 1
 
         # vegetation indices
         lab = Label(self, text='Vegetation Indices')
@@ -334,30 +326,41 @@ class App(tk.Tk):
 
         def getinput(self, default_arguments_obj):
             ''' sub-function to get inputs from GUI widget '''
-            # input ground points file
-            default_arguments_obj.filein_ground = filein_ground.get('1.0','end-1c').split('\n')[0]
-            # inputs vegetation points file
-            default_arguments_obj.filein_vegetation = filein_vegetation.get('1.0','end-1c').split('\n')[0]
+            # input point cloud files
+            print(filesin.get('1.0','end-1c'))
+            if " " in filesin.get('1.0','end-1c'):
+                default_arguments_obj.filesin = list(filesin.get('1.0','end-1c').split('\n')[0].split(' '))
+                default_arguments_obj.filesin = [r'{}'.format(x.strip(' ')) for x in default_arguments_obj.filesin]
+            if "," in filesin.get('1.0','end-1c'):
+                default_arguments_obj.filesin = list(filesin.get('1.0','end-1c').split('\n')[0].split(','))
+                default_arguments_obj.filesin = [x.replace("'",'') for x in default_arguments_obj.filesin]
+                default_arguments_obj.filesin = [r'{}'.format(x.strip(' ')) for x in default_arguments_obj.filesin]
+            elif ";" in filesin.get('1.0','end-1c'):
+                default_arguments_obj.filesin = list(filesin.get('1.0','end-1c').split('\n')[0].split(';'))
+                default_arguments_obj.filesin = [x.replace("'",'') for x in default_arguments_obj.filesin]
+                default_arguments_obj.filesin = [x.strip(' ') for x in default_arguments_obj.filesin]
+            print(default_arguments_obj.filesin)
             # input reclassification file
             default_arguments_obj.reclassfile = reclassfile.get('1.0','end-1c').split('\n')[0]
             # input saved model file
             # default_arguments_obj.model_file = model_file.get('1.0','end-1c').split('\n')[0]
             # model name
             if " " in model_output_name.get('1.0','end-1c'):
-                default_arguments_obj.model_output_name = model_output_name.get('1.0','end-1c').replace(' ','_').split('\n')[0]
-                default_arguments_obj.model_output_name = [x.strip(' ') for x in default_arguments_obj.model_output_name]
+                default_arguments_obj.model_name = model_output_name.get('1.0','end-1c').replace(' ','_').split('\n')[0]
+                default_arguments_obj.model_name = [x.strip(' ') for x in default_arguments_obj.model_output_name]
             elif not " " in model_output_name.get('1.0','end-1c'):
-                default_arguments_obj.model_output_name = model_output_name.get('1.0','end-1c').split('\n')[0]
-            # model inputs
-            if " " in model_inputs.get('1.0','end-1c'):
-                default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split())
-                default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
-            elif "," in model_inputs.get('1.0','end-1c'):
-                default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split(','))
-                default_arguments_obj.model_inputs = [x.replace("'",'') for x in default_arguments_obj.model_inputs]
-                default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
+                default_arguments_obj.model_name = model_output_name.get('1.0','end-1c').split('\n')[0]
+            # # model inputs
+            # if " " in model_inputs.get('1.0','end-1c'):
+            #     default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split())
+            #     default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
+            # elif "," in model_inputs.get('1.0','end-1c'):
+            #     default_arguments_obj.model_inputs = list(model_inputs.get('1.0','end-1c').split('\n')[0].split(','))
+            #     default_arguments_obj.model_inputs = [x.replace("'",'') for x in default_arguments_obj.model_inputs]
+            #     default_arguments_obj.model_inputs = [x.strip(' ') for x in default_arguments_obj.model_inputs]
+            
             # vegetation indices
-            default_arguments_obj.model_vegetation_indices = list(model_inputs.get('1.0','end-1c').replace("'",'').split('\n')[0].split(','))
+            default_arguments_obj.model_vegetation_indices = list(model_vegetation_indices.get('1.0','end-1c').replace("'",'').split('\n')[0].split(','))
             if 'rgb' in default_arguments_obj.model_vegetation_indices:
                 (default_arguments_obj.model_vegetation_indices).remove('rgb')
                 simplelist = ['r','g','b']
@@ -379,6 +382,7 @@ class App(tk.Tk):
                     if not a in default_arguments_obj.model_inputs:
                         default_arguments_obj.model_inputs = [a] + default_arguments_obj.model_inputs
                 default_arguments_obj.model_vegetation_indices = 'all'
+
             # model nodes
             if " " in model_nodes.get('1.0','end-1c'):
                 default_arguments_obj.model_nodes = list(map(int,(model_nodes.get('1.0','end-1c').split('\n')[0].split())))
@@ -419,9 +423,13 @@ class App(tk.Tk):
             default_arguments_obj.verbose_run = str_to_bool(verbose_run.get('1.0','end-1c').strip().split('\n')[0])
             # reclassification threshold(s)
             if " " in reclass_thresholds.get('1.0','end-1c'):
-                default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split())))
+                default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(' '))))
             elif "," in reclass_thresholds.get('1.0','end-1c'):
                 default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(','))))
+            elif ";" in reclass_thresholds.get('1.0','end-1c'):
+                default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(';'))))
+            else:
+                default_arguments_obj.reclass_thresholds = map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0]))
             # after getting all values, destroy the window
             self.destroy()
         # create, define, and place submit button
@@ -443,19 +451,17 @@ class Args():
         # to enable a graphic user interface, enable the 'gui' option
         self.gui = True
         # input files:
-        #   vegetation: input LAS/LAZ file containing only vegetation points
-        #   ground: input LAS/LAZ file containing only bare Earth points
+        #   filesin: input LAS/LAZ files containing points per each class
         #   reclassfile: input LAS/LAZ file to reclassify using the specified model
         # NOTE: If no filein_vegetation or filein_ground is/are specified, then the
         # program will default to requesting the one or both files that are missing
         # but required.
-        self.filein_vegetation = 'NA'
-        self.filein_ground = 'NA'
+        self.filesin = []
         self.reclassfile = 'NA'
         # model file used for reclassification
         # self.model_file = 'NA'
         # model name:
-        self.model_output_name = 'NA'
+        self.model_name = 'NA'
         # model inputs and vegetation indices of interest:
         #   model_inputs: list of input variables for model training and prediction
         #   model_vegetation_indices: list of vegetation indices to calculate
@@ -465,7 +471,7 @@ class Args():
         #          8,16 --> 2 layer model with 8 nodes (L1) and 16 nodes (L2)
         #   model_dropout: probability of dropping out (i.e. not using) any node
         #   geometry_radius: 3D radius used to compute geometry information over
-        self.model_inputs = ['r','g','b']
+        self.model_inputs = []
         self.model_vegetation_indices = 'rgb'
         self.model_nodes = [8,8,8]
         self.model_dropout = 0.2
@@ -475,7 +481,7 @@ class Args():
         #          of epochs specified by patience.
         #   patience: The number of epochs to monitor change. If there is no improvement
         #          greater than the value specified by delta, then training will stop.
-        self.model_early_stop_patience = 5
+        self.model_early_stop_patience = 15
         self.model_early_stop_delta = 0.001
         # for training:
         #   epoch: number of training epochs
@@ -519,14 +525,10 @@ class Args():
                          choices=['true','True','false','False','t','f'], 
                          default='true', 
                          help='Initialize the graphical user interface [default = true]')
-        psr.add_argument('-v','-veg','-vegfile',
-                         dest='vegfile',
+        psr.add_argument('-pcs','-pclouds','-pointclouds',
+                         dest='filesin',
                          type=str,
-                         help='Point cloud containing vegetation points only')
-        psr.add_argument('-g','-ground','-noveg','-groundfile',
-                         dest='groundfile',
-                         type=str,
-                         help='Point cloud containing bare-Earth points only')
+                         help='Training point clouds separated by class')
         psr.add_argument('-r','-reclass','-reclassfile',
                          dest='reclassfile',
                          type=str,
@@ -536,7 +538,7 @@ class Args():
                          type=str,
                          default='NA',
                          help='(optional) Specify the output model file name')
-        psr.add_argument('-vi','-index','-vegindex',
+        psr.add_argument('-v','-vi','-index','-vegindex',
                          dest='vegindex',
                          type=str,
                          default='rgb',
@@ -641,14 +643,10 @@ class Args():
             # graphic user interface option
             self.gui = str_to_bool(args.gui)
             optionsargs['graphic user interface'] = self.gui
-        if args.vegfile:
+        if args.filesin:
             # input vegetation only dense cloud/point cloud
-            self.filein_vegetation = str(args.vegfile)
-            optionsargs['vegetation file'] = str(args.vegfile)
-        if args.groundfile:
-            # input bare-Earth only dense cloud/point cloud
-            self.filein_ground = str(args.groundfile)
-            optionsargs['bare-Earth file'] = str(args.groundfile)
+            self.filesin = list(map(str,str(args.filesin).replace(' ','').split(',')))
+            optionsargs['training point cloud files'] = str(args.filesin)
         if args.reclassfile:
             # input file to reclassify
             self.reclassfile = str(args.reclassfile)

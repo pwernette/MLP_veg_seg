@@ -29,6 +29,7 @@ from .miscfx import *
 from .modelbuilder import *
 
 
+
 def getfile(window_title='Select File'):
     '''
     Function to open a dialog window where the user can select a single file.
@@ -86,7 +87,7 @@ def getmodelname():
     return(mname)
 
 def las2split(infile_pcs,
-                veg_indices=['rgb'], 
+                veg_indices=[], 
                 geometry_metrics=[],
                 training_split=0.7, 
                 class_imbalance_corr=True,
@@ -125,93 +126,103 @@ def las2split(infile_pcs,
     # open both ground and vegetation files
 
     input_files = []
-    names_list = []
     dat_list = []
     min_pts = 999999999999999
 
+    dat_dict = {}
+    class_val = 0
+
+    # get minimum number of points
+    for ifile in infile_pcs:
+        # open the file to access only the header
+        inhead = laspy.open(ifile)
+        # get the minimum number of points in all input point counts
+        if inhead.header.point_count < min_pts:
+            min_pts = inhead.header.point_count
+
     # try:
     for ifile in infile_pcs:
-        print(ifile)
+        # print(ifile)
         input_files.append(ifile)
         if laspy_majorversion == 1:
-            inlas = file.File(ifile, mode='r')
+            indat = file.File(ifile, mode='r')
         elif laspy_majorversion == 2:
-            inlas = laspy.read(ifile)
+            indat = laspy.read(ifile)
         print('Read {} using laspy major version: {}'.format(ifile, laspy_majorversion))
 
-        # compute vegetation indices
-        if veg_indices=='rgb' or veg_indices is None:
-            globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = veg_rgb(inlas)
+        # compute vegetation indices and generate dataframe
+        if veg_indices == 'rgb' or veg_indices is None:
+            indat = veg_rgb(indat)
         else:
-            globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = vegidx(inlas, indices=veg_indices, geom_metrics=geometry_metrics)
+            indat = vegidx(indat, 
+                           indices=veg_indices, 
+                           geom_metrics=geometry_metrics)
         
-        names_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_names')
-        dat_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_dat')
+        # names_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_names')
+        # dat_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_dat')
 
-        # transpose the data
-        globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = np.transpose(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'])
+        # convert the samples to Pandas DataFrame objects
+        indat = generate_dataframe(indat, 
+                                   veg_indices,
+                                   dtype_conversion='float32')
+        indat['veglab'] = np.full(shape=len(indat), 
+                                  fill_value=class_val, 
+                                  dtype=np.float32)
+        print(indat['veglab'])
 
-        # populate the dictionary of point counts
-        if globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'].shape[0] < min_pts:
-            min_pts = globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'].shape[0]
+        # # transpose the data
+        # globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = np.transpose(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'])
+        # convert the data to pandas DataFrame
+        # globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = generate_dataframe(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'], 
+        #                                                                                     veg_indices, 
+        #                                                                                     dtype_conversion='float32')
 
-        # append the names with the vegetation label column name
-        globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'] = np.append(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], 'veglab')
+        # # append the names with the vegetation label column name
+        # globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'] = np.append(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], 'veglab')
         
-        print(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'])
-        if laspy_majorversion == 1:
-            inlas.close()
-            print('\n\nERROR: Unable to close {}\n\n'.format(inlas))
-        del(inlas)
-    # except Exception as e:
-    #     sys.exit(e)
+        # print(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'])
+        # if laspy_majorversion == 1:
+        #     inlas.close()
+        #     print('\n\nERROR: Unable to close {}\n\n'.format(inlas))
+        # del(inlas)
 
-    # OPTIONAL: print number of points in each input dense point cloud
-    if verbose:
-        print('\nPoint cloud counts:')
-        [print('{} contains {} points'.format(input_files[i], globals()[v].shape)) for i,v in enumerate(dat_list)]
-
-    dat_dict = {}
-
-    for i,d in enumerate(dat_list):
-        print('\nSplitting {}:'.format(input_files[i]))
         # sample larger dat to match size of smaller dat
         if class_imbalance_corr:
-            if globals()[d].shape[0] > min_pts:
-                globals()[d] = train_test_split(globals()[d], train_size=min_pts/globals()[d].shape[0], random_state=42)[0]
+            if len(indat) > min_pts:
+                indat = train_test_split(indat, train_size=min_pts/len(indat), random_state=42)[0]
+                print('Class Imbalance Correction: Randomly sampled {} to {} points'.format(ifile, len(indat)))
         
         # sub-sample the data to cut the data volume
         if data_reduction < 1.0:
-            globals()[d] = train_test_split(globals()[d], train_size=data_reduction, random_state=42)[0]
-        
-        # convert the samples to Pandas DataFrame objects
-        globals()[d] = pd.DataFrame(globals()[d].astype('float32'), columns=globals()[names_list[i]][:-1])
-        globals()[d]['veglab'] = np.full(shape=globals()[d].shape[0], fill_value=i, dtype=np.float32)
+            indat = train_test_split(indat, train_size=data_reduction, random_state=42)[0]
+            print('Data Reduction: Randomly sampled {} to {} points'.format(ifile, len(indat)))
 
         # write dictionary of data name and corresponding numerical value
-        dat_dict[input_files[i]] = i
+        dat_dict[class_val] = os.path.basename(ifile)
+
+        print('\nSplitting {}:'.format(ifile))
 
         # split the data to training, validation, and evaluation
-        traind,evald = train_test_split(globals()[d], train_size=training_split, random_state=42)
+        traind,evald = train_test_split(indat, train_size=training_split, random_state=42)
         traind,vald = train_test_split(traind, train_size=training_split, random_state=42)
 
         # concatenate new training data to dataframe
-        if not 'trainout' in globals():
-            globals()['trainout'] = traind
+        if class_val == 0:
+            trainout = traind
         else:
-            globals()['trainout'] = pd.concat([globals()['trainout'],traind], ignore_index=True)
+            trainout = pd.concat([trainout,traind], ignore_index=True)
         
         # concatenate new validation data to dataframe
-        if not 'valout' in globals():
-            globals()['valout'] = vald
+        if class_val == 0:
+            valout = vald
         else:
-            globals()['valout'] = pd.concat([globals()['valout'],vald], ignore_index=True)
+            valout = pd.concat([valout,vald], ignore_index=True)
         
         # concatenate new evaluation data to dataframe
-        if not 'evalout' in globals():
-            globals()['evalout'] = vald
+        if class_val == 0:
+            evalout = evald
         else:
-            globals()['evalout'] = pd.concat([globals()['evalout'],evald], ignore_index=True)
+            evalout = pd.concat([evalout,evald], ignore_index=True)
 
         if verbose:
             print('    {} training points'.format(len(traind)))
@@ -221,13 +232,23 @@ def las2split(infile_pcs,
         # clean up memory
         del(traind,vald,evald)
 
+        class_val += 1
+
     # return the train, validation, and evaluation objects
     # all outputs are pandas.DataFrame objects WITH an additional veglab attribute
-    return trainout, valout, evalout, dat_dict
+    return trainout.sample(frac=1), valout.sample(frac=1), evalout.sample(frac=1), dat_dict
 
 
 # A utility method to create a tf.data dataset from a Pandas Dataframe
-def df_to_dataset(dataframe, targetcolname='', shuffle=False, prefetch=False, cache_ds=False, batch_size=32, verbose=0):
+def df_to_dataset(dataframe, 
+                  targetcolname='none', 
+                  label_depth=2, 
+                  shuffle=True, 
+                  prefetch=False, 
+                  cache_ds=False, 
+                  batch_size=32, 
+                  drop_remain=True,
+                  verbose=0):
     '''
     Read a pandas.DataFrame object and convert to tf.data object.
 
@@ -257,24 +278,86 @@ def df_to_dataset(dataframe, targetcolname='', shuffle=False, prefetch=False, ca
         dataframe = dataframe.sample(frac=1).reset_index(drop=True)
         if verbose > 0:
             print(dataframe.head())
-    if not targetcolname == '':
-        labels = dataframe.pop(targetcolname)
+    if not targetcolname == 'none':
+        # assume that the last column is the labels
+        # labels = np.array(dataframe.pop(dataframe.columns[-1]))
+        labels = np.array(dataframe.pop(targetcolname))
+        
+        # ds = tf.data.Dataset.from_tensor_slices((ds_inputs, labels))
+        # ds = tf.data.Dataset.from_tensor_slices((ds_inputs, tf.one_hot(labels, depth=label_depth)))
+        # # ds = tf.data.Dataset.from_tensor_slices((ds_inputs, tf.keras.utils.to_categorical(labels)))
+        # if verbose > 0:
+        #     print(ds)
+        # ds = ds.batch(batch_size, drop_remainder=True, num_parallel_calls=tf.data.AUTOTUNE)
+        # if cache_ds:
+        #     ds = ds.cache()
+        # if prefetch:
+        #     ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        labels = tf.one_hot(labels, depth=label_depth)
         ds_inputs = tf.convert_to_tensor(dataframe)
         ds = tf.data.Dataset.from_tensor_slices((ds_inputs, labels))
+
         if verbose > 0:
             print(ds)
-        ds = ds.batch(batch_size, drop_remainder=True, num_parallel_calls=tf.data.AUTOTUNE)
-        if cache_ds:
-            ds = ds.cache()
-        if prefetch:
-            ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+            print(ds.element_spec[0].shape[1:])
     else:
-        ds = tf.convert_to_tensor(dataframe)
-    if verbose > 0:
-        print(ds)
+        ds_inputs = tf.convert_to_tensor(dataframe)
+        ds = tf.data.Dataset.from_tensor_slices((ds_inputs))
+
+        if verbose > 0:
+            print(ds)
+
+    # if shuffle:
+    #     ds = ds.shuffle(buffer_size=batch_size)
+    ds = ds.batch(batch_size, drop_remainder=drop_remain, num_parallel_calls=tf.data.AUTOTUNE)
+    if cache_ds:
+        ds = ds.cache()
+    if prefetch:
+        ds = ds.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    
     return ds
 
-def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_cache, geo_metrics=[], geom_rad=0.10, verbose_output=2):
+# lookup_dict = {
+#     'simple': ['exr','exg','exb','exgr'],
+#     'coords': ['x','y','z'],
+#     'sd': ['sd'],
+#     'all': ['ngrdi','mgrvi','gli','rgbvi','ikaw','gla']
+# }
+def generate_dataframe(input_point_cloud, vegetation_index_list, dtype_conversion='float32'):
+    outdict = {}
+    outdict['r'] = np.array(input_point_cloud.red, dtype=dtype_conversion).flatten()
+    outdict['g'] = np.array(input_point_cloud.green, dtype=dtype_conversion).flatten()
+    outdict['b'] = np.array(input_point_cloud.blue, dtype=dtype_conversion).flatten()
+    if any('xyz' in m for m in vegetation_index_list):
+        outdict['x'] = np.array(input_point_cloud.x, dtype=dtype_conversion).flatten()
+        outdict['y'] = np.array(input_point_cloud.y, dtype=dtype_conversion).flatten()
+        outdict['z'] = np.array(input_point_cloud.z, dtype=dtype_conversion).flatten()
+    if any('sd' in m for m in vegetation_index_list):
+        outdict['sd3d'] = np.array(input_point_cloud.sd3d, dtype=dtype_conversion).flatten()
+    if any('exg' == m for m in vegetation_index_list) or any('simple' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
+        outdict['exg'] = np.array(input_point_cloud.exg, dtype=dtype_conversion).flatten()
+    if any('exr' in m for m in vegetation_index_list) or any('simple' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
+        outdict['exr'] = np.array(input_point_cloud.exr, dtype=dtype_conversion).flatten()
+    if any('exb' in m for m in vegetation_index_list) or any('simple' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
+        outdict['exb'] = np.array(input_point_cloud.exb, dtype=dtype_conversion).flatten()
+    if any('exgr' in m for m in vegetation_index_list) or any('simple' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
+        outdict['exgr'] = np.array(input_point_cloud.exgr, dtype=dtype_conversion).flatten()
+    if any('ngrdi' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
+        outdict['ngrdi'] = np.array(input_point_cloud.ngrdi, dtype=dtype_conversion).flatten()
+    if any('mgrvi' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
+        outdict['mgrvi'] = np.array(input_point_cloud.mgrvi, dtype=dtype_conversion).flatten()
+    if any('gli' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
+        outdict['gli'] = np.array(input_point_cloud.gli, dtype=dtype_conversion).flatten()
+    if any('rgbvi' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
+        outdict['rgbvi'] = np.array(input_point_cloud.rgbvi, dtype=dtype_conversion).flatten()
+    if any('ikaw' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
+        outdict['ikaw'] = np.array(input_point_cloud.ikaw, dtype=dtype_conversion).flatten()
+    if any('gla' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
+        outdict['gla'] = np.array(input_point_cloud.gla, dtype=dtype_conversion).flatten()
+    
+    return pd.DataFrame(outdict)
+
+def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, ds_cache=False, indiceslist=[], geo_metrics=[], geom_rad=0.10, verbose_output=2):
     '''
     Reclassify the input point cloud using the models specified in the model_list
     variable and the threshold value(s) specified in the threshold_vals list. It
@@ -327,43 +410,56 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
     print('List of models for reclassification: {}'.format(modnamelist))
 
     # figure out what vegetation indices to compute
-    indiceslist = ['r','g','b']
-    if any('xyzrgb' in m for m in modnamelist):
-        indiceslist.extend('xyz')
-    if any('sdrgb' in m for m in modnamelist):
-        indiceslist.extend('sd')
+    if any('xyz' in m for m in modnamelist):
+        indiceslist.append('xyz')
+    if any('sd' in m for m in modnamelist):
+        indiceslist.append('sd3d')
     if any('all' in m for m in modnamelist):
-        indiceslist.extend('all')
+        indiceslist = 'all'
     if any('simple' in m for m in modnamelist):
-        indiceslist.extend('simple')
-    if any('rgb' in m for m in modnamelist):
-        indiceslist.extend('rgb')
+        indiceslist = 'simple'
+    if any('exr' in m for m in modnamelist):
+        indiceslist.append('exr')
+    if any('exg' in m for m in modnamelist) and not any('exgr' in m for m in modnamelist):
+        indiceslist.append('exg')
+    if any('exgr' in m for m in modnamelist):
+        indiceslist.append('exgr')
+    if any('exb' in m for m in modnamelist):
+        indiceslist.append('exb')
+    if any('ngrdi' in m for m in modnamelist):
+        indiceslist.append('ngrdi')
+    if any('mgrvi' in m for m in modnamelist):
+        indiceslist.append('mgrvi')
+    if any('gli' in m for m in modnamelist):
+        indiceslist.append('gli')
+    if any('rgbvi' in m for m in modnamelist):
+        indiceslist.append('rgbvi')
+    if any('ikaw' in m for m in modnamelist):
+        indiceslist.append('ikaw')
+    if any('gla' in m for m in modnamelist):
+        indiceslist.append('gla')
 
     # compute vegetation indices
-    indfnames,indf = vegidx(incloud, geom_metrics=geo_metrics, indices=indiceslist, geom_radius=geom_rad)
+    incloud = vegidx(incloud, 
+                     geom_metrics=geo_metrics, 
+                     indices=indiceslist, 
+                     geom_radius=geom_rad)
 
-    indat = pd.DataFrame(indf.astype('float32').transpose(), columns=indfnames)
-
-    # FIRST, get only the columns needed for model inputs (will be matched against the model name)
-    # SECOND, convert the dataframe to a tf.dataset
-    if any('sdrgb' in m for m in modnamelist):
-        sdrgb_df = indat[['r','g','b','sd']]
-        sdrgb_ds = df_to_dataset(sdrgb_df, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
-        del(sdrgb_df)
-    if any('xyzrgb' in m for m in modnamelist):
-        xyzrgb_df = indat[['x','y','z','r','g','b']]
-        xyzrgb_ds = df_to_dataset(xyzrgb_df, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
-        del(xyzrgb_df)
-    if any('simple' in m for m in modnamelist):
-        rgb_simple_df = indat[['r','g','b','exr','exg','exb','exgr']]
-        rgb_simple_ds = df_to_dataset(rgb_simple_df, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
-        del(rgb_simple_df)
-    if any('all' in m for m in modnamelist):
-        all_ds = df_to_dataset(indat, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
-    if any('rgb' in m for m in modnamelist):
-        rgb_df = indat[['r','g','b']]
-        rgb_ds = df_to_dataset(rgb_df, shuffle=False, cache_ds=ds_cache, batch_size=batch_sz)
-        del(rgb_df)
+    # generate Pandas DataFrame from computed indices in the point cloud
+    indat = generate_dataframe(incloud, 
+                               indiceslist, 
+                               dtype_conversion='float32')
+    print(indat)
+    
+    # convert the dataframe to a TF dataset
+    converted_dataset = df_to_dataset(indat, 
+                                      targetcolname='none', 
+                                      shuffle=False, 
+                                      cache_ds=ds_cache, 
+                                      batch_size=batch_sz,
+                                      drop_remain=False)
+    print(converted_dataset)
+    print(len(converted_dataset))
 
     del(indat)
     odir,ofname = os.path.split(incloudname)
@@ -376,22 +472,19 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
 
     # uncomment the following block of code for use with multiple models as a list of inputs
     for m in model_list:
-        print(m.name)  # print model name to console
-
         # predict classification
         print('Reclassifying using {} model'.format(m.name))
-        if "simple" in m.name:
-            outdat_pred = m.predict(rgb_simple_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
-        elif "all" in m.name:
-            outdat_pred = m.predict(all_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
-        elif "sdrgb" in m.name:
-            outdat_pred = m.predict(sdrgb_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
-        elif "xyzrgb" in m.name:
-            outdat_pred = m.predict(xyzrgb_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
-        else:
-            outdat_pred = m.predict(rgb_ds, batch_size=batch_sz, verbose=verbose_output, use_multiprocessing=True)
+        outdat_pred = m.predict(converted_dataset, verbose=2, use_multiprocessing=True)
 
-        print('threshold_vals = {}'.format(threshold_vals))
+        print('\nOutput Predictions (raw): {}'.format(len(outdat_pred)))
+        print(outdat_pred)
+
+        outdat_pred = tf.argmax(outdat_pred,-1)
+
+        print('\nOutput Predictions: {}'.format(len(outdat_pred)))
+        print(outdat_pred)
+
+        # print('threshold_vals = {}'.format(threshold_vals))
         if not isinstance(threshold_vals, list):
             try:
                 threshold_vals = [v for v in threshold_vals]
@@ -401,39 +494,77 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz, ds_
                 except:
                     print('No conversion of the threshold_values object to list took place.')
                     pass
-        print('threshold_vals = {}'.format(threshold_vals))
-        for threshold_val in list(threshold_vals):
-            outdat_pred_reclass = outdat_pred
-            outdat_pred_reclass[(outdat_pred_reclass >= threshold_val)] = 4  # reclass veg. points
-            outdat_pred_reclass[(outdat_pred_reclass < threshold_val)] = 2   # reclass no veg. points
-            outdat_pred_reclass = outdat_pred_reclass.flatten().astype(np.int32)  # convert float to int
-
-            # open the output file (laspy version dependent)
-            try:
+        print('Threshold Value(s) = {}'.format(threshold_vals))
+        if isinstance(threshold_vals, list):
+            for threshold_val in list(threshold_vals):
+                outdat_pred_reclass = outdat_pred
+                # outdat_pred_reclass[(outdat_pred_reclass >= threshold_val)] = 4  # reclass veg. points
+                # # outdat_pred_reclass[(outdat_pred_reclass < threshold_val)] = 2   # reclass no veg. points
+                # outdat_pred_reclass = outdat_pred_reclass.flatten().astype(np.int32)  # convert float to int
+                
+                # open the output file (laspy version dependent)
                 if int(laspy.__version__.split('.')[0]) == 1:
                     print('Writing LAS file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.las')))
-                    outfile = file.File((os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.las')), mode='w', header=incloud.header)
+                    outfile = file.File((os.path.join(odir,ofname.replace('las','').replace('laz','')+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.las')), mode='w', header=incloud.header)
+                    # copy the points from the original file
+                    outfile.points = incloud.points
+                # elif int(laspy.__version__.split('.')[0]) == 2:
+                #     outfile = laspy.LasData(header=incloud.header)
+
+                if int(laspy.__version__.split('.')[0]) == 1:
+                    # update the classification values
+                    outfile.classification = outdat_pred_reclass
+                    outfile.close()
+                    print('  --> Converting from LAS to LAZ format')
+                    # the following functions use the subprocess module to call commands outside of Python.
+                    # use lastools outside of program to convert las to laz file
+                    subprocess.call(['las2las',
+                                    '-i', (os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.las')),
+                                    '-o', (os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz'))])
+                    # remove las output file (after compressed to laz)
+                    subprocess.call(['rm',
+                                    ('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_val).replace('.','') + '.las')])
                 elif int(laspy.__version__.split('.')[0]) == 2:
-                    outfile = laspy.LasData(header=incloud.header)
-            except Exception as e:
-                print(e)
+                    # update the classification values
+                    incloud.classification = outdat_pred_reclass
+                    # write out the new file (with vegetation indices included as extra bytes, is specified)
+                    print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz')))
+                    incloud.write(os.path.join(odir,ofname.replace('las','').replace('laz','')+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz'))
+        else:
+            outdat_pred_reclass = outdat_pred
+            # outdat_pred_reclass[(outdat_pred_reclass >= threshold_vals)] = 4  # reclass veg. points
+            # # outdat_pred_reclass[(outdat_pred_reclass < threshold_vals)] = 2   # reclass no veg. points
+            # outdat_pred_reclass = outdat_pred_reclass.flatten().astype(np.int32)  # convert float to int
 
-            # copy the points from the original file
-            outfile.points = incloud.points
-
-            # update the classification values
-            outfile.classification = outdat_pred_reclass
+            # open the output file (laspy version dependent)
             if int(laspy.__version__.split('.')[0]) == 1:
+                print('Writing LAS file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.las')))
+                outfile = file.File((os.path.join(odir,ofname.replace('las','').replace('laz','')+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.las')), mode='w', header=incloud.header)
+                # copy the points from the original file
+                outfile.points = incloud.points
+            # elif int(laspy.__version__.split('.')[0]) == 2:
+            #     outfile = laspy.LasData(header=incloud.header)
+
+            if int(laspy.__version__.split('.')[0]) == 1:
+                # update the classification values
+                outfile.classification = outdat_pred_reclass
                 outfile.close()
                 print('  --> Converting from LAS to LAZ format')
                 # the following functions use the subprocess module to call commands outside of Python.
                 # use lastools outside of program to convert las to laz file
                 subprocess.call(['las2las',
-                                '-i', (os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.las')),
-                                '-o', (os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz'))])
+                                '-i', (os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.las')),
+                                '-o', (os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.laz'))])
                 # remove las output file (after compressed to laz)
                 subprocess.call(['rm',
-                                ('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_val).replace('.','') + '.las')])
+                                ('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_vals).replace('.','') + '.las')])
             elif int(laspy.__version__.split('.')[0]) == 2:
-                print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz')))
-                outfile.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz'))
+                # update the classification values
+                print('\nincloud.classification: {}'.format(len(incloud.classification)))
+                print(incloud.classification)
+                print('\nOutput Predictions: {}'.format(len(outdat_pred_reclass)))
+                print(outdat_pred_reclass)
+                incloud.classification = outdat_pred_reclass
+                # write out the new file (with vegetation indices included as extra bytes, is specified)
+                print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.laz')))
+                incloud.write(os.path.join(odir,ofname.replace('las','').replace('laz','')+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.laz'))

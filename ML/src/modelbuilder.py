@@ -1,4 +1,4 @@
-import time
+import time, os
 
 # load plotting module
 import matplotlib as mpl
@@ -55,6 +55,8 @@ class PlotLearning(Callback):
 def build_model(model_name, 
                 training_tf_dataset, 
                 validation_tf_dataset, 
+                rootdirectory,
+                nclasses=2,
                 nodes=[8,8,8], 
                 activation_fx='relu', 
                 dropout_rate=0.2, 
@@ -67,8 +69,13 @@ def build_model(model_name,
     print('Building {} model...'.format(model_name))
     # the first layer should take the input features as its input
     #input_layer = input_feature_layer(model_inputs)
-    print(training_tf_dataset.element_spec[0].shape[1:])
+    
+    # print(training_tf_dataset.element_spec[0].shape[1:])
     input_layer = Input(shape=training_tf_dataset.element_spec[0].shape[1:], name='input_points')
+    
+    # print(training_tf_dataset.shape)
+    # input_layer = Input(shape=training_tf_dataset.shape, name='input_points')
+
     # l = Dense(nodes[0], activation=activation_fx)(input_feat_layer)
     if isinstance(nodes,list):
         if len(nodes)<1:
@@ -85,10 +92,12 @@ def build_model(model_name,
     # add a dropout layer to reduce the chance of overfitting
     l = Dropout(dropout_rate, name='Dropout')(l)
     # flatten the output to a single Dense layer
-    out = Dense(1, name='Final_Dense')(l)
+    ###out = Dense(1, name='Final_Dense')(l)
+    l = Dense(nclasses, name='Final_Dense')(l)
     #l = Dense(2, name='Final_Dense')(l)
     # Simplify output layer to a single label
-    #out = Activation('sigmoid', dtype='float32', name='Output')(l)
+    out = Activation('sigmoid', dtype='float32', name='Output')(l)
+    # out = Flatten()(l)
 
     # build the model
     mod = Model(inputs=input_layer, outputs=out, name=model_name)
@@ -97,9 +106,20 @@ def build_model(model_name,
     try:
         #mod.compile(loss=loss_metric,
         #              optimizer=model_optimizer)
-        mod.compile(loss=loss_metric,
+        mod.compile(loss=[tf.keras.losses.CategoricalCrossentropy()],
                       optimizer=model_optimizer,
-                      metrics=['accuracy'])
+                      metrics=[tf.keras.metrics.CategoricalCrossentropy(name='cross entropy'),
+                   tf.keras.metrics.CategoricalAccuracy(name='cat_accuracy'),
+                   tf.keras.metrics.Accuracy(name='accuracy'),
+                #    tf.keras.metrics.MeanSquaredError(name='mse'),
+                #    tf.keras.metrics.TruePositives(name='tp'),
+                #    tf.keras.metrics.FalsePositives(name='fp'),
+                #    tf.keras.metrics.TrueNegatives(name='tn'),
+                #    tf.keras.metrics.FalseNegatives(name='fn'),
+                   tf.keras.metrics.Precision(name='precision'),
+                   tf.keras.metrics.Recall(name='recall'),
+                #    tf.keras.metrics.AUC(multi_label=True),
+                   tf.keras.metrics.AUC(name='auc', multi_label=True, curve='PR')])
     except Exception as e:
         print(e)
 
@@ -110,22 +130,29 @@ def build_model(model_name,
     # create history callback
     hist = History()
     if dotrain:
+        checkpoint_best = os.path.join(rootdirectory,str(model_name)+'_BEST.h5')
         call_list = [hist]
         if earlystopping:
             call_list.append(EarlyStopping(monitor='val_loss',
                                            patience=earlystopping[0],
                                            min_delta=earlystopping[1],
-                                           mode='max'))
+                                           mode='min'))
         call_list.append(ReduceLROnPlateau(monitor='val_loss', 
                                            factor=0.5, 
                                            patience=10, 
                                            min_delta=1e-4, 
-                                           mode='max', 
+                                           mode='min', 
+                                           verbose=1))
+        call_list.append(ModelCheckpoint(monitor='val_loss', 
+                                           filepath=checkpoint_best, 
+                                           mode='min', 
+                                           save_best_only=True,
                                            verbose=1))
         # if verbose:
         #     call_list.append(PlotLearning())
+        
         start_time = time.time()
-        mod.fit(training_tf_dataset,
+        mod.fit(x=training_tf_dataset,
                 validation_data=validation_tf_dataset,
                 epochs=dotrain_epochs,
                 verbose=2,
