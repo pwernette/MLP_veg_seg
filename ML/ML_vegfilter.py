@@ -62,23 +62,24 @@ def main(default_values, verbose=True):
     #   2) compute vegetation indices
     #   3) split point clouds into training, testing, and validation sets
     if 'sd' in default_values.model_inputs:
-        train_ds,test_ds,val_ds = las2split(default_values.filein_ground,
-                               default_values.filein_vegetation,
+        train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
                                veg_indices=default_values.model_vegetation_indices,
                                class_imbalance_corr=default_values.training_class_imbalance_corr,
                                training_split=default_values.training_split,
                                data_reduction=default_values.training_data_reduction,
                                geom_metrics='sd')
     else:
-        train_ds,test_ds,val_ds = las2split(default_values.filein_ground,
-                               default_values.filein_vegetation,
+        train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
                                veg_indices=default_values.model_vegetation_indices,
                                class_imbalance_corr=default_values.training_class_imbalance_corr,
                                training_split=default_values.training_split,
                                data_reduction=default_values.training_data_reduction)
+        
+    print('\nClass dictionary:')
+    [print(i,v) for i,v in enumerate(class_dat)]
 
     # get root directory
-    default_values.rootdir = os.path.split(os.path.split(default_values.filein_ground)[0])[0]
+    default_values.rootdir = os.path.split(os.path.split(default_values.filesin[0])[0])[0]
 
     # append columns/variables of interest list
     default_values.model_inputs.append('veglab')
@@ -102,17 +103,25 @@ def main(default_values, verbose=True):
 
     # print model name
     if verbose:
-        print("\nModel name: {}".format(default_values.model_output_name))
+        print("\nModel name: {}".format(default_values.model_name))
+
+    # get today's date as string
+    tdate = str(date.today()).replace('-','')
+
+    # check if saved model dir already exists (create if not present)
+    if not os.path.isdir(os.path.join(default_values.rootdir,'saved_models_'+tdate)):
+        os.makedirs(os.path.join(default_values.rootdir,'saved_models_'+tdate))
 
     # build and train model
     mod,history,tt = build_model(model_name=default_values.model_name,
                         training_tf_dataset=train_ds,
                         validation_tf_dataset=val_ds,
+                        rootdirectory=os.path.join(default_values.rootdir,'saved_models_'+tdate),
                         nodes=default_values.model_nodes,
                         activation_fx='relu',
                         dropout_rate=default_values.model_dropout,
-                        # loss_metric='mean_squared_error',
-                        loss_metric=tf.keras.losses.MeanSquaredError(),
+                        loss_metric='mean_squared_error',
+                        # loss_metric=tf.keras.losses.MeanSquaredError(),
                         model_optimizer='adam',
                         earlystopping=[default_values.model_early_stop_patience,default_values.model_early_stop_delta],
                         dotrain=True,
@@ -122,13 +131,6 @@ def main(default_values, verbose=True):
     # evaluate the model
     print('\nEvaluating model with validation set...')
     model_eval = mod.evaluate(test_ds, verbose=2)
-
-    # get today's date as string
-    tdate = str(date.today()).replace('-','')
-
-    # check if saved model dir already exists (create if not present)
-    if not os.path.isdir('saved_models_'+tdate):
-        os.makedirs('saved_models_'+tdate)
 
     if default_values.training_plot:
         print('\nPlotting model...')
@@ -146,8 +148,8 @@ def main(default_values, verbose=True):
         fig.suptitle(default_values.model_name+' Training History')
 
         # plot accuracy
-        f1.plot(history.history['accuracy'])
-        f1.plot(history.history['val_accuracy'])
+        f1.plot(history.history['cat_accuracy'])
+        f1.plot(history.history['val_cat_accuracy'])
         f1.set_title('Model Accuracy')
         f1.set(xlabel='epoch', ylabel='accuracy')
         f1.legend(['train','test'], loc='right')
@@ -169,12 +171,15 @@ def main(default_values, verbose=True):
         # Pass the file handle in as a lambda function to make it callable
         mod.summary(print_fn=lambda x: fh.write(x+'\n'))
         fh.write('created: {}\n'.format(tdate))
-        fh.write('bare-Earth file: {}\n'.format(default_values.filein_ground))
-        fh.write('vegetation file: {}\n'.format(default_values.filein_vegetation))
+        fh.write('input point cloud files: {}\n'.format(list(default_values.filesin)))
+        fh.write('vegetation indices: {}\n'.format(list(default_values.model_vegetation_indices)))
         fh.write('model inputs: {}\n'.format(list(default_values.model_inputs)))
         fh.write('validation accuracy: {}\n'.format(model_eval[1]))
         fh.write('validation loss: {}\n'.format(model_eval[0]))
         fh.write('train time: {}'.format(datetime.timedelta(seconds=tt))+'\n')
+        fh.write('\nClass Dictionary:\n')
+        for key, value in class_dat.items():  
+            fh.write('%s: %s\n' % (value, key))
 
     print('\nSaving model as .h5 and sub-directory in {}...'.format(os.path.join(default_values.rootdir,'saved_models_'+tdate)))
     # save the complete model (will create a new folder with the saved model)
@@ -205,17 +210,18 @@ def main(default_values, verbose=True):
         print(mod.summary())
 
     # reclassify the input file
-    try:
-        predict_reclass_write(default_values.reclassfile,
-                                [globals()[mod.name]],
-                                threshold_vals=default_values.reclass_thresholds,
-                                batch_sz=default_values.training_batch_size,
-                                ds_cache=default_values.training_cache,
-                                geo_metrics=geomet,
-                                geom_rad=default_values.geometry_radius)
-    except Exception as e:
-        print('ERROR: Unable to reclassify the input file. See below for specific error:')
-        sys.exit(e)
+    # try:
+    predict_reclass_write(default_values.reclassfile,
+                            [globals()[mod.name]],
+                            indiceslist=default_values.model_vegetation_indices,
+                            threshold_vals=default_values.reclass_thresholds,
+                            batch_sz=default_values.training_batch_size,
+                            ds_cache=default_values.training_cache,
+                            geo_metrics=geomet,
+                            geom_rad=default_values.geometry_radius)
+    # except Exception as e:
+    #     print('ERROR: Unable to reclassify the input file. See below for specific error:')
+    #     sys.exit(e)
 
     # get the model inputs from the loaded file
 if __name__ == '__main__':

@@ -126,6 +126,12 @@ def calc_index(las_object, indices=['all'], colordepth=8):
     '''
     # start timer
     start_time = time.time()
+
+    # check that red, green, and blue data is present
+    assert 'red' in list(las_object.point_format.dimension_names)
+    assert 'green' in list(las_object.point_format.dimension_names)
+    assert 'blue' in list(las_object.point_format.dimension_names)
+
     # extract r, g, and b bands from the point cloud
     r,g,b = las_object.red,las_object.green,las_object.blue
     # check for color depth
@@ -360,7 +366,6 @@ def calc_index(las_object, indices=['all'], colordepth=8):
     '''
     # print('Values and indices: {}'.format(pdindexnames))
     # print('    Computation time: {}s'.format((time.time()-start_time)))
-    # return pdindexnames,pdindex
     
     return las_object
 
@@ -404,9 +409,11 @@ def main(default_values):
         else:
             las_obj['classification'][las_obj[default_values.veg_index] >= float(default_values.veg_threshold)] = 4
         
-        default_values.file_out = os.path.join(default_values.rootdir,os.path.basename(default_values.file_in).replace('.laz', '_'+str(default_values.veg_index)+'_'+str(default_values.veg_threshold)+'.laz'))
+        default_values.file_out = os.path.join(default_values.rootdir,os.path.basename(default_values.file_in).replace(os.path.splitext(default_values.file_in)[1], '_'+str(default_values.veg_index)+'_'+str(default_values.veg_threshold)+'.laz'))
+        print('\nUpdated output filename to: {}'.format(default_values.file_out))
     else:
-        default_values.file_out = os.path.join(default_values.rootdir,os.path.basename(default_values.file_in).replace('.laz', '_'+str(default_values.veg_index)+'.laz'))
+        default_values.file_out = os.path.join(default_values.rootdir,os.path.basename(default_values.file_in).replace(os.path.splitext(default_values.file_in)[1], '_'+str(default_values.veg_index)+'.laz'))
+        print('\nUpdated output filename to: {}'.format(default_values.file_out))
     
     # write out LAZ file
     print('\nWriting new LAZ file to:\n  {}'.format(default_values.file_out))
