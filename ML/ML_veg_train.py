@@ -142,8 +142,8 @@ def main(default_values, verbose=True):
         fig.suptitle(default_values.model_name+' Training History')
 
         # plot accuracy
-        f1.plot(history.history['accuracy'])
-        f1.plot(history.history['val_accuracy'])
+        f1.plot(history.history['cat_accuracy'])
+        f1.plot(history.history['val_cat_accuracy'])
         f1.set_title('Model Accuracy')
         f1.set(xlabel='epoch', ylabel='accuracy')
         f1.legend(['train','test'], loc='right')

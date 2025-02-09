@@ -92,34 +92,35 @@ def build_model(model_name,
     # add a dropout layer to reduce the chance of overfitting
     l = Dropout(dropout_rate, name='Dropout')(l)
     # flatten the output to a single Dense layer
-    ###out = Dense(1, name='Final_Dense')(l)
+    # out = Dense(1, name='Final_Dense')(l)
     l = Dense(nclasses, name='Final_Dense')(l)
     #l = Dense(2, name='Final_Dense')(l)
     # Simplify output layer to a single label
-    out = Activation('sigmoid', dtype='float32', name='Output')(l)
-    # out = Flatten()(l)
+    out = Activation('softmax', dtype='float32', name='Output')(l)
 
     # build the model
     mod = Model(inputs=input_layer, outputs=out, name=model_name)
     #mod = Model(inputs=model_inputs, outputs=out, name=model_name)
     # compile the model
     try:
-        #mod.compile(loss=loss_metric,
-        #              optimizer=model_optimizer)
-        mod.compile(loss=[tf.keras.losses.CategoricalCrossentropy()],
+        # mod.compile(loss=loss_metric,
+        #              optimizer=model_optimizer,
+        #              metrics=['accuracy'])
+        mod.compile(loss=tf.keras.losses.CategoricalCrossentropy(),
                       optimizer=model_optimizer,
                       metrics=[tf.keras.metrics.CategoricalCrossentropy(name='cross entropy'),
                    tf.keras.metrics.CategoricalAccuracy(name='cat_accuracy'),
-                   tf.keras.metrics.Accuracy(name='accuracy'),
-                #    tf.keras.metrics.MeanSquaredError(name='mse'),
-                #    tf.keras.metrics.TruePositives(name='tp'),
-                #    tf.keras.metrics.FalsePositives(name='fp'),
-                #    tf.keras.metrics.TrueNegatives(name='tn'),
-                #    tf.keras.metrics.FalseNegatives(name='fn'),
+                #    tf.keras.metrics.Accuracy(name='accuracy'),
                    tf.keras.metrics.Precision(name='precision'),
                    tf.keras.metrics.Recall(name='recall'),
-                #    tf.keras.metrics.AUC(multi_label=True),
                    tf.keras.metrics.AUC(name='auc', multi_label=True, curve='PR')])
+        # mod.compile(loss=[tf.keras.losses.MeanSquaredError()],
+        #               optimizer=model_optimizer,
+        #               metrics=[tf.keras.metrics.Accuracy(name='accuracy'),
+        #            tf.keras.metrics.MeanSquaredError(name='mse'),
+        #            tf.keras.metrics.Precision(name='precision'),
+        #            tf.keras.metrics.Recall(name='recall'),
+        #            tf.keras.metrics.AUC(name='auc', multi_label=True, curve='PR')])
     except Exception as e:
         print(e)
 
@@ -131,11 +132,13 @@ def build_model(model_name,
     hist = History()
     if dotrain:
         checkpoint_best = os.path.join(rootdirectory,str(model_name)+'_BEST.h5')
+        logfile = os.path.join(rootdirectory,str(model_name)+'_LOG.txt')
         call_list = [hist]
         if earlystopping:
             call_list.append(EarlyStopping(monitor='val_loss',
                                            patience=earlystopping[0],
                                            min_delta=earlystopping[1],
+                                           restore_best_weights=True,
                                            mode='min'))
         call_list.append(ReduceLROnPlateau(monitor='val_loss', 
                                            factor=0.5, 
@@ -148,6 +151,9 @@ def build_model(model_name,
                                            mode='min', 
                                            save_best_only=True,
                                            verbose=1))
+        call_list.append(CSVLogger(filename=logfile,
+                                   separator=',',
+                                   append=False))
         # if verbose:
         #     call_list.append(PlotLearning())
         

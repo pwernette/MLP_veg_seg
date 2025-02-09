@@ -198,7 +198,7 @@ def las2split(infile_pcs,
             print('Data Reduction: Randomly sampled {} to {} points'.format(ifile, len(indat)))
 
         # write dictionary of data name and corresponding numerical value
-        dat_dict[class_val] = os.path.basename(ifile)
+        dat_dict[os.path.basename(ifile)] = class_val
 
         print('\nSplitting {}:'.format(ifile))
 
@@ -325,9 +325,9 @@ def df_to_dataset(dataframe,
 # }
 def generate_dataframe(input_point_cloud, vegetation_index_list, dtype_conversion='float32'):
     outdict = {}
-    outdict['r'] = np.array(input_point_cloud.red, dtype=dtype_conversion).flatten()
-    outdict['g'] = np.array(input_point_cloud.green, dtype=dtype_conversion).flatten()
-    outdict['b'] = np.array(input_point_cloud.blue, dtype=dtype_conversion).flatten()
+    outdict['r'] = np.array(input_point_cloud.rnorm, dtype=dtype_conversion).flatten()
+    outdict['g'] = np.array(input_point_cloud.gnorm, dtype=dtype_conversion).flatten()
+    outdict['b'] = np.array(input_point_cloud.bnorm, dtype=dtype_conversion).flatten()
     if any('xyz' in m for m in vegetation_index_list):
         outdict['x'] = np.array(input_point_cloud.x, dtype=dtype_conversion).flatten()
         outdict['y'] = np.array(input_point_cloud.y, dtype=dtype_conversion).flatten()
@@ -490,7 +490,7 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
                 threshold_vals = [v for v in threshold_vals]
             except:
                 try:
-                    threshold_vals = list(threshold_vals)
+                    threshold_vals = list(map(float, threshold_vals))
                 except:
                     print('No conversion of the threshold_values object to list took place.')
                     pass
@@ -501,6 +501,7 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
                 # outdat_pred_reclass[(outdat_pred_reclass >= threshold_val)] = 4  # reclass veg. points
                 # # outdat_pred_reclass[(outdat_pred_reclass < threshold_val)] = 2   # reclass no veg. points
                 # outdat_pred_reclass = outdat_pred_reclass.flatten().astype(np.int32)  # convert float to int
+
                 
                 # open the output file (laspy version dependent)
                 if int(laspy.__version__.split('.')[0]) == 1:
@@ -528,8 +529,8 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
                     # update the classification values
                     incloud.classification = outdat_pred_reclass
                     # write out the new file (with vegetation indices included as extra bytes, is specified)
-                    print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz')))
-                    incloud.write(os.path.join(odir,ofname.replace('las','').replace('laz','')+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz'))
+                    print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.copc.laz')))
+                    incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.copc.laz'))
         else:
             outdat_pred_reclass = outdat_pred
             # outdat_pred_reclass[(outdat_pred_reclass >= threshold_vals)] = 4  # reclass veg. points
@@ -566,5 +567,5 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
                 print(outdat_pred_reclass)
                 incloud.classification = outdat_pred_reclass
                 # write out the new file (with vegetation indices included as extra bytes, is specified)
-                print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.laz')))
-                incloud.write(os.path.join(odir,ofname.replace('las','').replace('laz','')+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.laz'))
+                print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.copc.laz')))
+                incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.copc.laz'))
