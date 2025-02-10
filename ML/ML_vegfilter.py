@@ -85,17 +85,23 @@ def main(default_values, verbose=True):
     default_values.model_inputs.append('veglab')
 
     # convert train, test, and validation to feature layers
-    train_ds = df_to_dataset(train_ds, 'veglab',
+    train_ds = df_to_dataset(train_ds, 
+                             targetcolname='veglab',
+                             label_depth=len(class_dat),
                              shuffle=default_values.training_shuffle,
                              cache_ds=default_values.training_cache,
                              prefetch=default_values.training_prefetch,
                              batch_size=default_values.training_batch_size)
-    val_ds = df_to_dataset(val_ds, 'veglab',
+    val_ds = df_to_dataset(val_ds, 
+                           targetcolname='veglab',
+                           label_depth=len(class_dat),
                              shuffle=default_values.training_shuffle,
                              cache_ds=default_values.training_cache,
                              prefetch=default_values.training_prefetch,
                              batch_size=default_values.training_batch_size)
-    test_ds = df_to_dataset(test_ds, 'veglab',
+    test_ds = df_to_dataset(test_ds, 
+                            targetcolname='veglab',
+                            label_depth=len(class_dat),
                              shuffle=default_values.training_shuffle,
                              cache_ds=default_values.training_cache,
                              prefetch=default_values.training_prefetch,
@@ -117,6 +123,7 @@ def main(default_values, verbose=True):
                         training_tf_dataset=train_ds,
                         validation_tf_dataset=val_ds,
                         rootdirectory=os.path.join(default_values.rootdir,'saved_models_'+tdate),
+                        nclasses=len(class_dat),
                         nodes=default_values.model_nodes,
                         activation_fx='relu',
                         dropout_rate=default_values.model_dropout,
