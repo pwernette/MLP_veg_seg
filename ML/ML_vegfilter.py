@@ -205,7 +205,7 @@ def main(default_values, verbose=True):
     #mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,default_values.model_name))
     # save the model and model weights as H5 files
     mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_FULL_MODEL.h5')))
-    mod.save_weights(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_MODEL_WEIGHTS.h5')))
+    mod.save_weights(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_MODEL_WEIGHTS.weights.h5')))
 
     ## RECLASSIFY A FilE USING TRAINED MODEL FILE
     print('\n\nRECLASSIFYING FILE...')

@@ -134,11 +134,13 @@ def las2split(infile_pcs,
 
     # get minimum number of points
     for ifile in infile_pcs:
+        print('Header information for: {}'.format(ifile))
         # open the file to access only the header
         inhead = laspy.open(ifile)
         # get the minimum number of points in all input point counts
         if inhead.header.point_count < min_pts:
             min_pts = inhead.header.point_count
+            print('   updated minimum number of points to {}'.format(min_pts))
 
     # try:
     for ifile in infile_pcs:
@@ -482,7 +484,10 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
     for m in model_list:
         # predict classification
         print('Reclassifying using {} model'.format(m.name))
-        outdat_pred = m.predict(converted_dataset, verbose=2, use_multiprocessing=True)
+        if float((tf.__version__).split('.',1)) < 11.0:
+            outdat_pred = m.predict(converted_dataset, verbose=2, use_multiprocessing=True)
+        else:
+            outdat_pred = m.predict(converted_dataset, verbose=2)
 
         if verbose_output == 2:
             print('\nOutput Predictions (raw): {}'.format(len(outdat_pred)))
