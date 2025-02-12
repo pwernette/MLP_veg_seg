@@ -1,9 +1,10 @@
 import sys
 import time
 import numpy as np
+from sklearn import preprocessing as skpre
 from .miscfx import *
 
-def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radius=0.10):
+def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radius=1.00):
     '''
     Compute specified vegetation indices and/or geometric values.
 
@@ -146,7 +147,37 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
     # if standard deviation is specified as a geometric metric, then
     # compute the sd using a pointwise approach
     # NOTE: This computation is very time and resource expensive.
-    if ('sd' in geom_metrics) or ('sd' in indices):
+    if any('sd' in m for m in geom_metrics) or any('sd' in m for m in indices):
+        print('    Calculating standard deviation in X, Y, and Z')
+        # compute standard deviations
+        starttime = time.time()
+        if not 'sd_x' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="sd_x",
+                type=np.float32,
+                description="standard_deviation_x_direction"
+                ))
+        if not 'sd_y' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="sd_y",
+                type=np.float32,
+                description="standard_deviation_y_direction"
+                ))
+        if not 'sd_z' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="sd_z",
+                type=np.float32,
+                description="standard_deviation_z_direction"
+                ))
+        lasfileobj.sd_x,lasfileobj.sd_y,lasfileobj.sd_z = calc_sd(np.array([lasfileobj.x, lasfileobj.y, lasfileobj.z]).transpose(), rad=geom_radius)
+        # # normalize the values
+        # mmscaler = skpre.MinMaxScaler()
+        # lasfileobj.sd_x = mmscaler.fit_transform(lasfileobj.sd_x)
+        # lasfileobj.sd_y = mmscaler.fit_transform(lasfileobj.sd_y)
+        # lasfileobj.sd_z = mmscaler.fit_transform(lasfileobj.sd_z)
+        print("Time to compute X,Y,Z Standard Deviations = {}".format(time.time()-starttime))
+    if any('3d' in m for m in geom_metrics) or any('3d' in m for m in indices):
+        print('    Calculating 3D standard deviation')
         # compute 3D standard deviation
         starttime = time.time()
         if not 'sd3d' in dim_names:

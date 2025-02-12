@@ -34,7 +34,7 @@ from src.modelbuilder import *
 def main(default_values, verbose=True):
     # list of acceptable geometric metrics to calculate
     # this list is subject to expansion or reduction depending on new code
-    acceptablegeometrics = ['sd']
+    acceptablegeometrics = ['sd','3d']
 
     # parse any command line arguments (if present)
     default_values.parse_cmd_arguments()
@@ -61,13 +61,25 @@ def main(default_values, verbose=True):
     #   1) import training point cloud files
     #   2) compute vegetation indices
     #   3) split point clouds into training, testing, and validation sets
-    if 'sd' in default_values.model_inputs:
+    print('model inputs: {}'.format(default_values.model_inputs))
+    print('model veg indices: {}'.format(default_values.model_vegetation_indices))
+
+    if '3d' in default_values.model_vegetation_indices:
         train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
                                veg_indices=default_values.model_vegetation_indices,
+                               geometry_metrics=['3d'],
                                class_imbalance_corr=default_values.training_class_imbalance_corr,
                                training_split=default_values.training_split,
                                data_reduction=default_values.training_data_reduction,
-                               geom_metrics='sd')
+                               )
+    elif 'sd' in default_values.model_vegetation_indices:
+        train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
+                               veg_indices=default_values.model_vegetation_indices,
+                               geometry_metrics=['sd'],
+                               class_imbalance_corr=default_values.training_class_imbalance_corr,
+                               training_split=default_values.training_split,
+                               data_reduction=default_values.training_data_reduction,
+                               )
     else:
         train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
                                veg_indices=default_values.model_vegetation_indices,

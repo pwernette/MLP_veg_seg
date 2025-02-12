@@ -4,6 +4,7 @@ import pandas as pd
 import laspy
 import matplotlib.pyplot as plt
 from scipy.spatial import cKDTree
+from tqdm import tqdm
 
 # import machine learning libraries
 import tensorflow as tf
@@ -405,25 +406,47 @@ def calc_3d_sd(coords, rad=0.5):
     # return the numpy array of computed standard deviation values all points in the cloud
     return sd
 
-def calc_3d_sd2(coords, rad=0.5):
+def calc_sd(coords, rad=0.5):
     # build the KDTree
     tree = cKDTree(coords, leafsize=5)
     # intiialize an empty numpy array of the same length as coords
-    sd = np.zeros((len(coords), 3))
+    sd = np.zeros(shape=(len(coords),3), dtype=float)
     # iterate over every point in the dense point cloud
     # (I think this is where the real slowdown is happening)
-    # perform spatial query on point
-    results = tree.query_ball_point(coords, r=rad)
-    for count, result in enumerate(results):
+    for count,elem in enumerate(tqdm(coords)):
+        # perform spatial query on point
+        result = tree.query_ball_point(elem, r=rad)
         # if at least one other point is returned, then continue
         if len(result) > 1:
-            # compute standard deviation
-            sd[count] = np.std(coords[result], axis=0)
+            # compute standard deviation of X, Y, and Z separately
+            sd[count] = np.std(coords[result],axis=0)
         # otherwise, no points were found in the search radius, return zero
         else:
             sd[count] = 0
     # return the numpy array of computed standard deviation values all points in the cloud
-    return np.sqrt(np.sum(sd ** 2, axis=1))
+    a,b,c = np.split(sd,3,axis=1)
+    return a.flatten(),b.flatten(),c.flatten()
+
+''' NOT SURE IF THIS NEXT FUNCTION WORKS '''
+# def calc_3d_sd2(coords, rad=0.5):
+#     # build the KDTree
+#     tree = cKDTree(coords, leafsize=5)
+#     # intiialize an empty numpy array of the same length as coords
+#     sd = np.zeros((len(coords), 3))
+#     # iterate over every point in the dense point cloud
+#     # (I think this is where the real slowdown is happening)
+#     # perform spatial query on point
+#     results = tree.query_ball_point(coords, r=rad)
+#     for count, result in enumerate(results):
+#         # if at least one other point is returned, then continue
+#         if len(result) > 1:
+#             # compute standard deviation
+#             sd[count] = np.std(coords[result], axis=0)
+#         # otherwise, no points were found in the search radius, return zero
+#         else:
+#             sd[count] = 0
+#     # return the numpy array of computed standard deviation values all points in the cloud
+#     return np.sqrt(np.sum(sd ** 2, axis=1))
 
 
 '''
