@@ -1,7 +1,12 @@
-import sys, os, math
+import sys, os, math, time
 import numpy as np
 import pandas as pd
 import laspy
+import lazrs
+from copy import deepcopy
+
+from scipy.spatial import cKDTree
+from tqdm import tqdm
 
 # message box and file selection libraries
 import tkinter
@@ -403,6 +408,27 @@ def scale_dims(las_file):
     return outdat
 
 
+def calc_sd(coords, rad=0.5):
+    # build the KDTree
+    tree = cKDTree(coords, leafsize=5)
+    # intiialize an empty numpy array of the same length as coords
+    sd = np.zeros(shape=(len(coords),3), dtype=float)
+    # iterate over every point in the dense point cloud
+    # (I think this is where the real slowdown is happening)
+    for count,elem in enumerate(tqdm(coords)):
+        # perform spatial query on point
+        result = tree.query_ball_point(elem, r=rad)
+        # if at least one other point is returned, then continue
+        if len(result) > 1:
+            # compute standard deviation of X, Y, and Z separately
+            sd[count] = np.std(coords[result],axis=0)
+        # otherwise, no points were found in the search radius, return zero
+        else:
+            sd[count] = 0
+    # return the numpy array of computed standard deviation values all points in the cloud
+    a,b,c = np.split(sd,3,axis=1)
+    return a.flatten(),b.flatten(),c.flatten()
+
 def calc_3d_sd(coords, rad=0.5):
     # build the KDTree
     tree = cKDTree(coords, leafsize=5)
@@ -410,7 +436,7 @@ def calc_3d_sd(coords, rad=0.5):
     sd = np.zeros(len(coords))
     # iterate over every point in the dense point cloud
     # (I think this is where the real slowdown is happening)
-    for count,elem in enumerate(coords):
+    for count,elem in enumerate(tqdm(coords)):
         # perform spatial query on point
         result = tree.query_ball_point(elem, r=rad)
         # if at least one other point is returned, then continue
@@ -448,60 +474,76 @@ def calc_3d_sd2(coords, rad=0.5):
     # return the numpy array of computed standard deviation values all points in the cloud
     return np.sqrt(np.sum(sd ** 2, axis=1))
 
-
-'''
-The following are a collection of functions to compute statistics
-for the computed vegetation indices.
-'''
-def addstats(intable, values_column='vals'):
-    minar,maxar,medar,meanar,stdar = [],[],[],[],[]
-    for index,row in intable.iterrows():
-        minar.append(np.amin(row[values_column]))
-        maxar.append(np.amax(row[values_column]))
-        medar.append(np.median(row[values_column]))
-        meanar.append(np.mean(row[values_column]))
-        stdar.append(np.std(row[values_column]))
-    intable['min'] = minar
-    intable['max'] = maxar
-    intable['med'] = medar
-    intable['mean'] = meanar
-    intable['std'] = stdar
-    del([minar,maxar,medar,meanar,stdar])
-
-def computeM_singletable(intable):
+def geom_metrics(lasfileobj, geom_metrics, geom_radius=1.00):
     '''
-    Compute the M-statistic to compare all rows in the input table.
-    From:
-        Kaufman, Y.J.; Remer, L.A. Detection of forests using mid-IR reflectance: An application for aerosol studies.
-        IEEE Trans. Geosci. Remote Sens. 1994, 32, 672–683.
-    '''
-    outtable = pd.DataFrame(0.00, index=list(intable.index),
-                            columns=list(intable.index))
-    for i in list(intable.index):
-        for j in list(intable.index):
-            if (i!=j)&(intable['mean'][i]!=intable['mean'][j]):
-                outtable[i][j] = (intable['mean'][i]-intable['mean'][j])/(intable['std'][i]-intable['std'][j])
-    return outtable
+    Compute specified vegetation indices and/or geometric values.
 
-def computeM(intable1, intable2, writeout=''):
-    '''
-    Compute the M-statistic to compare all rows in the input table.
-    From:
-        Kaufman, Y.J.; Remer, L.A. Detection of forests using mid-IR reflectance: An application for aerosol studies.
-        IEEE Trans. Geosci. Remote Sens. 1994, 32, 672–683.
-    '''
-    outtable = pd.DataFrame(0.00, index=list(intable1.index), columns=['M-statistic'])
-    for i in list(intable1.index):
-        for j in list(intable2.index):
-            if i==j:
-                outtable['M-statistic'][i] = (intable1['mean'][i]-intable2['mean'][j])/(intable1['std'][i]-intable2['std'][j])
-    if writeout!='':
-        outtable.to_csv(str(writeout)+'_veg_noveg_M-statistic.csv')
-    return outtable
+    Input parameters:
+        :param numpy.array lasfileobj: LAS file object
+        :param str indices: Vegetation indices to be computed.
+        :param float geom_radius: Radius used to compute geometric values.
 
-# def veg_noveg(infile, vegtrain, novegtrain, idxvals, thresh):
-#     # open an output file to read and write
-#     outfile = file.File('__out.laz',mode='wr',header=indat.header)
-#     outfile.points = indat.points  # copy the points from the specified input las/laz file
-#     ptclass = deepcopy(indat.classification)  # create a copy of the input points
-# def binarization(indat, inthresh):
+    Returns:
+        (1) the input point cloud with additional geometric indices
+
+    Notes:
+        There is no need to normalize any values before passing a valid
+        las or laz file object (from laspy) to this function.
+        r, g, and b values are normalized within this updated function (20210801).
+
+    References:
+    '''
+    dim_names = list(lasfileobj.point_format.dimension_names)
+
+    # start timer
+    start_time = time.time()
+
+    # if standard deviation is specified as a geometric metric, then
+    # compute the sd using a pointwise approach
+    # NOTE: This computation is very time and resource expensive.
+    if 'sd' in geom_metrics:
+        print('    Calculating standard deviation in X, Y, and Z')
+        # compute standard deviations
+        starttime = time.time()
+        if not 'sd_x' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="sd_x",
+                type=np.float32,
+                description="standard_deviation_x_direction"
+                ))
+        if not 'sd_y' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="sd_y",
+                type=np.float32,
+                description="standard_deviation_y_direction"
+                ))
+        if not 'sd_z' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="sd_z",
+                type=np.float32,
+                description="standard_deviation_z_direction"
+                ))
+        lasfileobj.sd_x,lasfileobj.sd_y,lasfileobj.sd_z = calc_sd(np.array([lasfileobj.x, lasfileobj.y, lasfileobj.z]).transpose(), rad=geom_radius)
+        # # normalize the values
+        # mmscaler = skpre.MinMaxScaler()
+        # lasfileobj.sd_x = mmscaler.fit_transform(lasfileobj.sd_x)
+        # lasfileobj.sd_y = mmscaler.fit_transform(lasfileobj.sd_y)
+        # lasfileobj.sd_z = mmscaler.fit_transform(lasfileobj.sd_z)
+        print("Time to compute X,Y,Z Standard Deviations = {}".format(time.time()-starttime))
+    if '3d' in geom_metrics:
+        print('    Calculating 3D standard deviation')
+        # compute 3D standard deviation
+        starttime = time.time()
+        if not 'sd3d' in dim_names:
+            lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="sd3d",
+                type=np.float32,
+                description="standard_deviation"
+                ))
+        lasfileobj.sd3d = calc_3d_sd(np.array([lasfileobj.x, lasfileobj.y, lasfileobj.z]).transpose(), rad=geom_radius)
+        print("Time to compute 3D Standard Deviation = {}".format(time.time()-starttime))
+
+    print('Computed indices: {}'.format(geom_metrics))
+    print('  Total Computation time: {}s'.format((time.time()-start_time)))
+    
+    return lasfileobj

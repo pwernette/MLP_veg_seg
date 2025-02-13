@@ -474,6 +474,8 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
     del(indat)
     odir,ofname = os.path.split(incloudname)
     ofname = ofname.split('.')[0]
+    if "copc.laz" in ofname:
+        ofname = ofname.replace('.copc','')
     print('Output file base name: {}'.format(ofname))
 
     rdate = str(date.today()).replace('-','')
