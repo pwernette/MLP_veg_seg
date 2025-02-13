@@ -484,7 +484,7 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
     for m in model_list:
         # predict classification
         print('Reclassifying using {} model'.format(m.name))
-        if float((tf.__version__).split('.',1)) < 11.0:
+        if float((tf.__version__).split('.',1)[1]) < 11.0:
             outdat_pred = m.predict(converted_dataset, verbose=2, use_multiprocessing=True)
         else:
             outdat_pred = m.predict(converted_dataset, verbose=2)
@@ -544,8 +544,8 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
                     # update the classification values
                     incloud.classification = outdat_pred_reclass
                     # write out the new file (with vegetation indices included as extra bytes, is specified)
-                    print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.copc.laz')))
-                    incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.copc.laz'))
+                    print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz')))
+                    incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz'))
         else:
             outdat_pred_reclass = outdat_pred
             # outdat_pred_reclass[(outdat_pred_reclass >= threshold_vals)] = 4  # reclass veg. points
@@ -582,5 +582,5 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
                 # print(outdat_pred_reclass)
                 incloud.classification = outdat_pred_reclass
                 # write out the new file (with vegetation indices included as extra bytes, is specified)
-                print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.copc.laz')))
-                incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.copc.laz'))
+                print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.laz')))
+                incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.laz'))

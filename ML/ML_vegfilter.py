@@ -204,7 +204,10 @@ def main(default_values, verbose=True):
     # save the complete model (will create a new folder with the saved model)
     #mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,default_values.model_name))
     # save the model and model weights as H5 files
-    mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_FULL_MODEL.h5')))
+    if float((tf.__version__).split('.',1)[1]) >= 11.0:
+        mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_FULL_MODEL.keras')))
+    else:
+        mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_FULL_MODEL.h5')))
     mod.save_weights(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_MODEL_WEIGHTS.weights.h5')))
 
     ## RECLASSIFY A FilE USING TRAINED MODEL FILE
