@@ -34,7 +34,7 @@ from src.modelbuilder import *
 def main(default_values, verbose=True):
     # list of acceptable geometric metrics to calculate
     # this list is subject to expansion or reduction depending on new code
-    acceptablegeometrics = ['sd']
+    acceptablegeometrics = ['sd','3d']
 
     # parse any command line arguments (if present)
     default_values.parse_cmd_arguments()
@@ -61,13 +61,25 @@ def main(default_values, verbose=True):
     #   1) import training point cloud files
     #   2) compute vegetation indices
     #   3) split point clouds into training, testing, and validation sets
-    if 'sd' in default_values.model_inputs:
+    print('model inputs: {}'.format(default_values.model_inputs))
+    print('model veg indices: {}'.format(default_values.model_vegetation_indices))
+
+    if '3d' in default_values.model_vegetation_indices:
         train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
                                veg_indices=default_values.model_vegetation_indices,
+                               geometry_metrics=['3d'],
                                class_imbalance_corr=default_values.training_class_imbalance_corr,
                                training_split=default_values.training_split,
                                data_reduction=default_values.training_data_reduction,
-                               geom_metrics='sd')
+                               )
+    elif 'sd' in default_values.model_vegetation_indices:
+        train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
+                               veg_indices=default_values.model_vegetation_indices,
+                               geometry_metrics=['sd'],
+                               class_imbalance_corr=default_values.training_class_imbalance_corr,
+                               training_split=default_values.training_split,
+                               data_reduction=default_values.training_data_reduction,
+                               )
     else:
         train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
                                veg_indices=default_values.model_vegetation_indices,
@@ -192,8 +204,11 @@ def main(default_values, verbose=True):
     # save the complete model (will create a new folder with the saved model)
     #mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,default_values.model_name))
     # save the model and model weights as H5 files
-    mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_FULL_MODEL.h5')))
-    mod.save_weights(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_MODEL_WEIGHTS.h5')))
+    if float((tf.__version__).split('.',1)[1]) >= 11.0:
+        mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_FULL_MODEL.keras')))
+    else:
+        mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_FULL_MODEL.h5')))
+    mod.save_weights(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_MODEL_WEIGHTS.weights.h5')))
 
     ## RECLASSIFY A FilE USING TRAINED MODEL FILE
     print('\n\nRECLASSIFYING FILE...')

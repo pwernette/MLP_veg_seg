@@ -131,7 +131,10 @@ def build_model(model_name,
     # create history callback
     hist = History()
     if dotrain:
-        checkpoint_best = os.path.join(rootdirectory,str(model_name)+'_BEST.h5')
+        if float((tf.__version__).split('.',1)[1]) >= 11.0:
+            checkpoint_best = os.path.join(rootdirectory,str(model_name)+'_BEST.keras')
+        else:
+            checkpoint_best = os.path.join(rootdirectory,str(model_name)+'_BEST.h5')
         logfile = os.path.join(rootdirectory,str(model_name)+'_LOG.txt')
         call_list = [hist]
         if earlystopping:

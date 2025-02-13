@@ -61,10 +61,11 @@ os
 ntpath
 time
 copy
+tqdm
 subprocess
 laspy
 lasrs *(required to write compressed LAZ file with laspy)*
-numpy
+numpy<2.0
 pandas
 tKinter
 tensorflow (or tensorflow-gpu) **Only if using the machine learning approach**
@@ -96,6 +97,19 @@ conda activate vegfilter
 or
 ```
 conda activate mlvegfilter
+```
+
+## Installation Troubleshooting
+
+Depending on your system configuration, you may need to update one or more packages. Here are some known issues and solutions:
+
+1. Within gitbash in Windows 11, there appears to be an inconsistency with Tensorflow as Numpy. A good StackOverflow post on this issue can be found [here](https://stackoverflow.com/questions/78641150/a-module-that-was-compiled-using-numpy-1-x-cannot-be-run-in-numpy-2-0-0). As of February 2025, the solution is to downgrade the default installed verison of numpy with the following:
+```
+pip install "numpy<2.0"
+```
+2. Within WSL2 in Windows 11, Tensorflow v2.18 has a known issue with trying to use the GPU (even if configured properly). GitHub has a good thread on this issue, [here](https://github.com/tensorflow/tensorflow/issues/78784) for more information on this known bug. As of February 2025, the solution is to downgrade Tensorflow to v2.17 with the following:
+```
+pip install tensorflow[and-cuda]==2.17
 ```
 
 # USAGE (PROGRAMS *WITHOUT* MACHINE LEARNING):

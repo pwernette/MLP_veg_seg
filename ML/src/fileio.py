@@ -134,11 +134,13 @@ def las2split(infile_pcs,
 
     # get minimum number of points
     for ifile in infile_pcs:
+        print('Header information for: {}'.format(ifile))
         # open the file to access only the header
         inhead = laspy.open(ifile)
         # get the minimum number of points in all input point counts
         if inhead.header.point_count < min_pts:
             min_pts = inhead.header.point_count
+            print('   updated minimum number of points to {}'.format(min_pts))
 
     # try:
     for ifile in infile_pcs:
@@ -154,6 +156,7 @@ def las2split(infile_pcs,
         if veg_indices == 'rgb' or veg_indices is None:
             indat = veg_rgb(indat)
         else:
+            print('\nGeometry metrics specified: {}'.format(geometry_metrics))
             indat = vegidx(indat, 
                            indices=veg_indices, 
                            geom_metrics=geometry_metrics)
@@ -168,7 +171,7 @@ def las2split(infile_pcs,
         indat['veglab'] = np.full(shape=len(indat), 
                                   fill_value=class_val, 
                                   dtype=np.float32)
-        print(indat['veglab'])
+        # print(indat['veglab'])
 
         # # transpose the data
         # globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = np.transpose(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'])
@@ -276,7 +279,7 @@ def df_to_dataset(dataframe,
     dataframe = dataframe.copy()
     if shuffle:
         dataframe = dataframe.sample(frac=1).reset_index(drop=True)
-        if verbose > 0:
+        if verbose == 2:
             print(dataframe.head())
     if not targetcolname == 'none':
         # assume that the last column is the labels
@@ -297,14 +300,14 @@ def df_to_dataset(dataframe,
         ds_inputs = tf.convert_to_tensor(dataframe)
         ds = tf.data.Dataset.from_tensor_slices((ds_inputs, labels))
 
-        if verbose > 0:
+        if verbose == 2:
             print(ds)
             print(ds.element_spec[0].shape[1:])
     else:
         ds_inputs = tf.convert_to_tensor(dataframe)
         ds = tf.data.Dataset.from_tensor_slices((ds_inputs))
 
-        if verbose > 0:
+        if verbose == 2:
             print(ds)
 
     # if shuffle:
@@ -332,8 +335,10 @@ def generate_dataframe(input_point_cloud, vegetation_index_list, dtype_conversio
         outdict['x'] = np.array(input_point_cloud.x, dtype=dtype_conversion).flatten()
         outdict['y'] = np.array(input_point_cloud.y, dtype=dtype_conversion).flatten()
         outdict['z'] = np.array(input_point_cloud.z, dtype=dtype_conversion).flatten()
-    if any('sd' in m for m in vegetation_index_list):
+    if any('3d' in m for m in vegetation_index_list):
         outdict['sd3d'] = np.array(input_point_cloud.sd3d, dtype=dtype_conversion).flatten()
+    if any('sd' in m for m in vegetation_index_list):
+        outdict['sd_x'] = np.array(input_point_cloud.sd_x, dtype=dtype_conversion).flatten()
     if any('exg' == m for m in vegetation_index_list) or any('simple' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
         outdict['exg'] = np.array(input_point_cloud.exg, dtype=dtype_conversion).flatten()
     if any('exr' in m for m in vegetation_index_list) or any('simple' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
@@ -357,7 +362,7 @@ def generate_dataframe(input_point_cloud, vegetation_index_list, dtype_conversio
     
     return pd.DataFrame(outdict)
 
-def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, ds_cache=False, indiceslist=[], geo_metrics=[], geom_rad=0.10, verbose_output=2):
+def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, ds_cache=False, indiceslist=[], geo_metrics=[], geom_rad=0.10, verbose_output=1):
     '''
     Reclassify the input point cloud using the models specified in the model_list
     variable and the threshold value(s) specified in the threshold_vals list. It
@@ -409,11 +414,16 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
     modnamelist = [str(f.name) for f in model_list]
     print('List of models for reclassification: {}'.format(modnamelist))
 
+    if not isinstance(indiceslist, list):
+        indiceslist = list(indiceslist)
+
     # figure out what vegetation indices to compute
     if any('xyz' in m for m in modnamelist):
         indiceslist.append('xyz')
+    if any('3d' in m for m in modnamelist):
+        indiceslist.append('3d')
     if any('sd' in m for m in modnamelist):
-        indiceslist.append('sd3d')
+        indiceslist.append('sd')
     if any('all' in m for m in modnamelist):
         indiceslist = 'all'
     if any('simple' in m for m in modnamelist):
@@ -458,8 +468,8 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
                                       cache_ds=ds_cache, 
                                       batch_size=batch_sz,
                                       drop_remain=False)
-    print(converted_dataset)
-    print(len(converted_dataset))
+    # print(converted_dataset)
+    # print(len(converted_dataset))
 
     del(indat)
     odir,ofname = os.path.split(incloudname)
@@ -474,15 +484,20 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
     for m in model_list:
         # predict classification
         print('Reclassifying using {} model'.format(m.name))
-        outdat_pred = m.predict(converted_dataset, verbose=2, use_multiprocessing=True)
+        if float((tf.__version__).split('.',1)[1]) < 11.0:
+            outdat_pred = m.predict(converted_dataset, verbose=2, use_multiprocessing=True)
+        else:
+            outdat_pred = m.predict(converted_dataset, verbose=2)
 
-        print('\nOutput Predictions (raw): {}'.format(len(outdat_pred)))
-        print(outdat_pred)
+        if verbose_output == 2:
+            print('\nOutput Predictions (raw): {}'.format(len(outdat_pred)))
+            print(outdat_pred)
 
         outdat_pred = tf.argmax(outdat_pred,-1)
 
-        print('\nOutput Predictions: {}'.format(len(outdat_pred)))
-        print(outdat_pred)
+        if verbose_output == 2:
+            print('\nOutput Predictions: {}'.format(len(outdat_pred)))
+            print(outdat_pred)
 
         # print('threshold_vals = {}'.format(threshold_vals))
         if not isinstance(threshold_vals, list):
@@ -529,8 +544,8 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
                     # update the classification values
                     incloud.classification = outdat_pred_reclass
                     # write out the new file (with vegetation indices included as extra bytes, is specified)
-                    print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.copc.laz')))
-                    incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.copc.laz'))
+                    print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz')))
+                    incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_val).replace('.','')+'.laz'))
         else:
             outdat_pred_reclass = outdat_pred
             # outdat_pred_reclass[(outdat_pred_reclass >= threshold_vals)] = 4  # reclass veg. points
@@ -561,11 +576,11 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
                                 ('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_vals).replace('.','') + '.las')])
             elif int(laspy.__version__.split('.')[0]) == 2:
                 # update the classification values
-                print('\nincloud.classification: {}'.format(len(incloud.classification)))
-                print(incloud.classification)
-                print('\nOutput Predictions: {}'.format(len(outdat_pred_reclass)))
-                print(outdat_pred_reclass)
+                # print('\nincloud.classification: {}'.format(len(incloud.classification)))
+                # print(incloud.classification)
+                # print('\nOutput Predictions: {}'.format(len(outdat_pred_reclass)))
+                # print(outdat_pred_reclass)
                 incloud.classification = outdat_pred_reclass
                 # write out the new file (with vegetation indices included as extra bytes, is specified)
-                print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.copc.laz')))
-                incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.copc.laz'))
+                print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.laz')))
+                incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+"_"+str(threshold_vals).replace('.','')+'.laz'))
