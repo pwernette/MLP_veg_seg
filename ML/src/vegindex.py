@@ -149,7 +149,7 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
             multidimensional array
         3) append the vegetation index name to the output array
     '''
-    if ('all' in indices) or ('exr' in indices):
+    if ('all' in indices) or ('exr' in indices) or ('simple' in indices):
         if not 'exr' in dim_names:
             lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
                 name="exr",
@@ -157,7 +157,7 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
                 description="exr"
                 ))
         lasfileobj.exr = 1.4*lasfileobj.bnorm-lasfileobj.gnorm
-    if ('all' in indices) or ('exg' in indices):
+    if ('all' in indices) or ('exg' in indices) or ('simple' in indices):
         if not 'exg' in dim_names:
             lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
                 name="exg",
@@ -165,7 +165,7 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
                 description="exg"
                 ))
         lasfileobj.exg = 2*lasfileobj.gnorm-lasfileobj.rnorm-lasfileobj.bnorm
-    if ('all' in indices) or ('exb' in indices):
+    if ('all' in indices) or ('exb' in indices) or ('simple' in indices):
         if not 'exb' in dim_names:
             lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
                 name="exb",
@@ -173,7 +173,7 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
                 description="exb"
                 ))
         lasfileobj.exb = 1.4*r-g
-    if ('all' in indices) or ('exgr' in indices):
+    if ('all' in indices) or ('exgr' in indices) or ('simple' in indices):
         if not 'exgr' in dim_names:
             lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
                 name="exgr",

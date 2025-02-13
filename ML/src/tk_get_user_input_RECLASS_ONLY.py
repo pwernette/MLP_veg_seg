@@ -88,29 +88,29 @@ class App(tk.Tk):
         rowplacement += 1
 
         # input model file
-        lab = Label(self, text='Saved h5 Model File')
+        lab = Label(self, text='Saved Model File')
         lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
         model_file = Text(self, height=1, width=50)
         model_file.insert(tk.END, default_arguments_obj.model_file)
         model_file.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        button_explore = Button(self, text='Browse', command=lambda:browseFiles(model_file, 'Select saved h5 model file'))
+        button_explore = Button(self, text='Browse', command=lambda:browseFiles(model_file, 'Select saved model file'))
         button_explore.grid(column=3, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
         rowplacement += 1
 
-        ''' predicting parameters '''
-        lab = Label(self, text='RECLASSIFICATION PARAMETERS:')
-        lab.grid(column=0, columnspan=3, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        rowplacement += 1
+        # ''' predicting parameters '''
+        # lab = Label(self, text='RECLASSIFICATION PARAMETERS:')
+        # lab.grid(column=0, columnspan=3, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        # rowplacement += 1
 
-        # reclassification threshold(s)
-        lab = Label(self, text='Reclassification Threshold(s)')
-        lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # get variable input
-        reclass_thresholds = Text(self, height=1, width=50)
-        reclass_thresholds.insert(tk.END, default_arguments_obj.reclass_thresholds)
-        reclass_thresholds.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # increase the row by 1
-        rowplacement += 1
+        # # reclassification threshold(s)
+        # lab = Label(self, text='Reclassification Threshold(s)')
+        # lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
+        # # get variable input
+        # reclass_thresholds = Text(self, height=1, width=50)
+        # reclass_thresholds.insert(tk.END, default_arguments_obj.reclass_thresholds)
+        # reclass_thresholds.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
+        # # increase the row by 1
+        # rowplacement += 1
 
         # # training batch size
         # lab = Label(self, text='Batch Size')
@@ -155,14 +155,14 @@ class App(tk.Tk):
             # # prefetch
             # default_arguments_obj.training_prefetch = str_to_bool(training_prefetch.get('1.0','end-1c').strip().split('\n')[0])
             # reclassification threshold(s)
-            if " " in reclass_thresholds.get('1.0','end-1c'):
-                default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(' '))))
-            elif "," in reclass_thresholds.get('1.0','end-1c'):
-                default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(','))))
-            elif ";" in reclass_thresholds.get('1.0','end-1c'):
-                default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(';'))))
-            else:
-                default_arguments_obj.reclass_thresholds = float(reclass_thresholds.get('1.0','end-1c'))
+            # if " " in reclass_thresholds.get('1.0','end-1c'):
+            #     default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(' '))))
+            # elif "," in reclass_thresholds.get('1.0','end-1c'):
+            #     default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(','))))
+            # elif ";" in reclass_thresholds.get('1.0','end-1c'):
+            #     default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(';'))))
+            # else:
+            #     default_arguments_obj.reclass_thresholds = float(reclass_thresholds.get('1.0','end-1c'))
             # after getting all values, destroy the window
             self.destroy()
         # create, define, and place submit button
@@ -246,7 +246,7 @@ class Args():
         self.plotdir = 'v'
         # for reclassification
         #   reclass_thresholds: list of thresholds used for reclassification
-        self.reclass_thresholds = [0.6]
+        self.reclass_thresholds = 0.6
     
     def parse_cmd_arguments(self):
         ''' function to update default values with any command line arguments '''
@@ -260,14 +260,7 @@ class Args():
                          choices=['true','True','false','False'], 
                          default='true', 
                          help='Initialize the graphical user interface [default = true]')
-        psr.add_argument('-v','-veg','-vegfile',
-                         dest='vegfile',
-                         type=str,
-                         help='Point cloud containing vegetation points only')
-        psr.add_argument('-g','-ground','-noveg','-groundfile',
-                         dest='groundfile',
-                         type=str,
-                         help='Point cloud containing bare-Earth points only')
+
         psr.add_argument('-r','-reclass','-reclassfile',
                          dest='reclassfile',
                          type=str,
@@ -276,26 +269,26 @@ class Args():
                          dest='modelfile',
                          type=str,
                          help='Trained MLP model file (h5 format)')
-        psr.add_argument('-m','-mname','-modelname',
-                         dest='modelname',
-                         type=str,
-                         help='(optional) Specify the output model file name')
-        psr.add_argument('-vi','-index','-vegindex',
-                         dest='vegindex',
-                         type=str,
-                         default='rgb',
-                         help='(optional) Which vegetation indices should be included in the model [default = rgb]')
+        # psr.add_argument('-m','-mname','-modelname',
+        #                  dest='modelname',
+        #                  type=str,
+        #                  help='(optional) Specify the output model file name')
+        # psr.add_argument('-vi','-index','-vegindex',
+        #                  dest='vegindex',
+        #                  type=str,
+        #                  default='rgb',
+        #                  help='(optional) Which vegetation indices should be included in the model [default = rgb]')
         psr.add_argument('-plotdir','-plotdir',
                          dest='plotdir',
                          type=str,
                          choices=['h','v'],
                          default='v',
                          help='(optional) Direction to orient plots [default = v (vertical)]')
-        psr.add_argument('-thresh','-threshold','-reclassthresholds',
-                         dest='reclassthresholds',
-                         type=float,
-                         default=0.6,
-                         help='Confidence threshold value or list of threshold values (as floats) to use for segmenting vegetation points [default = 0.6]')
+        # psr.add_argument('-thresh','-threshold','-reclassthresholds',
+        #                  dest='reclassthresholds',
+        #                  type=float,
+        #                  default=0.6,
+        #                  help='Confidence threshold value or list of threshold values (as floats) to use for segmenting vegetation points [default = 0.6]')
         psr.add_argument('-rad','-radius','-geometryradius',
                          dest='geometryradius',
                          type=float,
@@ -313,14 +306,6 @@ class Args():
             # graphic user interface option
             self.gui = str_to_bool(args.gui)
             optionsargs['graphic user interface'] = self.gui
-        if args.vegfile:
-            # input vegetation only dense cloud/point cloud
-            self.filein_vegetation = str(args.vegfile)
-            optionsargs['vegetation file'] = str(args.vegfile)
-        if args.groundfile:
-            # input bare-Earth only dense cloud/point cloud
-            self.filein_ground = str(args.groundfile)
-            optionsargs['bare-Earth file'] = str(args.groundfile)
         if args.reclassfile:
             # input file to reclassify
             self.reclassfile = str(args.reclassfile)
@@ -329,10 +314,10 @@ class Args():
             # model filename
             self.model_file = str(args.modelfile)
             optionsargs['model file'] = str(self.model_file)
-        if args.modelname:
-            # model output name (used to save the model)
-            self.model_output_name = str(args.modelname)
-            optionsargs['model name'] = str(args.modelname)
+        # if args.modelname:
+        #     # model output name (used to save the model)
+        #     self.model_output_name = str(args.modelname)
+        #     optionsargs['model name'] = str(args.modelname)
         # if args.vegindex:
         #     # because the input argument is handled as a single string, we need
         #     # to strip the brackets, split by the delimeter, and then re-form it
@@ -437,12 +422,12 @@ class Args():
                 print('Invalid plot direction. Defaulting to vertical model plot.')
                 self.plotdir = 'TB'
             optionsargs['plot direction'] = self.plotdir
-        if args.reclassthresholds:
-            # because the input argument is handled as a single string, we need
-            # to strip the brackets, split by the delimeter, and then re-form it
-            # as a list of characters/strings
-            self.reclass_thresholds = list(map(float,str(args.reclassthresholds).split(',')))
-            optionsargs['reclassification thresholds'] = self.reclass_thresholds
+        # if args.reclassthresholds:
+        #     # because the input argument is handled as a single string, we need
+        #     # to strip the brackets, split by the delimeter, and then re-form it
+        #     # as a list of characters/strings
+        #     self.reclass_thresholds = list(map(float,str(args.reclassthresholds).split(',')))
+        #     optionsargs['reclassification thresholds'] = self.reclass_thresholds
 
         if len(optionsargs)>0:
             print('Command line parameters:')

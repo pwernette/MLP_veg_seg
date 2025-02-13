@@ -425,9 +425,9 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
     if any('sd' in m for m in modnamelist):
         indiceslist.append('sd')
     if any('all' in m for m in modnamelist):
-        indiceslist = 'all'
+        indiceslist.append('all')
     if any('simple' in m for m in modnamelist):
-        indiceslist = 'simple'
+        indiceslist.append('simple')
     if any('exr' in m for m in modnamelist):
         indiceslist.append('exr')
     if any('exg' in m for m in modnamelist) and not any('exgr' in m for m in modnamelist):
@@ -484,6 +484,10 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
 
     # uncomment the following block of code for use with multiple models as a list of inputs
     for m in model_list:
+
+        # set the output file name
+        outfilename = os.path.join(odir,ofname+"_"+str(m.name)+'.laz')
+        
         # predict classification
         print('Reclassifying using {} model'.format(m.name))
         if float((tf.__version__).split('.',1)[1]) < 11.0:
@@ -495,116 +499,51 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
             print('\nOutput Predictions (raw): {}'.format(len(outdat_pred)))
             print(outdat_pred)
 
+        # get the maximum likelihood classification based on the predicted probabilities
         outdat_pred = tf.argmax(outdat_pred,-1)
 
         if verbose_output == 2:
             print('\nOutput Predictions: {}'.format(len(outdat_pred)))
             print(outdat_pred)
 
-        # print('threshold_vals = {}'.format(threshold_vals))
-        if not isinstance(threshold_vals, list):
+        # open the output file (laspy version dependent)
+        if int(laspy.__version__.split('.')[0]) == 1:
+            print('Writing LAS file: {}'.format(outfilename.replace('.laz','.las')))
+            outfile = file.File((outfilename.replace('.laz','.las')), mode='w', header=incloud.header)
+            # copy the points from the original file
+            outfile.points = incloud.points
+
+            # update the classification values
+            outfile.classification = outdat_pred
+            outfile.close()
+            print('  --> Converting from LAS to LAZ format')
+            # the following functions use the subprocess module to call commands outside of Python.
+            # use lastools outside of program to convert las to laz file
+            subprocess.call(['las2las',
+                            '-i', (outfilename.replace('.laz','.las')),
+                            '-o', (outfilename)])
+            # remove las output file (after compressed to laz)
+            subprocess.call(['rm',
+                            ('results_' + rdate + '/' + ofname + "_" + str(m.name)+ '.las')])
+        elif int(laspy.__version__.split('.')[0]) == 2:
+            # update the classification values
+            # print('\nincloud.classification: {}'.format(len(incloud.classification)))
+            # print(incloud.classification)
+            # print('\nOutput Predictions: {}'.format(len(outdat_pred)))
+            # print(outdat_pred)
+            incloud.classification = outdat_pred
+            # write out the new file (with vegetation indices included as extra bytes, is specified)
+            print('Writing LAZ file: {}'.format(outfilename))
             try:
-                threshold_vals = [v for v in threshold_vals]
+                incloud.write(outfilename)
             except:
                 try:
-                    threshold_vals = list(map(float, threshold_vals))
+                    print('   It appears that the input file is a COPC format file. Attempting to convert this to a raw LAZ file...')
+                    newheader = laspy.LasHeader(version=incloud.header.version, point_format=incloud.header.point_format)
+                    newheader.offsets = incloud.header.offsets
+                    newheader.scales = incloud.header.scales
+                    with laspy.open(outfilename, mode='w', header=newheader) as newout:
+                        newout.write_points(incloud.points)
+                    print('   Wrote out :{}'.format())
                 except:
-                    print('No conversion of the threshold_values object to list took place.')
-                    pass
-        print('Threshold Value(s) = {}'.format(threshold_vals))
-        if isinstance(threshold_vals, list):
-            for threshold_val in list(threshold_vals):
-                outdat_pred_reclass = outdat_pred
-                # outdat_pred_reclass[(outdat_pred_reclass >= threshold_val)] = 4  # reclass veg. points
-                # # outdat_pred_reclass[(outdat_pred_reclass < threshold_val)] = 2   # reclass no veg. points
-                # outdat_pred_reclass = outdat_pred_reclass.flatten().astype(np.int32)  # convert float to int
-
-                
-                # open the output file (laspy version dependent)
-                if int(laspy.__version__.split('.')[0]) == 1:
-                    print('Writing LAS file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+'.las')))
-                    outfile = file.File((os.path.join(odir,ofname.replace('las','').replace('laz','')+"_"+str(m.name)+'.las')), mode='w', header=incloud.header)
-                    # copy the points from the original file
-                    outfile.points = incloud.points
-                # elif int(laspy.__version__.split('.')[0]) == 2:
-                #     outfile = laspy.LasData(header=incloud.header)
-
-                if int(laspy.__version__.split('.')[0]) == 1:
-                    # update the classification values
-                    outfile.classification = outdat_pred_reclass
-                    outfile.close()
-                    print('  --> Converting from LAS to LAZ format')
-                    # the following functions use the subprocess module to call commands outside of Python.
-                    # use lastools outside of program to convert las to laz file
-                    subprocess.call(['las2las',
-                                    '-i', (os.path.join(odir,ofname+"_"+str(m.name)+'.las')),
-                                    '-o', (os.path.join(odir,ofname+"_"+str(m.name)+'.laz'))])
-                    # remove las output file (after compressed to laz)
-                    subprocess.call(['rm',
-                                    ('results_' + rdate + '/' + ofname + "_" + str(m.name)+'.las')])
-                elif int(laspy.__version__.split('.')[0]) == 2:
-                    # update the classification values
-                    incloud.classification = outdat_pred_reclass
-                    # write out the new file (with vegetation indices included as extra bytes, is specified)
-                    print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+'.laz')))
-                    try:
-                        incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+'.laz'))
-                    except:
-                        try:
-                            print('   It appears that the input file is a COPC format file. Attempting to convert this to a raw LAZ file...')
-                            newheader = laspy.LasHeader(version=incloud.header.version, point_format=incloud.header.point_format)
-                            newheader.offsets = incloud.header.offsets
-                            newheader.scales = incloud.header.scales
-                            with laspy.open(os.path.join(odir,ofname+"_"+str(m.name)+'.laz'), mode='w', header=newheader) as newout:
-                                newout.write_points(incloud.points)
-                        except:
-                            print('\nERROR: Unable to write out: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+'.laz')))
-        else:
-            outdat_pred_reclass = outdat_pred
-            # outdat_pred_reclass[(outdat_pred_reclass >= threshold_vals)] = 4  # reclass veg. points
-            # # outdat_pred_reclass[(outdat_pred_reclass < threshold_vals)] = 2   # reclass no veg. points
-            # outdat_pred_reclass = outdat_pred_reclass.flatten().astype(np.int32)  # convert float to int
-
-            # open the output file (laspy version dependent)
-            if int(laspy.__version__.split('.')[0]) == 1:
-                print('Writing LAS file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+'.las')))
-                outfile = file.File((os.path.join(odir,ofname.replace('las','').replace('laz','')+"_"+str(m.name)+'.las')), mode='w', header=incloud.header)
-                # copy the points from the original file
-                outfile.points = incloud.points
-            # elif int(laspy.__version__.split('.')[0]) == 2:
-            #     outfile = laspy.LasData(header=incloud.header)
-
-            if int(laspy.__version__.split('.')[0]) == 1:
-                # update the classification values
-                outfile.classification = outdat_pred_reclass
-                outfile.close()
-                print('  --> Converting from LAS to LAZ format')
-                # the following functions use the subprocess module to call commands outside of Python.
-                # use lastools outside of program to convert las to laz file
-                subprocess.call(['las2las',
-                                '-i', (os.path.join(odir,ofname+"_"+str(m.name)+'.las')),
-                                '-o', (os.path.join(odir,ofname+"_"+str(m.name)+'.laz'))])
-                # remove las output file (after compressed to laz)
-                subprocess.call(['rm',
-                                ('results_' + rdate + '/' + ofname + "_" + str(m.name) + "_" + str(threshold_vals).replace('.','') + '.las')])
-            elif int(laspy.__version__.split('.')[0]) == 2:
-                # update the classification values
-                # print('\nincloud.classification: {}'.format(len(incloud.classification)))
-                # print(incloud.classification)
-                # print('\nOutput Predictions: {}'.format(len(outdat_pred_reclass)))
-                # print(outdat_pred_reclass)
-                incloud.classification = outdat_pred_reclass
-                # write out the new file (with vegetation indices included as extra bytes, is specified)
-                print('Writing LAZ file: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+'.laz')))
-                try:
-                    incloud.write(os.path.join(odir,ofname+"_"+str(m.name)+'.laz'))
-                except:
-                    try:
-                        print('   It appears that the input file is a COPC format file. Attempting to convert this to a raw LAZ file...')
-                        newheader = laspy.LasHeader(version=incloud.header.version, point_format=incloud.header.point_format)
-                        newheader.offsets = incloud.header.offsets
-                        newheader.scales = incloud.header.scales
-                        with laspy.open(os.path.join(odir,ofname+"_"+str(m.name)+'.laz'), mode='w', header=newheader) as newout:
-                            newout.write_points(incloud.points)
-                    except:
-                        print('\nERROR: Unable to write out: {}'.format(os.path.join(odir,ofname+"_"+str(m.name)+'.laz')))
+                    print('\nERROR: Unable to write out: {}'.format(outfilename))
