@@ -418,35 +418,35 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
         indiceslist = list(indiceslist)
 
     # figure out what vegetation indices to compute
-    if any('xyz' in m for m in modnamelist):
+    if any('xyz' in m for m in modnamelist) and not 'xyz' in indiceslist:
         indiceslist.append('xyz')
-    if any('3d' in m for m in modnamelist):
+    if any('3d' in m for m in modnamelist) and not '3d' in indiceslist:
         indiceslist.append('3d')
-    if any('sd' in m for m in modnamelist):
+    if any('sd' in m for m in modnamelist) and not 'sd' in indiceslist:
         indiceslist.append('sd')
-    if any('all' in m for m in modnamelist):
+    if any('all' in m for m in modnamelist) and not 'all' in indiceslist:
         indiceslist.append('all')
-    if any('simple' in m for m in modnamelist):
+    if any('simple' in m for m in modnamelist) and not 'simple' in indiceslist:
         indiceslist.append('simple')
-    if any('exr' in m for m in modnamelist):
+    if any('exr' in m for m in modnamelist) and not 'exr' in indiceslist:
         indiceslist.append('exr')
-    if any('exg' in m for m in modnamelist) and not any('exgr' in m for m in modnamelist):
+    if any('exg' in m for m in modnamelist) and not any('exgr' in m for m in modnamelist) and not 'exg' in indiceslist:
         indiceslist.append('exg')
-    if any('exgr' in m for m in modnamelist):
+    if any('exgr' in m for m in modnamelist) and not 'exgr' in indiceslist:
         indiceslist.append('exgr')
-    if any('exb' in m for m in modnamelist):
+    if any('exb' in m for m in modnamelist) and not 'exb' in indiceslist:
         indiceslist.append('exb')
-    if any('ngrdi' in m for m in modnamelist):
+    if any('ngrdi' in m for m in modnamelist) and not 'ngrdi' in indiceslist:
         indiceslist.append('ngrdi')
-    if any('mgrvi' in m for m in modnamelist):
+    if any('mgrvi' in m for m in modnamelist) and not 'mgrvi' in indiceslist:
         indiceslist.append('mgrvi')
-    if any('gli' in m for m in modnamelist):
+    if any('gli' in m for m in modnamelist) and not 'gli' in indiceslist:
         indiceslist.append('gli')
-    if any('rgbvi' in m for m in modnamelist):
+    if any('rgbvi' in m for m in modnamelist) and not 'rgbvi' in indiceslist:
         indiceslist.append('rgbvi')
-    if any('ikaw' in m for m in modnamelist):
+    if any('ikaw' in m for m in modnamelist) and not 'ikaw' in indiceslist:
         indiceslist.append('ikaw')
-    if any('gla' in m for m in modnamelist):
+    if any('gla' in m for m in modnamelist) and not 'gla' in indiceslist:
         indiceslist.append('gla')
 
     # compute vegetation indices
@@ -459,7 +459,7 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
     indat = generate_dataframe(incloud, 
                                indiceslist, 
                                dtype_conversion='float32')
-    print(indat)
+    # print(indat)
     
     # convert the dataframe to a TF dataset
     converted_dataset = df_to_dataset(indat, 
@@ -537,13 +537,15 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
             try:
                 incloud.write(outfilename)
             except:
-                try:
-                    print('   It appears that the input file is a COPC format file. Attempting to convert this to a raw LAZ file...')
-                    newheader = laspy.LasHeader(version=incloud.header.version, point_format=incloud.header.point_format)
-                    newheader.offsets = incloud.header.offsets
-                    newheader.scales = incloud.header.scales
-                    with laspy.open(outfilename, mode='w', header=newheader) as newout:
-                        newout.write_points(incloud.points)
-                    print('   Wrote out :{}'.format())
-                except:
-                    print('\nERROR: Unable to write out: {}'.format(outfilename))
+                # try:
+                print('   It appears that the input file is a COPC format file. Attempting to convert this to a raw LAZ file...')
+                newheader = laspy.LasHeader(version=incloud.header.version, point_format=incloud.header.point_format)
+                newheader.offsets = incloud.header.offsets
+                newheader.scales = incloud.header.scales
+                with laspy.open(outfilename, mode='w', header=newheader) as newout:
+                    for points in incloud.chunk_iterator(1_000_000):
+                        newout.write_points(points)
+                    # newout.write_points(incloud.points)
+                print('   Wrote out :{}'.format(outfilename))
+                # except:
+                #     print('\nERROR: Unable to write out: {}'.format(outfilename))
