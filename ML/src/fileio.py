@@ -543,7 +543,9 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
                 newheader.offsets = incloud.header.offsets
                 newheader.scales = incloud.header.scales
                 with laspy.open(outfilename, mode='w', header=newheader) as newout:
-                    newout.write_points(incloud.points)
+                    for points in incloud.chunk_iterator(1_000_000):
+                        newout.write_points(points)
+                    # newout.write_points(incloud.points)
                 print('   Wrote out :{}'.format(outfilename))
                 # except:
                 #     print('\nERROR: Unable to write out: {}'.format(outfilename))
