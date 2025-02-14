@@ -68,8 +68,11 @@ lasrs *(required to write compressed LAZ file with laspy)*
 numpy<2.0
 pandas
 tKinter
-tensorflow (or tensorflow-gpu) **Only if using the machine learning approach**
 ```
+
+For the machine learning programs you need to install and configure Tensorflow. If you have a GPU, then use `tensorflow-gpu`, otherwise use `tensorflow` (CPU support only).
+
+**WSL2 and Linux:** If using a Linux-based system (including WSL2) and have a GPU, you need to install `tensorflow[and-cuda]`.
 
 # Installation:
 
@@ -80,14 +83,19 @@ git clone https://github.com/pwernette/point_cloud_vegetation_filtering
 
 Then, create a virtual environment from one of the .yml environment files in the environment sub-directory.
 
-To create an environment for the non-machine learning approach (utilizing Otsu's thresholding method and a vegetation index), create the environment using:
+*Windows-based systems:* Create an environment for the non-machine learning approach (utilizing Otsu's thresholding method and a vegetation index) using:
 ```
-conda env create -f PC_veg_filter_env.yml
+conda env create -f noML_veg_filter_env.yml
 ```
 
-To create an environment for the machine learning approach (utilizing Tensorflow), create the environment using:
+*Windows-based systems:* Create an environment for the machine learning approach (utilizing Tensorflow) using:
 ```
 conda env create -f ML_veg_filter_env.yml
+```
+
+*Linux-based systems (inc. WSL2):* Create an environment for machine learning approach using:
+```
+conda env create -f ML_veg_filter_env_linux.yml
 ```
 
 Once you have created the virtual environment, activate the environment by either:
@@ -103,11 +111,15 @@ conda activate mlvegfilter
 
 Depending on your system configuration, you may need to update one or more packages. Here are some known issues and solutions:
 
-1. Within gitbash in Windows 11, there appears to be an inconsistency with Tensorflow as Numpy. A good StackOverflow post on this issue can be found [here](https://stackoverflow.com/questions/78641150/a-module-that-was-compiled-using-numpy-1-x-cannot-be-run-in-numpy-2-0-0). As of February 2025, the solution is to downgrade the default installed verison of numpy with the following:
+1. Within git bash in Windows 11, there appears to be an inconsistency with Tensorflow as Numpy. A good StackOverflow post on this issue can be found [here](https://stackoverflow.com/questions/78641150/a-module-that-was-compiled-using-numpy-1-x-cannot-be-run-in-numpy-2-0-0). As of February 2025, the solution is to downgrade the default installed verison of numpy with the following:
 ```
 pip install "numpy<2.0"
 ```
-2. Within WSL2 in Windows 11, Tensorflow v2.18 has a known issue with trying to use the GPU (even if configured properly). GitHub has a good thread on this issue, [here](https://github.com/tensorflow/tensorflow/issues/78784) for more information on this known bug. As of February 2025, the solution is to downgrade Tensorflow to v2.17 with the following:
+2. When using git bash and Windows 11, your ability to use GPU for processing will be limited if you use Tensorflow version 2.11 and newer. As a result, you need to use Tensorflow version 2.10
+```
+pip install tensorflow-gpu==2.10
+```
+3. Within WSL2 in Windows 11, Tensorflow v2.18 has a known issue with trying to use the GPU (even if configured properly). GitHub has a good thread on this issue, [here](https://github.com/tensorflow/tensorflow/issues/78784) for more information on this known bug. As of February 2025, the solution is to downgrade Tensorflow to v2.17 with the following:
 ```
 pip install tensorflow[and-cuda]==2.17
 ```
@@ -168,6 +180,8 @@ Where *{filename}* is the original point cloud file name and *{vegetation_index_
 
 The output LAZ file will be saved in the same directory as the input file and will contain all the original points with updated classification values corresponding to either vegetation or bare-Earth.
 
+*2024 February UPDATE:* The ML program has been updated significantly to now write out LAZ point clouds containing all vegetation indices used in the model as extra bytes with float data types. For example, if you trained a model with the EXGR index, the resulting point cloud of the reclassification process will include the EXGR values as an extra byte in the output file.
+
 
 # USAGE (FOR MACHINE LEARNING PROGRAMS):
 
@@ -178,10 +192,9 @@ The machine learning approach can be run [(1) as two separate programs](#option-
 Command line options are available to for both the two program and one program options to cut down on pop-up windows and aid in batch scripting:
 | Argument | Type(s) | Default value(s) | Description/Function | Program |
 | --- | --- | --- | --- | --- |
-| `-v`, `-veg` | string | NA | Point cloud containing vegetation points only | ML_veg_train, ML_vegfilter |
-| `-g`, `-ground` | string | NA | Point cloud containing ground points only | ML_veg_train, ML_vegfilter |
+| `-pcs`, `-pclouds` | string | NA | Point cloud containing vegetation points only | ML_veg_train, ML_vegfilter |
 | `-r`, `-reclass` | string | NA | Point cloud to be reclassified | ML_veg_reclass, ML_vegfilter |
-| `-h5`, `-model` | string | NA | h5 Model file | ML_veg_reclass, ML_vegfilter |
+| `-h5`, `-mfile` | string | NA | h5 Model file | ML_veg_reclass, ML_vegfilter |
 | `-m`, `-name` | string | NA | ML model name | ML_veg_train, ML_vegfilter |
 | `-vi`, `-index` | string | rgb | Vegetation index or indices to be calculated | ML_veg_train, ML_vegfilter |
 | `-mi`, `-inputs` | list-string | r,g,b | Model inputs (will be used in conjuction with `-index` flag options) | ML_veg_train, ML_vegfilter |
@@ -196,7 +209,6 @@ Command line options are available to for both the two program and one program o
 | `-tsp`, `-split` | float | 0.7 | Data split for model training (remainder will be used for model validation) | ML_veg_train, ML_vegfilter |
 | `-tci`, `-imbalance` | boolean | True | Adjust data inputs for class imbalance (will use lowest number of inputs) | ML_veg_train, ML_vegfilter |
 |`-tdr`, `-reduction` | float | 0.0 | Data reduction as proportion of 1.0 (useful if working with limited computing resources) | ML_veg_train, ML_vegfilter |
-| `-thresh`, `-threshold` | float | 0.6 | Confidence threshold used for reclassification | ML_veg_reclass, ML_vegfilter |
 | `-rad`, `-radius` | float | 0.10 | Radius used to compute geometry metrics (if specified in inputs) | ML_veg_train, ML_veg_reclass, ML_vegfilter |
 
 
@@ -238,7 +250,7 @@ A plot of the model will also be saved as a PNG file (see example below), and a 
 
 ## ML_veg_reclass.py
 
-The `ML_veg_reclass.py` program will automatically read in the model structure, weights, and required inputs (including vegetation indices and geometry metrics) and will reclassify the input point cloud.
+The `ML_veg_reclass.py` program will automatically read in the model structure, weights, and required inputs (including vegetation indices and geometry metrics) and will reclassify the input point cloud. If you want geometry metrics included in the model, simply include them in the specified vegetation indices.
 
 Running `ML_veg_reclass.py` without any command line argument will automatically enable a simple graphical interface similar to this:
 
@@ -256,7 +268,7 @@ The reclassified LAS/LAZ file will be saved in the same directory as the origina
 
 A new LAZ file will be generated in with the following syntax:
 
-> {filename}_{model_name}_{threshold_value}.laz
+> {filename}_{model_name}.laz
 
 Where *{filename}* is the original point cloud file name, *{model_name}* is the name of the model used to reclassify the input point cloud, and *{threshold_value}* is the threshold value used to segment vegetation from bare-Earth.
 
