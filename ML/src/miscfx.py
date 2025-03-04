@@ -388,7 +388,7 @@ def calc_3d_sd(coords, rad=0.5):
     sd = np.zeros(len(coords))
     # iterate over every point in the dense point cloud
     # (I think this is where the real slowdown is happening)
-    for count,elem in enumerate(coords):
+    for count,elem in enumerate(tqdm(coords)):
         # perform spatial query on point
         result = tree.query_ball_point(elem, r=rad)
         # if at least one other point is returned, then continue
