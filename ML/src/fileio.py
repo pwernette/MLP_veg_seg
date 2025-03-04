@@ -126,7 +126,6 @@ def las2split(infile_pcs,
     # open both ground and vegetation files
 
     input_files = []
-    dat_list = []
     min_pts = 999999999999999
 
     dat_dict = {}
@@ -134,7 +133,7 @@ def las2split(infile_pcs,
 
     # get minimum number of points
     for ifile in infile_pcs:
-        print('Header information for: {}'.format(ifile))
+        print('Header information read for: {}'.format(ifile))
         # open the file to access only the header
         inhead = laspy.open(ifile)
         # get the minimum number of points in all input point counts
@@ -150,7 +149,17 @@ def las2split(infile_pcs,
             indat = file.File(ifile, mode='r')
         elif laspy_majorversion == 2:
             indat = laspy.read(ifile)
-        print('Read {} using laspy major version: {}'.format(ifile, laspy_majorversion))
+        print('\nRead {} using laspy major version: {}'.format(ifile, laspy_majorversion))
+
+        # sample larger dat to match size of smaller dat
+        if class_imbalance_corr and len(indat) > min_pts:
+            indat = indat[np.random.randint(0, len(indat), size=min_pts)]
+            print('    Class Imbalance Correction: Randomly sampled {} to {} points'.format(ifile, len(indat)))
+        
+        # sub-sample the data to cut the data volume
+        if data_reduction < 1.0:
+            indat = indat[np.random.randint(0, len(indat), size=int(data_reduction*len(indat)))]
+            print('    Data Reduction: Randomly sampled {} to {} points'.format(ifile, len(indat)))
 
         # compute vegetation indices and generate dataframe
         if veg_indices == 'rgb' or veg_indices is None:
@@ -160,9 +169,6 @@ def las2split(infile_pcs,
             indat = vegidx(indat, 
                            indices=veg_indices, 
                            geom_metrics=geometry_metrics)
-        
-        # names_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_names')
-        # dat_list.append(os.path.splitext(os.path.basename(ifile))[0]+'_dat')
 
         # convert the samples to Pandas DataFrame objects
         indat = generate_dataframe(indat, 
@@ -171,34 +177,17 @@ def las2split(infile_pcs,
         indat['veglab'] = np.full(shape=len(indat), 
                                   fill_value=class_val, 
                                   dtype=np.float32)
-        # print(indat['veglab'])
 
-        # # transpose the data
-        # globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = np.transpose(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'])
-        # convert the data to pandas DataFrame
-        # globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'] = generate_dataframe(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_dat'], 
-        #                                                                                     veg_indices, 
-        #                                                                                     dtype_conversion='float32')
-
-        # # append the names with the vegetation label column name
-        # globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'] = np.append(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'], 'veglab')
+        # # sample larger dat to match size of smaller dat
+        # if class_imbalance_corr:
+        #     if len(indat) > min_pts:
+        #         indat = train_test_split(indat, train_size=min_pts/len(indat), random_state=42)[0]
+        #         print('Class Imbalance Correction: Randomly sampled {} to {} points'.format(ifile, len(indat)))
         
-        # print(globals()[os.path.splitext(os.path.basename(ifile))[0]+'_names'])
-        # if laspy_majorversion == 1:
-        #     inlas.close()
-        #     print('\n\nERROR: Unable to close {}\n\n'.format(inlas))
-        # del(inlas)
-
-        # sample larger dat to match size of smaller dat
-        if class_imbalance_corr:
-            if len(indat) > min_pts:
-                indat = train_test_split(indat, train_size=min_pts/len(indat), random_state=42)[0]
-                print('Class Imbalance Correction: Randomly sampled {} to {} points'.format(ifile, len(indat)))
-        
-        # sub-sample the data to cut the data volume
-        if data_reduction < 1.0:
-            indat = train_test_split(indat, train_size=data_reduction, random_state=42)[0]
-            print('Data Reduction: Randomly sampled {} to {} points'.format(ifile, len(indat)))
+        # # sub-sample the data to cut the data volume
+        # if data_reduction < 1.0:
+        #     indat = train_test_split(indat, train_size=data_reduction, random_state=42)[0]
+        #     print('Data Reduction: Randomly sampled {} to {} points'.format(ifile, len(indat)))
 
         # write dictionary of data name and corresponding numerical value
         dat_dict[os.path.basename(ifile)] = class_val
@@ -328,9 +317,13 @@ def df_to_dataset(dataframe,
 # }
 def generate_dataframe(input_point_cloud, vegetation_index_list, dtype_conversion='float32'):
     outdict = {}
-    outdict['r'] = np.array(input_point_cloud.rnorm, dtype=dtype_conversion).flatten()
-    outdict['g'] = np.array(input_point_cloud.gnorm, dtype=dtype_conversion).flatten()
-    outdict['b'] = np.array(input_point_cloud.bnorm, dtype=dtype_conversion).flatten()
+    if not any('3d' in m for m in vegetation_index_list) and not any('sd' in m for m in vegetation_index_list):
+        outdict['r'] = np.array(input_point_cloud.rnorm, dtype=dtype_conversion).flatten()
+        outdict['g'] = np.array(input_point_cloud.gnorm, dtype=dtype_conversion).flatten()
+        outdict['b'] = np.array(input_point_cloud.bnorm, dtype=dtype_conversion).flatten()
+    # outdict['r'] = np.array(input_point_cloud.rnorm, dtype=dtype_conversion).flatten()
+    # outdict['g'] = np.array(input_point_cloud.gnorm, dtype=dtype_conversion).flatten()
+    # outdict['b'] = np.array(input_point_cloud.bnorm, dtype=dtype_conversion).flatten()
     if any('xyz' in m for m in vegetation_index_list):
         outdict['x'] = np.array(input_point_cloud.x, dtype=dtype_conversion).flatten()
         outdict['y'] = np.array(input_point_cloud.y, dtype=dtype_conversion).flatten()
@@ -339,6 +332,8 @@ def generate_dataframe(input_point_cloud, vegetation_index_list, dtype_conversio
         outdict['sd3d'] = np.array(input_point_cloud.sd3d, dtype=dtype_conversion).flatten()
     if any('sd' in m for m in vegetation_index_list):
         outdict['sd_x'] = np.array(input_point_cloud.sd_x, dtype=dtype_conversion).flatten()
+        outdict['sd_y'] = np.array(input_point_cloud.sd_y, dtype=dtype_conversion).flatten()
+        outdict['sd_z'] = np.array(input_point_cloud.sd_z, dtype=dtype_conversion).flatten()
     if any('exg' == m for m in vegetation_index_list) or any('simple' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):
         outdict['exg'] = np.array(input_point_cloud.exg, dtype=dtype_conversion).flatten()
     if any('exr' in m for m in vegetation_index_list) or any('simple' in m for m in vegetation_index_list) or any('all' in m for m in vegetation_index_list):

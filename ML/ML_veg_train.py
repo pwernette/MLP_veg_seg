@@ -125,6 +125,12 @@ def main(default_values, verbose=True):
     # evaluate the model
     print('\nEvaluating model with validation set...')
     model_eval = mod.evaluate(eval_ds, verbose=2)
+    print('    loss: {}'.format(model_eval[0]))
+    print('    cross entropy: {}'.format(model_eval[1]))
+    print('    categorical accuracy: {}'.format(model_eval[2]))
+    print('    precision: {}'.format(model_eval[3]))
+    print('    recall: {}'.format(model_eval[4]))
+    print('    AUC: {}'.format(model_eval[5]))
 
     if default_values.training_plot:
         print('\nPlotting model...')
@@ -166,11 +172,19 @@ def main(default_values, verbose=True):
         mod.summary(print_fn=lambda x: fh.write(x+'\n'))
         fh.write('created: {}\n'.format(tdate))
         fh.write('input point cloud files: {}\n'.format(default_values.filesin))
-        fh.write('vegetation indices: {}\n'.format(list(default_values.model_vegetation_indices)))
+        
+        fh.write('\nvegetation indices: {}\n'.format(list(default_values.model_vegetation_indices)))
         fh.write('model inputs: {}\n'.format(list(default_values.model_inputs)))
-        fh.write('validation accuracy: {}\n'.format(model_eval[1]))
-        fh.write('validation loss: {}\n'.format(model_eval[0]))
-        fh.write('train time: {}'.format(datetime.timedelta(seconds=tt))+'\n')
+
+        fh.write('\vEvaluation metrics:\n')
+        fh.write('Loss: {}\n'.format(model_eval[0]))
+        fh.write('Cross Entropy: {}\n'.format(model_eval[1]))
+        fh.write('Categorical Accuracy: {}\n'.format(model_eval[2]))
+        fh.write('Precision: {}\n'.format(model_eval[3]))
+        fh.write('Recall: {}\n'.format(model_eval[4]))
+        fh.write('AUC: {}\n'.format(model_eval[5]))
+
+        fh.write('\ntrain time: {}'.format(datetime.timedelta(seconds=tt))+'\n')
         fh.write('\nClass Dictionary:\n')
         for key, value in class_dat.items():  
             fh.write('%i: %s\n' % (value, key))
