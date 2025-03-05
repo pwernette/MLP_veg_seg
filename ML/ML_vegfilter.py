@@ -71,6 +71,8 @@ def main(default_values, verbose=True):
                                class_imbalance_corr=default_values.training_class_imbalance_corr,
                                training_split=default_values.training_split,
                                data_reduction=default_values.training_data_reduction,
+                               xyz_mins=default_values.xyz_mins,
+                               xyz_maxs=default_values.xyz_maxs
                                )
     elif 'sd' in default_values.model_vegetation_indices:
         train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
@@ -79,13 +81,18 @@ def main(default_values, verbose=True):
                                class_imbalance_corr=default_values.training_class_imbalance_corr,
                                training_split=default_values.training_split,
                                data_reduction=default_values.training_data_reduction,
+                               xyz_mins=default_values.xyz_mins,
+                               xyz_maxs=default_values.xyz_maxs
                                )
     else:
         train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
                                veg_indices=default_values.model_vegetation_indices,
                                class_imbalance_corr=default_values.training_class_imbalance_corr,
                                training_split=default_values.training_split,
-                               data_reduction=default_values.training_data_reduction)
+                               data_reduction=default_values.training_data_reduction,
+                               xyz_mins=default_values.xyz_mins,
+                               xyz_maxs=default_values.xyz_maxs
+                               )
         
     print('\nClass dictionary:')
     [print(i,v) for i,v in enumerate(class_dat)]

@@ -92,6 +92,8 @@ def las2split(infile_pcs,
                 training_split=0.7, 
                 class_imbalance_corr=True,
                 data_reduction=1.0, 
+                xyz_mins=[0,0,0],
+                xyz_maxs=[0,0,0],
                 verbose=True):
     '''
     Read two LAS/LAZ point clouds representing a sample of ground and vegetation
@@ -168,7 +170,10 @@ def las2split(infile_pcs,
             print('\nGeometry metrics specified: {}'.format(geometry_metrics))
             indat = vegidx(indat, 
                            indices=veg_indices, 
-                           geom_metrics=geometry_metrics)
+                           geom_metrics=geometry_metrics,
+                           xyz_mins=xyz_mins,
+                           xyz_maxs=xyz_maxs
+                           )
 
         # convert the samples to Pandas DataFrame objects
         indat = generate_dataframe(indat, 
@@ -325,9 +330,9 @@ def generate_dataframe(input_point_cloud, vegetation_index_list, dtype_conversio
     # outdict['g'] = np.array(input_point_cloud.gnorm, dtype=dtype_conversion).flatten()
     # outdict['b'] = np.array(input_point_cloud.bnorm, dtype=dtype_conversion).flatten()
     if any('xyz' in m for m in vegetation_index_list):
-        outdict['x'] = np.array(input_point_cloud.x, dtype=dtype_conversion).flatten()
-        outdict['y'] = np.array(input_point_cloud.y, dtype=dtype_conversion).flatten()
-        outdict['z'] = np.array(input_point_cloud.z, dtype=dtype_conversion).flatten()
+        outdict['x_norm'] = np.array(input_point_cloud.x_norm, dtype=dtype_conversion).flatten()
+        outdict['y_norm'] = np.array(input_point_cloud.y_norm, dtype=dtype_conversion).flatten()
+        outdict['z_norm'] = np.array(input_point_cloud.z_norm, dtype=dtype_conversion).flatten()
     if any('3d' in m for m in vegetation_index_list):
         outdict['sd3d'] = np.array(input_point_cloud.sd3d, dtype=dtype_conversion).flatten()
     if any('sd' in m for m in vegetation_index_list):
@@ -357,7 +362,17 @@ def generate_dataframe(input_point_cloud, vegetation_index_list, dtype_conversio
     
     return pd.DataFrame(outdict)
 
-def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, ds_cache=False, indiceslist=[], geo_metrics=[], geom_rad=0.10, verbose_output=1):
+def predict_reclass_write(incloudname, 
+                          model_list, 
+                          threshold_vals, 
+                          batch_sz=32, 
+                          ds_cache=False, 
+                          indiceslist=[], 
+                          geo_metrics=[], 
+                          xyz_maxs=[0,0,0],
+                          xyz_mins=[0,0,0],
+                          geom_rad=0.10, 
+                          verbose_output=1):
     '''
     Reclassify the input point cloud using the models specified in the model_list
     variable and the threshold value(s) specified in the threshold_vals list. It
@@ -448,7 +463,10 @@ def predict_reclass_write(incloudname, model_list, threshold_vals, batch_sz=32, 
     incloud = vegidx(incloud, 
                      geom_metrics=geo_metrics, 
                      indices=indiceslist, 
-                     geom_radius=geom_rad)
+                     geom_radius=geom_rad,
+                     xyz_mins=xyz_mins,
+                     xyz_maxs=xyz_maxs,
+                     )
 
     # generate Pandas DataFrame from computed indices in the point cloud
     indat = generate_dataframe(incloud, 
