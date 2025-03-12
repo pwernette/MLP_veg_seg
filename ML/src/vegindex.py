@@ -4,7 +4,7 @@ import numpy as np
 from sklearn import preprocessing as skpre
 from .miscfx import *
 
-def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radius=1.00):
+def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radius=1.00, xyz_mins=[0,0,0], xyz_maxs=[0,0,0]):
     '''
     Compute specified vegetation indices and/or geometric values.
 
@@ -139,6 +139,44 @@ def vegidx(lasfileobj, indices=['rgb'], geom_metrics=[], colordepth=8, geom_radi
                 ))
     # NOTE: includes conversion of r, g, b to np.float32 data type
     lasfileobj.rnorm,lasfileobj.gnorm,lasfileobj.bnorm = normBands(r,g,b, depth=colordepth)
+    
+    if any('xyz' in i for i in indices):
+        print('Adding X,Y,Z Normalized Values')
+        lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="x_norm",
+                type=np.float32,
+                description="x_norm"
+                ))
+        min_max_scaler = skpre.MinMaxScaler()
+        if xyz_mins == [0,0,0]:
+            lasfileobj.x_norm = min_max_scaler.fit_transform(np.array(lasfileobj.x).reshape(-1,1)).flatten()
+        else:
+            min_max_scaler.fit(np.array([xyz_mins[0], xyz_maxs[0]]).reshape(-1,1))
+            lasfileobj.x_norm = min_max_scaler.transform(np.array(lasfileobj.x).reshape(-1,1)).flatten()
+
+        lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="y_norm",
+                type=np.float32,
+                description="y_norm"
+                ))
+        min_max_scaler = skpre.MinMaxScaler()
+        if xyz_mins == [0,0,0]:
+            lasfileobj.y_norm = min_max_scaler.fit_transform(np.array(lasfileobj.y).reshape(-1,1)).flatten()
+        else:
+            min_max_scaler.fit(np.array([xyz_mins[1], xyz_maxs[1]]).reshape(-1,1))
+            lasfileobj.y_norm = min_max_scaler.transform(np.array(lasfileobj.y).reshape(-1,1)).flatten()
+
+        lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+                name="z_norm",
+                type=np.float32,
+                description="z_norm"
+                ))
+        min_max_scaler = skpre.MinMaxScaler()
+        if xyz_mins == [0,0,0]:
+            lasfileobj.z_norm = min_max_scaler.fit_transform(np.array(lasfileobj.z).reshape(-1,1)).flatten()
+        else:
+            min_max_scaler.fit(np.array([xyz_mins[2], xyz_maxs[2]]).reshape(-1,1))
+            lasfileobj.z_norm = min_max_scaler.transform(np.array(lasfileobj.z).reshape(-1,1)).flatten()
 
     '''
     Compute vegetation indices based on user specifications

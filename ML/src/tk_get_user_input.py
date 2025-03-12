@@ -476,6 +476,8 @@ class Args():
         self.model_nodes = [8,8,8]
         self.model_dropout = 0.2
         self.geometry_radius = 0.10
+        self.xyz_mins = [0,0,0]
+        self.xyz_maxs = [0,0,0]
         # for early stopping:
         #   delta: The minmum change required to continue training beyond the number
         #          of epochs specified by patience.
@@ -552,6 +554,18 @@ class Args():
                          type=str,
                          default='16,16,16',
                          help='(optional) List of integers representing the number of nodes for each layer [default = 16,16,16]')
+        psr.add_argument('-xyzmin','-xyzmins','-xyzminimums',
+                         dest='xyzmins',
+                         type=float,
+                         nargs=3,
+                         default=[0,0,0],
+                         help='(optional) Minimum values for X, Y, and Z coordinates [default = 0,0,0]')
+        psr.add_argument('-xyzmax','-xyzmaxs','-xyzmaximums',
+                         dest='xyzmaxs',
+                         type=float,
+                         nargs=3,
+                         default=[0,0,0],
+                         help='(optional) Maximum values for X, Y, and Z coordinates [default = 0,0,0]')
         psr.add_argument('-md','-dropout','-modeldropout',
                          dest='modeldropout',
                          type=float,

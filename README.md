@@ -50,7 +50,7 @@ These programs compute the following vegetation indicies, their M-statistics, an
 - Green Leaf Index (gli)[^6]
 - Red Green Blue Veggetation Index (rgbvi)[^7]
 - Kawashima Index (ikaw)[^8]
-- Green Lead Algorithm (gla)[^6]
+- Green Leaf Algorithm (gla)[^6]
 
 Each of the vegetation indices only requires some combination of the red, green, and blue color bands. No NIR, SWIR, or other band is required.
 
