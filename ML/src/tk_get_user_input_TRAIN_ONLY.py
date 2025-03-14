@@ -37,7 +37,7 @@ def str_to_bool(s):
     return out_boolean
 
 
-class App(tk.Tk):
+class App_train_only(tk.Tk):
     '''
     Create an external window and get multiple inputs from entries
     '''
@@ -404,7 +404,7 @@ class App(tk.Tk):
         self.bind('<Return>', lambda event:getinput(self, default_arguments_obj))
         self.bind('<Escape>', lambda event:cancel_and_exit(self))
 
-class Args():
+class Args_train_only():
     '''
     Class containing arguments
     '''

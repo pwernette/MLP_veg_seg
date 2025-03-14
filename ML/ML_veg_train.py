@@ -1,7 +1,6 @@
 # basic libraries
 import os, sys, time, datetime
 from datetime import date
-import traceback
 
 # import laspy
 import laspy
@@ -10,10 +9,6 @@ if int(laspy.__version__.split('.')[0]) == 1:
         from laspy import file
     except Exception as e:
         sys.exit(e)
-
-# import pdal (for manipulating and compressing LAS files)
-# import pdal
-# import json
 
 # import libraries for managing and plotting data
 import numpy as np
@@ -31,18 +26,27 @@ from src.miscfx import *
 from src.modelbuilder import *
 
 
-def main(default_values, verbose=True):
-    # print info about TF and laspy packages
-    print("Tensorflow Information:")
-    # print tensorflow version
-    print("   TF Version: {}".format(tf.__version__))
-    print("   Eager mode: {}".format(tf.executing_eagerly()))
-    print("   GPU name: {}".format(tf.config.experimental.list_physical_devices('GPU')))
-    # list all available GPUs
-    print("   Num GPUs Available: {}\n".format(len(tf.config.experimental.list_physical_devices('GPU'))))
-    print("laspy Information:")
-    # print laspy version installed and configured
-    print("   laspy Version: {}\n".format(laspy.__version__))
+def ml_veg_train(default_values, verbose=True):
+    # parse any command line arguments (if present)
+    default_values.parse_cmd_arguments()
+
+    if default_values.gui:
+        request_window = App_train_only()
+        request_window.create_widgets(default_values)
+        request_window.mainloop()
+
+    if verbose:
+        # print info about TF and laspy packages
+        print("Tensorflow Information:")
+        # print tensorflow version
+        print("   TF Version: {}".format(tf.__version__))
+        print("   Eager mode: {}".format(tf.executing_eagerly()))
+        print("   GPU name: {}".format(tf.config.experimental.list_physical_devices('GPU')))
+        # list all available GPUs
+        print("   Num GPUs Available: {}\n".format(len(tf.config.experimental.list_physical_devices('GPU'))))
+        print("laspy Information:")
+        # print laspy version installed and configured
+        print("   laspy Version: {}\n".format(laspy.__version__))
 
     print('\n\nMODEL INPUTS: {}'.format(list(default_values.model_inputs)))
 
@@ -206,15 +210,9 @@ def main(default_values, verbose=True):
     mod.save_weights(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_MODEL_WEIGHTS.h5')))
 
 if __name__ == '__main__':
-    defs = Args('defs')
-    defs.parse_cmd_arguments()
-
-    if defs.gui:
-        foo = App()
-        foo.create_widgets(defs)
-        foo.mainloop()
+    defs = Args_train_only('defs')
 
     # try:
-    main(default_values=defs)
+    ml_veg_train(default_values=defs)
     # except:
     #     traceback.print_exc()

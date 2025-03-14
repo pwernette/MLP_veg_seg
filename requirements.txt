@@ -1,0 +1,12 @@
+matplotlib
+ipython
+graphviz
+scikit-learn
+pandas
+geopandas
+scipy
+tqdm
+pydot
+laspy
+lazrs
+tensorflow-gpu==2.10

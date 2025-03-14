@@ -506,44 +506,44 @@ def computeM(intable1, intable2, writeout=''):
 #     ptclass = deepcopy(indat.classification)  # create a copy of the input points
 # def binarization(indat, inthresh):
 
-# def calc_confusion_matrix(truth, pred, save=True, plot=True):
-#     """
-#     Calculates the confusion matrix for a given set of predictions and truth values.
+def calc_confusion_matrix(truth, pred, save=True, plot=True):
+    """
+    Calculates the confusion matrix for a given set of predictions and truth values.
     
-#     Parameters
-#     ----------
-#     truth : numpy.ndarray
-#         Array of truth values.
-#     pred : numpy.ndarray
-#         Array of predicted values.
-#     save : bool, optional
-#         Whether to save the confusion matrix as a CSV file. Default is True.
-#     plot : bool, optional
-#         Whether to plot the confusion matrix. Default is True.
+    Parameters
+    ----------
+    truth : numpy.ndarray
+        Array of truth values.
+    pred : numpy.ndarray
+        Array of predicted values.
+    save : bool, optional
+        Whether to save the confusion matrix as a CSV file. Default is True.
+    plot : bool, optional
+        Whether to plot the confusion matrix. Default is True.
     
-#     Returns
-#     -------
-#     confmat : numpy.ndarray
-#         Confusion matrix.
-#     """
-#     # Calculate the confusion matrix
-#     confmat = confusion_matrix(truth, pred)
+    Returns
+    -------
+    confmat : numpy.ndarray
+        Confusion matrix.
+    """
+    # Calculate the confusion matrix
+    confmat = confusion_matrix(truth, pred)
     
-#     # Save the confusion matrix as a CSV file
-#     if save:
-#         # Create a pandas DataFrame from the confusion matrix
-#         confmat_df = pd.DataFrame(confmat, index=pred, columns=truth)
+    # Save the confusion matrix as a CSV file
+    if save:
+        # Create a pandas DataFrame from the confusion matrix
+        confmat_df = pd.DataFrame(confmat, index=pred, columns=truth)
         
-#         # Save the confusion matrix as a CSV file
-#         confmat_df.to_csv('confusion_matrix.csv')
+        # Save the confusion matrix as a CSV file
+        confmat_df.to_csv('confusion_matrix.csv')
     
-#     # Plot the confusion matrix
-#     if plot:
-#         # Create a pandas DataFrame from the confusion matrix
-#         confmat_df = pd.DataFrame(confmat, index=pred, columns=truth)
+    # Plot the confusion matrix
+    if plot:
+        # Create a pandas DataFrame from the confusion matrix
+        confmat_df = pd.DataFrame(confmat, index=pred, columns=truth)
         
-#         # Plot the confusion matrix
-#         sns.heatmap(confmat_df, annot=True, fmt='d', cmap='Blues')
-#         plt.show()
+        # Plot the confusion matrix
+        sns.heatmap(confmat_df, annot=True, fmt='d', cmap='Blues')
+        plt.show()
     
-#     return confmat
+    return confmat
