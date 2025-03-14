@@ -8,7 +8,7 @@ with open('requirements.txt', 'r') as f:
 
 setup(
     name='veg_seg',
-    version='0.1.0',
+    version='0.1.01',
     description='A package for classifying vegetation from lidar point clouds',
     author='Phillipe Wernette', 
     author_email='pwernett@msu.edu',
@@ -36,6 +36,7 @@ setup(
             'vegtrain=veg_seg.main:veg_train',
         ],
     },
+    py_modules=['veg_seg','ML'],
     long_description=description,
     long_description_content_type='text/markdown',
     license='MIT',
