@@ -314,16 +314,6 @@ class App(tk.Tk):
         # increase the row by 1
         rowplacement += 1
 
-        # reclassification threshold(s)
-        # lab = Label(self, text='Reclassification Threshold(s)')
-        # lab.grid(column=0, row=rowplacement, sticky=W, padx=padxval, pady=padyval)
-        # # get variable input
-        # reclass_thresholds = Text(self, height=1, width=50)
-        # reclass_thresholds.insert(tk.END, default_arguments_obj.reclass_thresholds)
-        # reclass_thresholds.grid(column=1, row=rowplacement, sticky=E, padx=padxval, pady=padyval)
-        # # increase the row by 1
-        # rowplacement += 1
-
         def getinput(self, default_arguments_obj):
             ''' sub-function to get inputs from GUI widget '''
             # input point cloud files
@@ -421,15 +411,6 @@ class App(tk.Tk):
             default_arguments_obj.plotdir = plotdir.get('1.0','end-1c').split('\n')[0]
             # verbose mode run
             default_arguments_obj.verbose_run = str_to_bool(verbose_run.get('1.0','end-1c').strip().split('\n')[0])
-            # reclassification threshold(s)
-            # if " " in reclass_thresholds.get('1.0','end-1c'):
-            #     default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(' '))))
-            # elif "," in reclass_thresholds.get('1.0','end-1c'):
-            #     default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(','))))
-            # elif ";" in reclass_thresholds.get('1.0','end-1c'):
-            #     default_arguments_obj.reclass_thresholds = list(map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0].split(';'))))
-            # else:
-            #     default_arguments_obj.reclass_thresholds = map(float,(reclass_thresholds.get('1.0','end-1c').split('\n')[0]))
             # after getting all values, destroy the window
             self.destroy()
         # create, define, and place submit button
@@ -508,9 +489,6 @@ class Args():
         #   plotdir: plotting direction (horizontal (h) or vertical (v))
         self.plotdir = 'v'
         self.training_plot = True
-        # for reclassification
-        #   reclass_thresholds: list of thresholds used for reclassification
-        self.reclass_thresholds = 0.6
         # general parameters
         #   verbose run
         self.verbose_run = True
@@ -618,11 +596,6 @@ class Args():
                          type=float,
                          default=1.0,
                          help='(optional) Use this proportion of the data total [default = 1.0]')
-        # psr.add_argument('-thresh','-threshold','-reclassthresholds',
-        #                  dest='reclassthresholds',
-        #                  type=float,
-        #                  default=0.6,
-        #                  help='Confidence threshold value or list of threshold values (as floats) to use for segmenting vegetation points [default = 0.6]')
         psr.add_argument('-rad','-radius','-geometryradius',
                          dest='geometryradius',
                          type=float,
@@ -786,12 +759,6 @@ class Args():
                 print('Invalid plot direction. Defaulting to vertical model plot.')
                 self.plotdir = 'TB'
             optionsargs['plot direction'] = self.plotdir
-        # if args.reclassthresholds:
-        #     # because the input argument is handled as a single string, we need
-        #     # to strip the brackets, split by the delimeter, and then re-form it
-        #     # as a list of characters/strings
-        #     self.reclass_thresholds = list(map(float, str(args.reclassthresholds).split(',')))
-        #     optionsargs['reclassification thresholds'] = self.reclass_thresholds
         if args.verbose:
             # plot model training
             self.verbose_run = str_to_bool(args.verbose)

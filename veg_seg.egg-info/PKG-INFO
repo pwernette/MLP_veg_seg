@@ -1,3 +1,40 @@
+Metadata-Version: 2.2
+Name: veg_seg
+Version: 0.1.0
+Summary: A package for classifying vegetation from lidar point clouds
+Author: Phillipe Wernette
+Author-email: pwernett@msu.edu
+License: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: GIS
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: matplotlib
+Requires-Dist: ipython
+Requires-Dist: graphviz
+Requires-Dist: scikit-learn
+Requires-Dist: pandas
+Requires-Dist: geopandas
+Requires-Dist: scipy
+Requires-Dist: tqdm
+Requires-Dist: pydot
+Requires-Dist: laspy
+Requires-Dist: lazrs
+Requires-Dist: numpy==1.26.4; platform_system == "Windows"
+Requires-Dist: tensorflow[and-cuda]==2.17; platform_system == "Linux"
+Requires-Dist: tensorflow-gpu==2.10; platform_system == "Windows"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: summary
+
 # Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds using Machine Learning
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10966854.svg)](https://doi.org/10.5281/zenodo.10966854)
 
@@ -68,25 +105,12 @@ lasrs *(required to write compressed LAZ file with laspy)*
 numpy<2.0
 pandas
 tKinter
+tensorflow (or tensorflow-gpu) **Only if using the machine learning approach**
 ```
-
-For the machine learning programs you need to install and configure Tensorflow. If you have a GPU, then use `tensorflow-gpu`, otherwise use `tensorflow` (CPU support only).
-
-**WSL2 and Linux:** If using a Linux-based system (including WSL2) and have a GPU, you need to install `tensorflow[and-cuda]`.
 
 # Installation:
 
 ## Using pip:
-
-Create a new virtual environment using the following command:
-```
-conda create -n veg_seg python=3.10
-```
-
-Activate the virtual environment:
-```
-conda activate veg_seg
-```
 
 The MLP vegetation segmentation package can be installed directly from PyPI using pip:
 ```
@@ -97,15 +121,16 @@ pip install veg_seg
 
 IMPORTANT: There are some known compatibility issues with the package. 
 
-1. The cudnn and cudatoolkit packages are required for the GPU version of Tensorflow v2.10 to work properly on Windows. If using a Windows environment AND wanting to use your GPU for training, you need to manually install the following packages:
+If using a Windows environment, you need to manually install the following packages:
 ```
-conda install cudnn=8.1 cudatoolkit=11.2 -y
+conda install graphviz=2.42.3 cudnn=8.1 cudatoolkit=11.2
 ```
 
-2. There is another issue with plotting the model outputs caused by an outdated version of graphviz in PIP. To correct this issue, manually install the correct version of graphviz using the following command:
-```
-conda install graphviz=12.2.1 -y
-```
+Graphviz needs to be installed separately from the conda-forge channel for plotting to work properly. The cudnn and cudatoolkit packages are required for the GPU version of Tensorflow to work properly.
+
+
+
+
 
 ## Directly from GitHub:
 
@@ -116,19 +141,14 @@ git clone https://github.com/pwernette/point_cloud_vegetation_filtering
 
 Then, create a virtual environment from one of the .yml environment files in the environment sub-directory.
 
-*Windows-based systems:* Create an environment for the non-machine learning approach (utilizing Otsu's thresholding method and a vegetation index) using:
+To create an environment for the non-machine learning approach (utilizing Otsu's thresholding method and a vegetation index), create the environment using:
 ```
-conda env create -f noML_veg_filter_env.yml
+conda env create -f PC_veg_filter_env.yml
 ```
 
-*Windows-based systems:* Create an environment for the machine learning approach (utilizing Tensorflow) using:
+To create an environment for the machine learning approach (utilizing Tensorflow), create the environment using:
 ```
 conda env create -f ML_veg_filter_env.yml
-```
-
-*Linux-based systems (inc. WSL2):* Create an environment for machine learning approach using:
-```
-conda env create -f ML_veg_filter_env_linux.yml
 ```
 
 Once you have created the virtual environment, activate the environment by either:
@@ -144,48 +164,31 @@ conda activate mlvegfilter
 
 Depending on your system configuration, you may need to update one or more packages. Here are some known issues and solutions:
 
-1. Within git bash in Windows 11, there appears to be an inconsistency with Tensorflow as Numpy. A good StackOverflow post on this issue can be found [here](https://stackoverflow.com/questions/78641150/a-module-that-was-compiled-using-numpy-1-x-cannot-be-run-in-numpy-2-0-0). As of February 2025, the solution is to downgrade the default installed verison of numpy with the following:
+1. Within gitbash in Windows 11, there appears to be an inconsistency with Tensorflow as Numpy. A good StackOverflow post on this issue can be found [here](https://stackoverflow.com/questions/78641150/a-module-that-was-compiled-using-numpy-1-x-cannot-be-run-in-numpy-2-0-0). As of February 2025, the solution is to downgrade the default installed verison of numpy with the following:
 ```
 pip install "numpy<2.0"
 ```
-2. When using git bash and Windows 11, your ability to use GPU for processing will be limited if you use Tensorflow version 2.11 and newer. As a result, you need to use Tensorflow version 2.10
-```
-pip install tensorflow-gpu==2.10
-```
-3. Within WSL2 in Windows 11, Tensorflow v2.18 has a known issue with trying to use the GPU (even if configured properly). GitHub has a good thread on this issue, [here](https://github.com/tensorflow/tensorflow/issues/78784) for more information on this known bug. As of February 2025, the solution is to downgrade Tensorflow to v2.17 with the following:
+2. Within WSL2 in Windows 11, Tensorflow v2.18 has a known issue with trying to use the GPU (even if configured properly). GitHub has a good thread on this issue, [here](https://github.com/tensorflow/tensorflow/issues/78784) for more information on this known bug. As of February 2025, the solution is to downgrade Tensorflow to v2.17 with the following:
 ```
 pip install tensorflow[and-cuda]==2.17
 ```
 
 # USAGE (FOR MACHINE LEARNING PROGRAMS):
 
-The machine learning approach can be run [(1) as a single program](#option-b-run-a-single-program) that builds and trains a ML model and then uses that model to reclassify a LAS/LAZ file, or [(2) as two separate programs](#option-a-run-two-separate-programs), one for ML model training and a second for LAS/LAZ file (re)classification.
-
-Before running the training program(s), ensure that you have pre-clipped two or more separate LAS/LAZ point clouds. These point clouds can be segmented from larger point clouds using any number of programs but each point cloud must only contain points of the same class.
-
-
-For example, if you are using two point clouds, one containing only vegetation points and one containing only bare-Earth points, then you would pass the program these 2 files. However, if you were also interested in roadway surfaces, then you would pass the program 3 point cloud files: one containing only vegetation points, one containing only bare-Earth points, and one containing only roadway surface points. The input point clouds can be passed as CLI argiments (`-pc`) or in the appropriate box in the graphical user interface.
-
-*2024 February UPDATE:* The ML program has been updated significantly to now write out LAZ point clouds containing all vegetation indices used in the model as extra bytes with float data types. For example, if you trained a model with the EXGR index, the resulting point cloud of the reclassification process will include the EXGR values as an extra byte in the output file.
-
-
-These point clouds can be segmented from larger point clouds using any number of programs. I utilize CloudCompare to manually clip out points for each class. It is important that each training input point cloud include only points of the same class. Including points actually belonging to another class but included in a different sample point cloud will introduce error into the MLP model.
+The machine learning approach can be run [(1) as two separate programs](#option-a-run-two-separate-programs), one for ML model training and a second for LAS/LAZ file (re)classification, or [(2) as a single program](#option-b-run-a-single-program) that builds and trains a ML model and then uses that model to reclassify a LAS/LAZ file.
 
 ### Command Line Arguments
 
 Command line options are available to for both the two program and one program options to cut down on pop-up windows and aid in batch scripting:
 | Argument | Type(s) | Default value(s) | Description/Function | Program |
 | --- | --- | --- | --- | --- |
-
-| `-gui` | boolean | true | Initialize the graphical user interface | ML_veg_train, ML_veg_reclass, ML_vegfilter |
-| `-pcs`, `-pointclouds` | string | NA | Point clouds containing training point clouds separated by class | ML_veg_train, ML_vegfilter |
+| `-v`, `-veg` | string | NA | Point cloud containing vegetation points only | ML_veg_train, ML_vegfilter |
+| `-g`, `-ground` | string | NA | Point cloud containing ground points only | ML_veg_train, ML_vegfilter |
 | `-r`, `-reclass` | string | NA | Point cloud to be reclassified | ML_veg_reclass, ML_vegfilter |
-| `-h5`, `-model` | string | NA | h5 Model file | ML_veg_reclass |
+| `-h5`, `-model` | string | NA | h5 Model file | ML_veg_reclass, ML_vegfilter |
 | `-m`, `-name` | string | NA | ML model name | ML_veg_train, ML_vegfilter |
 | `-vi`, `-index` | string | rgb | Vegetation index or indices to be calculated | ML_veg_train, ML_vegfilter |
 | `-mi`, `-inputs` | list-string | r,g,b | Model inputs (will be used in conjuction with `-index` flag options) | ML_veg_train, ML_vegfilter |
-| `-xyzmins`, `xyzmins` | list-float | 0,0,0 | Minimum values for X, Y, and Z coordinates | ML_veg_train, ML_vegfilter |
-| `-xyzmaxs`, `xyzmaxs` | list-float | 0,0,0 | Maximum values for X, Y, and Z coordinates | ML_veg_train, ML_vegfilter |
 | `-mn`, `-nodes` | list-integer | 8,8,8 | Number of nodes per model layer (by default specifies the number of layers) | ML_veg_train, ML_vegfilter |
 | `-md`, `-dropout` | float | 0.2 | Probability of model layer dropout (used to avoid overfitting) | ML_veg_train, ML_vegfilter |
 | `-mes`, `-earlystop` | list-integer,float | 5,0.001 | Early stop criteria ([patience],[change_threshold]) | ML_veg_train, ML_vegfilter |
@@ -197,67 +200,22 @@ Command line options are available to for both the two program and one program o
 | `-tsp`, `-split` | float | 0.7 | Data split for model training (remainder will be used for model validation) | ML_veg_train, ML_vegfilter |
 | `-tci`, `-imbalance` | boolean | True | Adjust data inputs for class imbalance (will use lowest number of inputs) | ML_veg_train, ML_vegfilter |
 |`-tdr`, `-reduction` | float | 0.0 | Data reduction as proportion of 1.0 (useful if working with limited computing resources) | ML_veg_train, ML_vegfilter |
+| `-thresh`, `-threshold` | float | 0.6 | Confidence threshold used for reclassification | ML_veg_reclass, ML_vegfilter |
 | `-rad`, `-radius` | float | 0.10 | Radius used to compute geometry metrics (if specified in inputs) | ML_veg_train, ML_veg_reclass, ML_vegfilter |
 
-## OPTION A: RUN A SINGLE PROGRAM
-
-## ML_vegfilter.py
-
-The single, combined program will use the two or more training point clouds to generate a machine learning model with the user-specified arguments, and then use this model to reclassify the specified point cloud. The significant advantage of using a single program is eliminating the need to read the model file for reclassification.
-
-Running combined program without any command line arguments or without `-gui False`will automatically enable a simple graphical interface similar to this:
-
-<img src='/misc/images/gui_screenshot_vegfilter.png' alt='screenshot of the graphical interface for the ML_vegfilter program'>
-
-### Installed via PIP
-If you installed the package using PIP, you can run the program direction from the command line with: `vegfilter`. You may choose to specify any number of the command line arguments, or you can use the graphical user interface to specify the arguments.
-
-### Installed directly from GitHub
-If you installed the package directly from GitHub, run `python ML_vegfilter.py` to start the program.
-
-### Inputs:
-
-The following inputs are required for the `ML_vegfilter.py` program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
-
-1. A list of two or more point clouds, each containing only points for one class (e.g. vegetation points, bare-Earth points, roadway surface points, etc.)
-2. The point cloud to be reclassified using the trained ML model.
-
-### Outputs:
-
-The model will be saved as a h5 file and a directory, as well as a PNG of the model structure and a detailed metadata summary text file. The model and all it's associated files (graph as PNG and summary metadata file) will be saved in a *saved_models_{date}* folder, where {date} is the date the model was created.
-
-The reclassified point cloud will be saved in the *results_{date}* folder as:
-
-> {filename}_{model_name}.laz
-
-Where *{filename}* is the original point cloud file name and *{model_name}* is the name of the model used to reclassify the input point cloud.
 
 ## OPTION A: RUN TWO SEPARATE PROGRAMS
 If utilizing the two program approach, first build, train, and save the model (line 1). Then, reclassify a LAS/LAZ file using one or more models (line 2):
-
-### Installed via PIP
-```
-vegtrain
-vegreclass
-```
-
-### Installed directly from GitHub
 ```
 python ML_veg_train.py
 python ML_veg_reclass.py
 ```
 
-For both programs, you may choose to specify any number of the command line arguments, or you can use the graphical user interface to specify the arguments.
-
 ## ML_veg_train.py
 
-### Installed via PIP
-If you installed the package using PIP, you can run the program direction from the command line with: `vegtrain`.
+The `ML_veg_train.py` program will read in the two training point clouds, account for any class imbalance, build a ML model, and train the ML model.
 
-### Installed directly from GitHub
-If you installed the package directly from GitHub, run `python ML_veg_train.py` to start the program.
-
-Running the ML_veg_train program without any command line arguments or without `-gui False` will automatically enable a simple graphical interface similar to this:
+Running `ML_veg_train.py` without any command line argument will automatically enable a simple graphical interface similar to this:
 
 <img src='/misc/images/gui_screenshot_veg_train.png' alt='screenshot of the graphical interface for the ML_veg_train program'>
 
@@ -265,7 +223,9 @@ Running the ML_veg_train program without any command line arguments or without `
 
 The following inputs are required for the `ML_veg_train.py` program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
 
-1. A list of two or more point clouds, each containing only points for one class (e.g. vegetation points, bare-Earth points, roadway surface points, etc.)
+1. The point cloud containing vegetation points only
+2. The point cloud containing only bare-Earth points
+3. The output model name
 
 ### Outputs:
 All outputs will be saved in a directory with the following scheme:
@@ -282,16 +242,9 @@ A plot of the model will also be saved as a PNG file (see example below), and a 
 
 ## ML_veg_reclass.py
 
-### Installed via PIP
-If you installed the package using PIP, you can run the program direction from the command line with: `vegreclass`.
+The `ML_veg_reclass.py` program will automatically read in the model structure, weights, and required inputs (including vegetation indices and geometry metrics) and will reclassify the input point cloud.
 
-### Installed directly from GitHub
-If you installed the package directly from GitHub, run `python ML_veg_reclass.py` to start the program.
-
-The `ML_veg_reclass.py` program will automatically read in the model structure, weights, and required inputs (including vegetation indices and geometry metrics) and will reclassify the input point cloud. If you want geometry metrics included in the model, simply include them in the specified vegetation indices.
-
-
-Running the ML_veg_reclass program without any command line arguments or without `-gui False` will automatically enable a simple graphical interface similar to this:
+Running `ML_veg_reclass.py` without any command line argument will automatically enable a simple graphical interface similar to this:
 
 <img src='/misc/images/gui_screenshot_veg_reclass.png' alt='screenshot of the graphical interface for the ML_veg_reclass program'>
 
@@ -300,14 +253,44 @@ Running the ML_veg_reclass program without any command line arguments or without
 The following inputs are required for the `ML_veg_reclass.py` program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
 
 1. The point cloud to be reclassified
-2. The h5 model file (can be generated using the `ML_veg_train.py`/`vegtrain` or `ML_vegfilter.py`/`vegfilter` programs)
+2. The h5 model file (can be generated using the `ML_veg_train.py` program)
 
 ### Outputs:
 The reclassified LAS/LAZ file will be saved in the same directory as the original point cloud.
 
 A new LAZ file will be generated in with the following syntax:
 
-> {filename}_{model_name}.laz
+> {filename}_{model_name}_{threshold_value}.laz
+
+Where *{filename}* is the original point cloud file name, *{model_name}* is the name of the model used to reclassify the input point cloud, and *{threshold_value}* is the threshold value used to segment vegetation from bare-Earth.
+
+
+## OPTION B: RUN A SINGLE PROGRAM
+
+## ML_vegfilter.py
+
+The `ML_vegfilter.py` program will use the two training point clouds to generate a machine learning model with the user-specified arguments, and then use this model to reclassify the specified point cloud. The significant advantage of using a single program is eliminating the need to read the model file for reclassification.
+
+Running `ML_vegfilter.py` without any command line argument will automatically enable a simple graphical interface similar to this:
+
+<img src='/misc/images/gui_screenshot_vegfilter.png' alt='screenshot of the graphical interface for the ML_vegfilter program'>
+
+### Inputs:
+
+The following inputs are required for the `ML_vegfilter.py` program. If any of these options are not specified in the command line arguments, a pop-up window will appear for each.
+
+1. The point cloud containing vegetation points only
+2. The point cloud containing only bare-Earth points
+3. The output model name
+4. The point cloud to be reclassified
+
+### Outputs:
+
+The model will be saved as a h5 file and a directory, as well as a PNG of the model structure and a detailed metadata summary text file. The model and all it's associated files (graph as PNG and summary metadata file) will be saved in a *saved_models_{date}* folder, where {date} is the date the model was created.
+
+The reclassified point cloud will be saved in the *results_{date}* folder as:
+
+> {filename}_{model_name}_{threshold_value}.laz
 
 Where *{filename}* is the original point cloud file name, *{model_name}* is the name of the model used to reclassify the input point cloud, and *{threshold_value}* is the threshold value used to segment vegetation from bare-Earth.
 
@@ -378,7 +361,7 @@ Wernette, Phillipe A. 2024. Segmenting Vegetation from bare-Earth in High-relief
   author = {{Wernette, Phillipe A.}},
   title = {Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds using Machine Learning},
   url = {https://10.5281/zenodo.10966854},
-  version = {1.44},
+  version = {1.00},
   date = {2024-04-12},
 }
 ```
@@ -393,11 +376,11 @@ Point clouds for coastal bluffs near the Elwha River mouth near Port Angeles, WA
 > Wernette, Phillipe (2024). Coastal bluff point clouds derived from SfM near Elwha River mouth, Washington from 2016-04-18 to 2020-05-08 [Dataset]. Dryad. https://doi.org/10.5061/dryad.8pk0p2nww
 
 # REFERENCES
-[^1]: Meyer, G.E.; Neto, J.C. 2008. Verification of color vegetation indices for automated crop imaging applications. Comput. Electron. Agric. 63, 282–293.
-[^2]: Woebbecke, D.M.; Meyer, G.E.; Von Bargen, K.; Mortensen, D.A. 1995. Color Indices forWeed Identification Under Various Soil, Residue, and Lighting Conditions. Trans. ASAE, 38, 259–269.
-[^3]: Mao, W.; Wang, Y.;Wang, Y. 2003. Real-time detection of between-row weeds using machine vision. In Proceedings of the 2003 ASAE Annual Meeting; American Society of Agricultural and Biological Engineers, Las Vegas, NV, USA, 27–30 July 2003.
-[^4]: Neto, J.C. 2004. A combined statistical-soft computing approach for classification and mapping weed species in minimum -tillage systems. Ph.D. Thesis, University of Nebraska – Lincoln, Lincoln, NE, USA, August 2004.
-[^5]: Tucker, C.J. Red and photographic infrared linear combinations for monitoring vegetation. Remote Sens. Environ. 8, 127–150.
-[^6]: Louhaichi, M.; Borman, M.M.; Johnson, D.E. 2001. Spatially located platform and aerial photography for documentation of grazing impacts on wheat. Geocarto Int. 16, 65–70.
-[^7]: Bendig, J.; Yu, K.; Aasen, H.; Bolten, A.; Bennertz, S.; Broscheit, J.; Gnyp, M.L.; Bareth, G. 2015. Combining UAV-based plant height from crop surface models, visible, and near infrared vegetation indices for biomass monitoring in barley. Int. J. Appl. Earth Obs. Geoinf. 39, 79–87.
-[^8]: Kawashima, S.; Nakatani, M. 1998. An algorithm for estimating chlorophyll content in leaves using a video camera. Ann. Bot. 81, 49–54.
+[^1]: Meyer, G.E.; Neto, J.C. 2008. Verification of color vegetation indices for automated crop imaging applications. Comput. Electron. Agric. 63, 282â€“293.
+[^2]: Woebbecke, D.M.; Meyer, G.E.; Von Bargen, K.; Mortensen, D.A. 1995. Color Indices forWeed Identification Under Various Soil, Residue, and Lighting Conditions. Trans. ASAE, 38, 259â€“269.
+[^3]: Mao, W.; Wang, Y.;Wang, Y. 2003. Real-time detection of between-row weeds using machine vision. In Proceedings of the 2003 ASAE Annual Meeting; American Society of Agricultural and Biological Engineers, Las Vegas, NV, USA, 27â€“30 July 2003.
+[^4]: Neto, J.C. 2004. A combined statistical-soft computing approach for classification and mapping weed species in minimum -tillage systems. Ph.D. Thesis, University of Nebraska â€“ Lincoln, Lincoln, NE, USA, August 2004.
+[^5]: Tucker, C.J. Red and photographic infrared linear combinations for monitoring vegetation. Remote Sens. Environ. 8, 127â€“150.
+[^6]: Louhaichi, M.; Borman, M.M.; Johnson, D.E. 2001. Spatially located platform and aerial photography for documentation of grazing impacts on wheat. Geocarto Int. 16, 65â€“70.
+[^7]: Bendig, J.; Yu, K.; Aasen, H.; Bolten, A.; Bennertz, S.; Broscheit, J.; Gnyp, M.L.; Bareth, G. 2015. Combining UAV-based plant height from crop surface models, visible, and near infrared vegetation indices for biomass monitoring in barley. Int. J. Appl. Earth Obs. Geoinf. 39, 79â€“87.
+[^8]: Kawashima, S.; Nakatani, M. 1998. An algorithm for estimating chlorophyll content in leaves using a video camera. Ann. Bot. 81, 49â€“54.

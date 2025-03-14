@@ -9,10 +9,6 @@ if int(laspy.__version__.split('.')[0]) == 1:
         from laspy import file
     except Exception as e:
         sys.exit(e)
-
-# import pdal (for manipulating and compressing LAS files)
-# import pdal
-# import json
 import matplotlib as mpl
 
 # import libraries for managing and plotting data
@@ -20,9 +16,8 @@ import numpy as np
 
 # import machine learning libraries
 import tensorflow as tf
-from tensorflow import feature_column
-from tensorflow.keras import datasets, layers, models
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras import *
+from tensorflow.keras.callbacks import *
 
 # import functions from other files
 from src.fileio import *
@@ -31,7 +26,7 @@ from src.vegindex import *
 from src.miscfx import *
 from src.modelbuilder import *
 
-def main(default_values, verbose=True):
+def ml_veg_filter(default_values, verbose=True):
     # list of acceptable geometric metrics to calculate
     # this list is subject to expansion or reduction depending on new code
     acceptablegeometrics = ['sd','3d']
@@ -258,7 +253,6 @@ def main(default_values, verbose=True):
     predict_reclass_write(default_values.reclassfile,
                             [globals()[mod.name]],
                             indiceslist=default_values.model_vegetation_indices,
-                            threshold_vals=default_values.reclass_thresholds,
                             batch_sz=default_values.training_batch_size,
                             ds_cache=default_values.training_cache,
                             geo_metrics=geomet,
@@ -272,4 +266,4 @@ if __name__ == '__main__':
     # create the arguments
     defs = Args('defs')
 
-    main(default_values=defs)
+    ml_veg_filter(default_values=defs)

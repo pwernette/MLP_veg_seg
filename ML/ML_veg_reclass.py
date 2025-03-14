@@ -10,18 +10,13 @@ if int(laspy.__version__.split('.')[0]) == 1:
     except Exception as e:
         sys.exit(e)
 
-# import pdal (for manipulating and compressing LAS files)
-# import pdal
-# import json
-
 # import libraries for managing and plotting data
 import numpy as np
 
 # import machine learning libraries
 import tensorflow as tf
-from tensorflow import feature_column
-from tensorflow.keras import datasets, layers, models
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras import *
+from tensorflow.keras.callbacks import *
 
 # import functions from other files
 from src.fileio import *
@@ -31,12 +26,12 @@ from src.miscfx import *
 from src.modelbuilder import *
 
 
-def main(default_values, verbose=True):
+def ml_veg_reclass(default_values, verbose=True):
     # parse any command line arguments (if present)
     default_values.parse_cmd_arguments()
 
     if default_values.gui:
-        request_window = App()
+        request_window = App_reclass_only()
         request_window.create_widgets(default_values)
         request_window.mainloop()
 
@@ -102,9 +97,6 @@ def main(default_values, verbose=True):
     if isinstance(reclassmodel, list):
         predict_reclass_write(default_values.reclassfile,
                                 reclassmodel,
-                                threshold_vals=default_values.reclass_thresholds,
-                                # batch_sz=default_values.training_batch_size,
-                                # ds_cache=default_values.training_cache,
                                 geo_metrics=geomet,
                                 geom_rad=default_values.geometry_radius)
     # else if the reclass model is not a list of models, then convert it to a
@@ -113,9 +105,6 @@ def main(default_values, verbose=True):
         #try:
         predict_reclass_write(default_values.reclassfile,
                                 [reclassmodel],
-                                threshold_vals=default_values.reclass_thresholds,
-                                # batch_sz=default_values.training_batch_size,
-                                # ds_cache=default_values.training_cache,
                                 geo_metrics=geomet,
                                 geom_rad=default_values.geometry_radius)
         #except Exception as e:
@@ -124,6 +113,6 @@ def main(default_values, verbose=True):
 
     # get the model inputs from the loaded file
 if __name__ == '__main__':
-    defs = Args('defs')
+    defs = Args_reclass_only('defs')
 
-    main(default_values=defs)
+    ml_veg_reclass(default_values=defs)

@@ -363,8 +363,7 @@ def generate_dataframe(input_point_cloud, vegetation_index_list, dtype_conversio
     return pd.DataFrame(outdict)
 
 def predict_reclass_write(incloudname, 
-                          model_list, 
-                          threshold_vals, 
+                          model_list,
                           batch_sz=32, 
                           ds_cache=False, 
                           indiceslist=[], 

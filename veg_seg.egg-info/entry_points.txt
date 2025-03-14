@@ -1,0 +1,4 @@
+[console_scripts]
+vegfilter = veg_seg.main:veg_filter
+vegreclass = veg_seg.main:veg_reclass
+vegtrain = veg_seg.main:veg_train
