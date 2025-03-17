@@ -7,10 +7,9 @@ from scipy.spatial import cKDTree
 from tqdm import tqdm
 
 # import machine learning libraries
-import tensorflow as tf
-from tensorflow import feature_column
-from tensorflow.keras import datasets, layers, models
-from tensorflow.keras.callbacks import EarlyStopping
+# import tensorflow as tf
+# from tensorflow.keras import datasets, layers, models
+# from tensorflow.keras.callbacks import EarlyStopping
 
 # message box and file selection libraries
 import tkinter
