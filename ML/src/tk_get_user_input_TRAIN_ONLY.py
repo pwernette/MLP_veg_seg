@@ -595,6 +595,18 @@ class Args_train_only():
                          dest='verbose',
                          type=str,
                          choices=['true','True','false','False','t','f'])
+        psr.add_argument('-xyzmin','-xyzmins','-xyzminimums',
+                         dest='xyzmins',
+                         type=float,
+                         nargs=3,
+                         default=[0,0,0],
+                         help='(optional) Minimum values for X, Y, and Z coordinates [default = 0,0,0]')
+        psr.add_argument('-xyzmax','-xyzmaxs','-xyzmaximums',
+                         dest='xyzmaxs',
+                         type=float,
+                         nargs=3,
+                         default=[0,0,0],
+                         help='(optional) Maximum values for X, Y, and Z coordinates [default = 0,0,0]')
 
         # parse arguments
         args = psr.parse_args()

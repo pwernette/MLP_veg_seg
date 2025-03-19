@@ -2,6 +2,7 @@ import sys, os, math
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import csv
 import matplotlib.pyplot as plt
 from scipy.spatial import cKDTree
 from tqdm import tqdm
@@ -35,9 +36,9 @@ def calculate_confusion_matrix(model, test_dataset, verbose=True):
         original_labels = np.concatenate([original_labels, y])
         # Predict class using model 
         # model_predictions = np.concatenate([model_predictions, y])      # debugging only
-        model_predictions = np.concatenate([model_predictions, tf.argmax(self.mod.predict(x, verbose=self.das.model_verbose_run), axis=-1)])
+        model_predictions = np.concatenate([model_predictions, tf.argmax(model.predict(x, verbose=1), axis=-1)])
         if verbose:
-            print('\nOriginal:\n {}\nPredicted:\n {}'.format(y, tf.argmax(self.mod.predict(x, verbose=self.das.model_verbose_run), axis=-1)))
+            print('\nOriginal:\n {}\nPredicted:\n {}'.format(y, tf.argmax(model.predict(x, verbose=1), axis=-1)))
 
     # Create the confusion matrix (and calculate as a percentage) 
     confusion_mat = tf.math.confusion_matrix(labels=original_labels, predictions=model_predictions).numpy()
@@ -46,30 +47,31 @@ def calculate_confusion_matrix(model, test_dataset, verbose=True):
         print('\nConfusion matrix:\n{}'.format(confusion_mat))
     return(confusion_mat, confusion_mat_percentage)
 
-def plot_confusion_matrices(confusion_matrix, confusion_matrix_percentage, dir, basename):
+
+def plot_confusion_matrices(confusion_matrices, confusion_matrices_percentage, dir, basename, class_names, verbose=True):
     plt.rcParams['figure.figsize'] = (12.0,6.5)
     plt.rcParams['figure.subplot.bottom'] = 0.3
     
     # Compute combined confusion matrix
-    conf_matrix = self.confusion_matrices[0]
-    for m in np.arange(1,len(self.confusion_matrices)):
-        conf_matrix = [[conf_matrix[i][j] + self.confusion_matrices[m][i][j]  for j in range(len(conf_matrix[0]))] for i in range(len(conf_matrix))]
+    conf_matrix = confusion_matrices[0]
+    for m in np.arange(1,len(confusion_matrices)):
+        conf_matrix = [[conf_matrix[i][j] + confusion_matrices[m][i][j]  for j in range(len(conf_matrix[0]))] for i in range(len(conf_matrix))]
     
         # re-format confusion matrix as 2D array for plotting
-    self.confusion_matrix = np.asarray(conf_matrix)
+    confusion_matrix = np.asarray(conf_matrix)
 
     print('\nCombined confusion matrix:')
-    print(self.confusion_matrix)
+    print(conf_mat)
     
     # Calculate the classification accuracy for each cell as a percentage
-    confusion_mat_percent = self.confusion_matrix/self.confusion_matrix.sum(axis=1)[:, tf.newaxis]
+    confusion_mat_percent = conf_mat/conf_mat.sum(axis=1)[:, tf.newaxis]
 
     # Plot the loss training curve 
-    if self.das.model_verbose_run > 0:
+    if verbose:
         print('\nPlotting confusion matrices.')
 
     # Write confusion matrix to CSV file 
-    f_indiv = open(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix.csv'), 'w+', newline='')
+    f_indiv = open(os.path.join(dir, 'output_models', str(model.name)+'_confusion_matrix.csv'), 'w+', newline='')
     wr_indiv = csv.writer(f_indiv, delimiter=',')
 
     # Confusion matrix iterator (used for file naming)
