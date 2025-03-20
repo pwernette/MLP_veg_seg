@@ -24,16 +24,16 @@ from tensorflow.keras.utils import *
 
 # import functions from other files
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__name__))), 'ML'))
-from ML_vegfilter import *
-from ML_veg_reclass import *
-from ML_veg_train import *
-from src.fileio import *
-from src.tk_get_user_input import *
-from src.tk_get_user_input_TRAIN_ONLY import *
-from src.tk_get_user_input_RECLASS_ONLY import *
-from src.vegindex import *
-from src.miscfx import *
-from src.modelbuilder import *
+from .ML_vegfilter import *
+from .ML_veg_reclass import *
+from .ML_veg_train import *
+# from src.fileio import *
+from .src.tk_get_user_input import *
+from .src.tk_get_user_input_TRAIN_ONLY import *
+from .src.tk_get_user_input_RECLASS_ONLY import *
+# from src.vegindex import *
+# from src.miscfx import *
+# from src.modelbuilder import *
 
 # def main():
 #     print('testing')

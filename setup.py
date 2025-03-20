@@ -8,11 +8,11 @@ with open('requirements.txt', 'r') as f:
 
 setup(
     name='veg_seg',
-    version='0.1.01',
+    version='0.1.02',
     description='A package for classifying vegetation from lidar point clouds',
     author='Phillipe Wernette', 
     author_email='pwernett@msu.edu',
-    packages=find_packages(),
+    # packages=find_packages(where=['veg_seg', 'veg_seg/src']),
     install_requires=[
         "matplotlib",
         "ipython",
@@ -27,16 +27,17 @@ setup(
         "lazrs",
         "numpy==1.26.4;platform_system=='Windows'",
         "tensorflow[and-cuda]==2.17;platform_system=='Linux'",
-        "tensorflow-gpu==2.10;platform_system=='Windows'",
+        "tensorflow-gpu==2.10.1;platform_system=='Windows'",
     ],
     entry_points={
         'console_scripts': [
-            'vegfilter=veg_seg.main:veg_filter',
-            'vegreclass=veg_seg.main:veg_reclass',
-            'vegtrain=veg_seg.main:veg_train',
+            'vegfilter=main:veg_filter',
+            'vegreclass=main:veg_reclass',
+            'vegtrain=main:veg_train',
         ],
     },
-    py_modules=['veg_seg','ML'],
+    py_modules=['veg_seg','veg_seg.main','veg_seg.src'],
+    url='https://github.com/pwernet/MLP_veg_seg',
     long_description=description,
     long_description_content_type='text/markdown',
     license='MIT',
@@ -46,5 +47,6 @@ setup(
         'Topic :: Scientific/Engineering :: GIS',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.10',
+        "Operating System :: OS Independent",
     ],
 )

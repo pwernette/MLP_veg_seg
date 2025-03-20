@@ -43,47 +43,38 @@ def calculate_confusion_matrix(model, test_dataset, verbose=True):
     # Create the confusion matrix (and calculate as a percentage) 
     confusion_mat = tf.math.confusion_matrix(labels=original_labels, predictions=model_predictions).numpy()
     confusion_mat_percentage = confusion_mat/confusion_mat.sum(axis=1)[:, tf.newaxis]
+    
     if verbose:
         print('\nConfusion matrix:\n{}'.format(confusion_mat))
+    
     return(confusion_mat, confusion_mat_percentage)
 
 
-def plot_confusion_matrices(confusion_matrices, confusion_matrices_percentage, dir, basename, class_names, verbose=True):
+def plot_confusion_matrices(confusion_matrices, dir, model, class_names, verbose=True):
+    # set plotting parameters
     plt.rcParams['figure.figsize'] = (12.0,6.5)
     plt.rcParams['figure.subplot.bottom'] = 0.3
-    
-    # Compute combined confusion matrix
-    conf_matrix = confusion_matrices[0]
-    for m in np.arange(1,len(confusion_matrices)):
-        conf_matrix = [[conf_matrix[i][j] + confusion_matrices[m][i][j]  for j in range(len(conf_matrix[0]))] for i in range(len(conf_matrix))]
-    
-        # re-format confusion matrix as 2D array for plotting
-    confusion_matrix = np.asarray(conf_matrix)
-
-    print('\nCombined confusion matrix:')
-    print(conf_mat)
-    
-    # Calculate the classification accuracy for each cell as a percentage
-    confusion_mat_percent = conf_mat/conf_mat.sum(axis=1)[:, tf.newaxis]
 
     # Plot the loss training curve 
     if verbose:
         print('\nPlotting confusion matrices.')
 
     # Write confusion matrix to CSV file 
-    f_indiv = open(os.path.join(dir, 'output_models', str(model.name)+'_confusion_matrix.csv'), 'w+', newline='')
+    f_indiv = open(os.path.join(dir, str(model.name)+'_confusion_matrix.csv'), 'w+', newline='')
     wr_indiv = csv.writer(f_indiv, delimiter=',')
 
     # Confusion matrix iterator (used for file naming)
     cmat_iter = 1
 
-    # Plot individual model confusion matrices
-    for cmat in self.confusion_matrices:
+    '''
+    Plot and save individual model confusion matrices
+    '''
+    for cmat in confusion_matrices:
         # Plot the image count confusion matrix 
         fig = sns.heatmap(
             cmat, annot=True, fmt='d',
-            xticklabels=self.cnames,
-            yticklabels=self.cnames,
+            xticklabels=class_names,
+            yticklabels=class_names,
             cmap=sns.color_palette('gray_r')
         )
         
@@ -93,36 +84,48 @@ def plot_confusion_matrices(confusion_matrices, confusion_matrices_percentage, d
         # Add X and Y axes labels 
         fig.set(xlabel='Predicted', ylabel='True')
         savefig = fig.get_figure()
-        if 'eps' in self.das.plot_format:
-            savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_'+str(cmat_iter)+'.eps'), dpi=300, format='eps')
-            savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_'+str(cmat_iter)+'.jpg'), dpi=300)
-        elif 'jpg' in self.das.plot_format or 'jpeg' in self.das.plot_format:
-            savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_'+str(cmat_iter)+'.jpg'), dpi=300)
-        elif 'tif' in self.das.plot_format:
-            savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_'+str(cmat_iter)+'.tif'), dpi=300)
-        else:
-            savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_'+str(cmat_iter)+'.png'), dpi=300, transparent=True)
 
-        if self.das.model_verbose_run > 0:
-            print('Saved: {}'.format(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_'+str(cmat_iter))))
+        savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix_'+str(cmat_iter)+'.eps'), dpi=300, format='eps')
+        savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix_'+str(cmat_iter)+'.jpg'), dpi=300)
+        savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix_'+str(cmat_iter)+'.png'), dpi=300, transparent=True)
         
         # Clear plot 
         plt.clf()
 
-        # Write results to output log file
-        wr_indiv.writerow(self.cnames)
+        # Write confusion matrix to output log file
+        wr_indiv.writerow(class_names)
         wr_indiv.writerows(cmat)
-        
+
+        if verbose:
+            print('Saved (EPS/JPG/PNG): {}'.format(os.path.join(dir, str(model.name)+'_confusion_matrix_'+str(cmat_iter))))
+            print('    (results also saved to log file: {})'.format(os.path.join(dir, str(model.name)+'_confusion_matrix.csv')))
+
         # Increment confusion matrix iterator
         cmat_iter+=1
     # Close the confusion matrix file
     f_indiv.close()
         
-    # Plot combined confusion matrix 
+    '''
+    Calculate combined confusion matrix
+    '''
+    conf_matrix = confusion_matrices[0]
+    for m in np.arange(1,len(confusion_matrices)):
+        conf_matrix = [[conf_matrix[i][j] + confusion_matrices[m][i][j]  for j in range(len(conf_matrix[0]))] for i in range(len(conf_matrix))]
+    
+        # re-format confusion matrix as 2D array for plotting
+    conf_matrix = np.asarray(conf_matrix)
+
+    if verbose:
+        print('\nCombined confusion matrix:')
+        print(conf_matrix)
+
+    '''
+    Plot combined confusion matrix
+    '''
     fig = sns.heatmap(
-        self.confusion_matrix, annot=True, fmt='.3g',
-        xticklabels=self.cnames,
-        yticklabels=self.cnames,
+        conf_matrix, annot=True, fmt='.3g',
+        xticklabels=class_names,
+        yticklabels=class_names,
         cmap=sns.color_palette('gray_r')
     )
     
@@ -132,37 +135,40 @@ def plot_confusion_matrices(confusion_matrices, confusion_matrices_percentage, d
     # Add X and Y axes labels 
     fig.set(xlabel='Predicted', ylabel='True')
     savefig = fig.get_figure()
-    if 'eps' in self.das.plot_format:
-        savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_combined.eps'), dpi=300, format='eps')
-        savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_combined.jpg'), dpi=300)
-    elif 'jpg' in self.das.plot_format:
-        savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_combined.jpg'), dpi=300)
-    elif 'tif' in self.das.plot_format:
-        savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_combined.tif'), dpi=300)
-    else:
-        savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_combined.png'), dpi=300, transparent=True)
-    if self.das.model_verbose_run > 0:
-        print('Saved: {}'.format(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_combined.png')))
+
+    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix_combined.eps'), dpi=300, format='eps')
+    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix_combined.jpg'), dpi=300)
+    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix_combined.png'), dpi=300, transparent=True)
     
     # Clear plot 
     plt.clf()
 
-    # Write confusion matrix to CSV file 
-    f = open(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_combined.csv'), 'w+', newline='')
+    '''
+    Write combined confusion matrix to CSV file
+    '''
+    f = open(os.path.join(dir, str(model.name)+'_confusion_matrix_combined.csv'), 'w+', newline='')
     wr = csv.writer(f, delimiter=',')
-    wr.writerow(self.cnames)
-    wr.writerows(self.confusion_matrix)
+    wr.writerow(class_names)
+    wr.writerows(conf_matrix)
     f.close()
     
-    # Print the name of the confusion matrix file to console
-    if self.das.model_verbose_run > 0:
-        print('Saved: {}'.format(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_'+str(cmat_iter))))
+    if verbose:
+        print('Saved (EPS/JPG/PNG): {}'.format(os.path.join(dir, str(model.name)+'_confusion_matrix_combined.png')))
+        print('    (results also saved to log file: {})'.format(os.path.join(dir, str(model.name)+'_confusion_matrix_combined.csv')))
+    
 
-    # Plot the percent accurate confusion matrix 
+    '''
+    Calculate the percent accuracy confusion matrix
+    '''
+    confusion_mat_percent = conf_matrix/conf_matrix.sum(axis=1)[:, tf.newaxis]
+
+    '''
+    Plot the percent accurate confusion matrix
+    '''
     fig = sns.heatmap(
-        confusion_mat_percent, annot=True, fmt='.3g',
-        xticklabels=self.cnames,
-        yticklabels=self.cnames,
+        confusion_mat_percent, annot=True, fmt='.3f',
+        xticklabels=class_names,
+        yticklabels=class_names,
         cmap=sns.color_palette('gray_r')
     )
     
@@ -172,17 +178,83 @@ def plot_confusion_matrices(confusion_matrices, confusion_matrices_percentage, d
     # Add X and Y axes labels 
     fig.set(xlabel='Predicted', ylabel='True')
     savefig = fig.get_figure()
-    if 'eps' in self.das.plot_format:
-        savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_percent.eps'), dpi=300, format='eps')
-        savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_percent.jpg'), dpi=300)
-    elif 'jpg' in self.das.plot_format:
-        savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_percent.jpg'), dpi=300)
-    elif 'tif' in self.das.plot_format:
-        savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_percent.tif'), dpi=300)
-    else:
-        savefig.savefig(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_percent.png'), dpi=300, transparent=True)
-    if self.das.model_verbose_run > 0:
-        print('Saved: {}'.format(os.path.join(self.das.rootdir, 'output_models', str(self.mod.name)+'_confusion_matrix_percent.png')))
+    
+    # Save the figures
+    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix_percent.eps'), dpi=300, format='eps')
+    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix_percent.jpg'), dpi=300)
+    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix_percent.png'), dpi=300, transparent=True)
+    
+    '''
+    Write combined percent accuracy confusion matrix to CSV file
+    '''
+    f = open(os.path.join(dir, str(model.name)+'_confusion_matrix_percent.csv'), 'w+', newline='')
+    wr = csv.writer(f, delimiter=',')
+    wr.writerow(class_names)
+    wr.writerows(confusion_mat_percent)
+    f.close()
+    
+    # Print the name of the confusion matrix file to console
+    if verbose:
+        print('Saved: {}'.format(os.path.join(dir, str(model.name)+'_confusion_matrix_'+str(cmat_iter))))
     
     # Clear plot 
     plt.clf()
+
+
+def plot_confusion_matrix(confusion_matrix, dir, model, class_names, drange='data', plot_title=None, verbose=True):
+    # set plotting parameters
+    plt.rcParams['figure.figsize'] = (12.0,6.5)
+    plt.rcParams['figure.subplot.bottom'] = 0.3
+
+    if verbose:
+        print('\nConfusion matrix:')
+        print(confusion_matrix)
+
+    # switch for data-based min/max scaling or percentage-based (0.0 to 1.0)
+    if drange == 'data':
+        drange = [0,np.sum(confusion_matrix)]
+    else:
+        drange = [0.0, 1.0]
+
+    '''
+    Plot confusion matrix
+    '''
+    fig = sns.heatmap(
+        confusion_matrix, annot=True, fmt='.3g',
+        xticklabels=class_names,
+        yticklabels=class_names,
+        vmin=drange[0],
+        vmax=drange[1],
+        cmap=sns.color_palette('gray_r')
+    )
+    
+    # Add a title 
+    if plot_title:
+        fig.set_title(plot_title)
+    else:
+        fig.set_title('Confusion Matrix for '+str(model.name))
+    
+    # Add X and Y axes labels 
+    fig.set(xlabel='Predicted', ylabel='True')
+    savefig = fig.get_figure()
+
+    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix.eps'), dpi=300, format='eps')
+    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix.jpg'), dpi=300)
+    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix.png'), dpi=300, transparent=True)
+    
+    # Clear plot 
+    plt.clf()
+
+    '''
+    Write combined confusion matrix to CSV file
+    '''
+    f = open(os.path.join(dir, str(model.name)+'_confusion_matrix.csv'), 'w+', newline='')
+    wr = csv.writer(f, delimiter=',')
+    wr.writerow(class_names)
+    wr.writerows(confusion_matrix)
+    f.close()
+    
+    if verbose:
+        print('Saved (EPS/JPG/PNG): {}'.format(os.path.join(dir, str(model.name)+'_confusion_matrix.png')))
+        print('    (results also saved to log file: {})'.format(os.path.join(dir, str(model.name)+'_confusion_matrix.csv')))
+    

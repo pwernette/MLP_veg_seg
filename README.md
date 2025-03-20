@@ -176,7 +176,6 @@ These point clouds can be segmented from larger point clouds using any number of
 Command line options are available to for both the two program and one program options to cut down on pop-up windows and aid in batch scripting:
 | Argument | Type(s) | Default value(s) | Description/Function | Program |
 | --- | --- | --- | --- | --- |
-
 | `-gui` | boolean | true | Initialize the graphical user interface | ML_veg_train, ML_veg_reclass, ML_vegfilter |
 | `-pcs`, `-pointclouds` | string | NA | Point clouds containing training point clouds separated by class | ML_veg_train, ML_vegfilter |
 | `-r`, `-reclass` | string | NA | Point cloud to be reclassified | ML_veg_reclass, ML_vegfilter |

@@ -9,34 +9,29 @@ if int(laspy.__version__.split('.')[0]) == 1:
         from laspy import file
     except Exception as e:
         sys.exit(e)
-import matplotlib as mpl
 
 # import libraries for managing and plotting data
 import numpy as np
 
 # import machine learning libraries
 import tensorflow as tf
-from tensorflow.keras import *
 from tensorflow.keras.callbacks import *
+from tensorflow.keras.utils import *
 
 # import functions from other files
-from src.fileio import *
-from src.tk_get_user_input import *
-from src.vegindex import *
-from src.miscfx import *
-from src.modelbuilder import *
-from src.confusion_matrix import *
+from fileio import *
+from tk_get_user_input_TRAIN_ONLY import *
+from vegindex import *
+from miscfx import *
+from modelbuilder import *
 
-def ml_veg_filter(default_values, verbose=True):
-    # list of acceptable geometric metrics to calculate
-    # this list is subject to expansion or reduction depending on new code
-    acceptablegeometrics = ['sd','3d']
 
+def ml_veg_train(default_values, verbose=True):
     # parse any command line arguments (if present)
     default_values.parse_cmd_arguments()
 
     if default_values.gui:
-        request_window = App()
+        request_window = App_train_only()
         request_window.create_widgets(default_values)
         request_window.mainloop()
 
@@ -53,43 +48,31 @@ def ml_veg_filter(default_values, verbose=True):
         # print laspy version installed and configured
         print("   laspy Version: {}\n".format(laspy.__version__))
 
+    print('\n\nMODEL INPUTS: {}'.format(list(default_values.model_inputs)))
+
     # the las2split() function performs the following actions:
     #   1) import training point cloud files
     #   2) compute vegetation indices
     #   3) split point clouds into training, testing, and validation sets
-    print('model inputs: {}'.format(default_values.model_inputs))
-    print('model veg indices: {}'.format(default_values.model_vegetation_indices))
-
-    if '3d' in default_values.model_vegetation_indices:
-        train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
-                               veg_indices=default_values.model_vegetation_indices,
-                               geometry_metrics=['3d'],
-                               class_imbalance_corr=default_values.training_class_imbalance_corr,
-                               training_split=default_values.training_split,
-                               data_reduction=default_values.training_data_reduction,
-                               xyz_mins=default_values.xyz_mins,
-                               xyz_maxs=default_values.xyz_maxs
-                               )
-    elif 'sd' in default_values.model_vegetation_indices:
-        train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
-                               veg_indices=default_values.model_vegetation_indices,
-                               geometry_metrics=['sd'],
-                               class_imbalance_corr=default_values.training_class_imbalance_corr,
-                               training_split=default_values.training_split,
-                               data_reduction=default_values.training_data_reduction,
-                               xyz_mins=default_values.xyz_mins,
-                               xyz_maxs=default_values.xyz_maxs
-                               )
+    if 'sd' in default_values.model_inputs or 'std' in default_values.model_inputs or 'stdev' in default_values.model_inputs:
+        train_ds,val_ds,eval_ds,class_dat = las2split(default_values.filesin,
+                                            veg_indices=default_values.model_vegetation_indices,
+                                            class_imbalance_corr=default_values.training_class_imbalance_corr,
+                                            training_split=default_values.training_split,
+                                            data_reduction=default_values.training_data_reduction,
+                                            geom_metrics='sd',
+                                            xyz_mins=default_values.xyz_mins,
+                                            xyz_maxs=default_values.xyz_maxs
+                                            )
     else:
-        train_ds,test_ds,val_ds,class_dat = las2split(default_values.filesin,
-                               veg_indices=default_values.model_vegetation_indices,
-                               class_imbalance_corr=default_values.training_class_imbalance_corr,
-                               training_split=default_values.training_split,
-                               data_reduction=default_values.training_data_reduction,
-                               xyz_mins=default_values.xyz_mins,
-                               xyz_maxs=default_values.xyz_maxs
-                               )
-        
+        train_ds,val_ds,eval_ds,class_dat = las2split(default_values.filesin,
+                                                      veg_indices=default_values.model_vegetation_indices,
+                                                      class_imbalance_corr=default_values.training_class_imbalance_corr,
+                                                      training_split=default_values.training_split,
+                                                      data_reduction=default_values.training_data_reduction,
+                                                      xyz_mins=default_values.xyz_mins,
+                                                      xyz_maxs=default_values.xyz_maxs
+                                                      )
     print('\nClass dictionary:')
     [print(i,v) for i,v in enumerate(class_dat)]
 
@@ -97,7 +80,10 @@ def ml_veg_filter(default_values, verbose=True):
     default_values.rootdir = os.path.split(os.path.split(default_values.filesin[0])[0])[0]
 
     # append columns/variables of interest list
-    default_values.model_inputs.append('veglab')
+    # default_values.model_inputs.append('veglab')
+
+    # print(train_ds)
+    # print(train_ds.drop('veglab',axis=1).shape)
 
     # convert train, test, and validation to feature layers
     train_ds = df_to_dataset(train_ds, 
@@ -110,21 +96,17 @@ def ml_veg_filter(default_values, verbose=True):
     val_ds = df_to_dataset(val_ds, 
                            targetcolname='veglab',
                            label_depth=len(class_dat),
-                             shuffle=default_values.training_shuffle,
-                             cache_ds=default_values.training_cache,
-                             prefetch=default_values.training_prefetch,
-                             batch_size=default_values.training_batch_size)
-    test_ds = df_to_dataset(test_ds, 
+                           shuffle=default_values.training_shuffle,
+                           cache_ds=default_values.training_cache,
+                           prefetch=default_values.training_prefetch,
+                           batch_size=default_values.training_batch_size)
+    eval_ds = df_to_dataset(eval_ds, 
                             targetcolname='veglab',
                             label_depth=len(class_dat),
-                             shuffle=default_values.training_shuffle,
-                             cache_ds=default_values.training_cache,
-                             prefetch=default_values.training_prefetch,
-                             batch_size=default_values.training_batch_size)
-
-    # print model name
-    if verbose:
-        print("\nModel name: {}".format(default_values.model_name))
+                            shuffle=default_values.training_shuffle,
+                            cache_ds=default_values.training_cache,
+                            prefetch=default_values.training_prefetch,
+                            batch_size=default_values.training_batch_size)
 
     # get today's date as string
     tdate = str(date.today()).replace('-','')
@@ -152,7 +134,7 @@ def ml_veg_filter(default_values, verbose=True):
 
     # evaluate the model
     print('\nEvaluating model with validation set...')
-    model_eval = mod.evaluate(test_ds, verbose=2)
+    model_eval = mod.evaluate(eval_ds, verbose=2)
     print('    loss: {}'.format(model_eval[0]))
     print('    cross entropy: {}'.format(model_eval[1]))
     print('    categorical accuracy: {}'.format(model_eval[2]))
@@ -190,21 +172,21 @@ def ml_veg_filter(default_values, verbose=True):
         f2.legend(['train','test'], loc='right')
 
         # save the figure
-        fig.savefig(os.path.join(default_values.rootdir, 'saved_models_'+tdate, default_values.model_name+'_PLOT_TRAINING.png'))
+        fig.savefig(os.path.join(default_values.rootdir,'saved_models_'+tdate,default_values.model_name+'_PLOT_TRAINING.png'))
 
-    print('\nWriting summary log file')
+    print('\nWriting summary log file...')
     # write model information and metadata to output txt file
     with open(os.path.join(default_values.rootdir,'saved_models_'+tdate,default_values.model_name+'_MODEL_SUMMARY.txt'),'w') as fh:
         # print model summary to output file
         # Pass the file handle in as a lambda function to make it callable
         mod.summary(print_fn=lambda x: fh.write(x+'\n'))
         fh.write('created: {}\n'.format(tdate))
-        fh.write('input point cloud files: {}\n'.format(list(default_values.filesin)))
-
+        fh.write('input point cloud files: {}\n'.format(default_values.filesin))
+        
         fh.write('\nvegetation indices: {}\n'.format(list(default_values.model_vegetation_indices)))
         fh.write('model inputs: {}\n'.format(list(default_values.model_inputs)))
 
-        fh.write('\nEvaluation metrics:\n')
+        fh.write('\vEvaluation metrics:\n')
         fh.write('Loss: {}\n'.format(model_eval[0]))
         fh.write('Cross Entropy: {}\n'.format(model_eval[1]))
         fh.write('Categorical Accuracy: {}\n'.format(model_eval[2]))
@@ -213,27 +195,9 @@ def ml_veg_filter(default_values, verbose=True):
         fh.write('AUC: {}\n'.format(model_eval[5]))
 
         fh.write('\ntrain time: {}'.format(datetime.timedelta(seconds=tt))+'\n')
-
         fh.write('\nClass Dictionary:\n')
-        # for key, value in class_dat.items():  
-        #     fh.write('%s: %s\n' % (value, key))
-        [fh.write('%s: %s\n' % (value, key)) for key,value in class_dat]
-
-    '''
-    Plot and save the confusion matrix/matrices
-    '''
-    # cm = calculate_confusion_matrix(model=mod, test_dataset=test_ds)
-
-    # plot_confusion_matrix(confusion_matrix=cm[0], 
-    #                       dir=os.path.join(default_values.rootdir,'saved_models_'+tdate), 
-    #                       model=mod, 
-    #                       class_names=[k for k,_ in enumerate(class_dat)], 
-    #                       drange='data')
-    # plot_confusion_matrix(confusion_matrix=cm[1], 
-    #                       dir=os.path.join(default_values.rootdir,'saved_models_'+tdate), 
-    #                       model=mod, 
-    #                       class_names=[k for k,_ in enumerate(class_dat)], 
-    #                       drange='percentage')
+        for key, value in class_dat.items():  
+            fh.write('%i: %s\n' % (value, key))
 
     print('\nSaving model as .h5 and sub-directory in {}...'.format(os.path.join(default_values.rootdir,'saved_models_'+tdate)))
     # save the complete model (will create a new folder with the saved model)
@@ -243,45 +207,12 @@ def ml_veg_filter(default_values, verbose=True):
         mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_FULL_MODEL.keras')))
     else:
         mod.save(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_FULL_MODEL.h5')))
-    mod.save_weights(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_MODEL_WEIGHTS.weights.h5')))
+    mod.save_weights(os.path.join(default_values.rootdir,'saved_models_'+tdate,(default_values.model_name+'_MODEL_WEIGHTS.h5')))
 
-    ## RECLASSIFY A FilE USING TRAINED MODEL FILE
-    print('\n\nRECLASSIFYING FILE...')
-
-    # load the model
-    globals()[mod.name] = mod
-
-    # get the model name from the loaded file
-    default_values.model_output_name = mod.name
-
-    # get model inputs from the loaded file
-    default_values.model_inputs = [f.name for f in mod.inputs]
-    if verbose:
-        print(default_values.model_inputs)
-
-    # check if any geometry metrics are specified
-    geomet = list(set(acceptablegeometrics).intersection(default_values.model_inputs))
-
-    # print the model summary
-    if verbose:
-        print(mod.summary())
-
-    # reclassify the input file
-    # try:
-    predict_reclass_write(default_values.reclassfile,
-                            [globals()[mod.name]],
-                            indiceslist=default_values.model_vegetation_indices,
-                            batch_sz=default_values.training_batch_size,
-                            ds_cache=default_values.training_cache,
-                            geo_metrics=geomet,
-                            geom_rad=default_values.geometry_radius)
-    # except Exception as e:
-    #     print('ERROR: Unable to reclassify the input file. See below for specific error:')
-    #     sys.exit(e)
-
-    # get the model inputs from the loaded file
 if __name__ == '__main__':
-    # create the arguments
-    defs = Args('defs')
+    defs = Args_train_only('defs')
 
-    ml_veg_filter(default_values=defs)
+    # try:
+    ml_veg_train(default_values=defs)
+    # except:
+    #     traceback.print_exc()

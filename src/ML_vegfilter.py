@@ -20,12 +20,11 @@ from tensorflow.keras import *
 from tensorflow.keras.callbacks import *
 
 # import functions from other files
-from src.fileio import *
-from src.tk_get_user_input import *
-from src.vegindex import *
-from src.miscfx import *
-from src.modelbuilder import *
-from src.confusion_matrix import *
+from fileio import *
+from tk_get_user_input import *
+from vegindex import *
+from miscfx import *
+from modelbuilder import *
 
 def ml_veg_filter(default_values, verbose=True):
     # list of acceptable geometric metrics to calculate
@@ -204,7 +203,7 @@ def ml_veg_filter(default_values, verbose=True):
         fh.write('\nvegetation indices: {}\n'.format(list(default_values.model_vegetation_indices)))
         fh.write('model inputs: {}\n'.format(list(default_values.model_inputs)))
 
-        fh.write('\nEvaluation metrics:\n')
+        fh.write('\vEvaluation metrics:\n')
         fh.write('Loss: {}\n'.format(model_eval[0]))
         fh.write('Cross Entropy: {}\n'.format(model_eval[1]))
         fh.write('Categorical Accuracy: {}\n'.format(model_eval[2]))
@@ -215,25 +214,8 @@ def ml_veg_filter(default_values, verbose=True):
         fh.write('\ntrain time: {}'.format(datetime.timedelta(seconds=tt))+'\n')
 
         fh.write('\nClass Dictionary:\n')
-        # for key, value in class_dat.items():  
-        #     fh.write('%s: %s\n' % (value, key))
-        [fh.write('%s: %s\n' % (value, key)) for key,value in class_dat]
-
-    '''
-    Plot and save the confusion matrix/matrices
-    '''
-    # cm = calculate_confusion_matrix(model=mod, test_dataset=test_ds)
-
-    # plot_confusion_matrix(confusion_matrix=cm[0], 
-    #                       dir=os.path.join(default_values.rootdir,'saved_models_'+tdate), 
-    #                       model=mod, 
-    #                       class_names=[k for k,_ in enumerate(class_dat)], 
-    #                       drange='data')
-    # plot_confusion_matrix(confusion_matrix=cm[1], 
-    #                       dir=os.path.join(default_values.rootdir,'saved_models_'+tdate), 
-    #                       model=mod, 
-    #                       class_names=[k for k,_ in enumerate(class_dat)], 
-    #                       drange='percentage')
+        for key, value in class_dat.items():  
+            fh.write('%s: %s\n' % (value, key))
 
     print('\nSaving model as .h5 and sub-directory in {}...'.format(os.path.join(default_values.rootdir,'saved_models_'+tdate)))
     # save the complete model (will create a new folder with the saved model)
