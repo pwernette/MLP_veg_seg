@@ -1,19 +1,26 @@
-import os
+import sys, os, math
 import numpy as np
+import pandas as pd
 import seaborn as sns
 import csv
 import matplotlib.pyplot as plt
+from scipy.spatial import cKDTree
+from tqdm import tqdm
 
 # import machine learning libraries
 import tensorflow as tf
+# from tensorflow.keras import datasets, layers, models
+# from tensorflow.keras.callbacks import EarlyStopping
 
-def calculate_confusion_matrix(model, test_dataset, verbose=False):
+# message box and file selection libraries
+import tkinter
+from tkinter import Tk
+from tkinter.filedialog import askopenfile
+from tkinter import simpledialog
+
+def calculate_confusion_matrix(model, test_dataset, class_depth=2, verbose=False):
     '''
     Calculate a confusion matrix from the test dataset specified
-
-    @param model: The model object.
-    @param test_dataset: The test dataset.
-    @param verbose: Whether to print the confusion matrix to the console.
     '''
     # Initialize empty arrays for labels and predictions 
     model_predictions = np.array([])
@@ -45,18 +52,6 @@ def calculate_confusion_matrix(model, test_dataset, verbose=False):
 
 
 def plot_confusion_matrices(confusion_matrices, dir, model, class_names, verbose=True):
-    '''
-    This function plots multiple confusion matrices, likely as a result of a k-fold cross-validation,
-    plus the combined confusion matrix.
-
-    Matrix plots are saved as EPS/JPG/PNG files and all matrices are saved to CSV files.
-
-    @param confusion_matrices: The confusion matrices to plot.
-    @param dir: The directory to save the plots and CSV files.
-    @param model: The model object.
-    @param class_names: The class names.
-    @param verbose: Whether to print the name of the confusion matrix file to the console.
-    '''
     # set plotting parameters
     plt.rcParams['figure.figsize'] = (12.0,6.5)
     plt.rcParams['figure.subplot.bottom'] = 0.3
@@ -208,20 +203,6 @@ def plot_confusion_matrices(confusion_matrices, dir, model, class_names, verbose
 
 
 def plot_confusion_matrix(confusion_matrix, dir, model, class_names, drange='data', filename=None, plot_title=None, verbose=True):
-    '''
-    This function plots a single confusion matrix and saves it as an EPS/JPG/PNG file. 
-
-    The matrix is als saved to a CSV file.
-
-    @param confusion_matrix: The confusion matrix to plot.
-    @param dir: The directory to save the plot and CSV file.
-    @param model: The model object.
-    @param class_names: The class names.
-    @param drange: The range of the confusion matrix to plot. Can be 'data' or 'percent'.
-    @param filename: The filename to save the plot and CSV file as.
-    @param plot_title: The title to give the plot.
-    @param verbose: Whether to print the name of the confusion matrix file to the console.
-    '''
     # Clear plot 
     plt.clf()
 

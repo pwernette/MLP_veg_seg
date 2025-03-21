@@ -176,9 +176,9 @@ def ml_veg_filter(default_values, verbose=True):
         fig.suptitle(default_values.model_name+' Training History')
 
         # plot accuracy
-        f1.plot(history.history['cat_accuracy'])
-        f1.plot(history.history['val_cat_accuracy'])
-        f1.set_title('Model Accuracy')
+        f1.plot(history.history['auc'])
+        f1.plot(history.history['val_auc'])
+        f1.set_title('Model Accuracy (AUC)')
         f1.set(xlabel='epoch', ylabel='accuracy')
         f1.legend(['train','test'], loc='right')
 
@@ -204,7 +204,7 @@ def ml_veg_filter(default_values, verbose=True):
         fh.write('\nvegetation indices: {}\n'.format(list(default_values.model_vegetation_indices)))
         fh.write('model inputs: {}\n'.format(list(default_values.model_inputs)))
 
-        fh.write('\vEvaluation metrics:\n')
+        fh.write('\nEvaluation metrics:\n')
         fh.write('Loss: {}\n'.format(model_eval[0]))
         fh.write('Cross Entropy: {}\n'.format(model_eval[1]))
         fh.write('Categorical Accuracy: {}\n'.format(model_eval[2]))
@@ -220,7 +220,7 @@ def ml_veg_filter(default_values, verbose=True):
         [fh.write('%s: %s\n' % (value,key)) for key,value in class_dat.items()]
 
     # calculate the confusion matrix
-    cm = calculate_confusion_matrix(mod, test_ds, class_depth=len(class_dat), verbose=True)
+    cm = calculate_confusion_matrix(mod, test_ds, verbose=True)
     plot_confusion_matrix(confusion_matrix=cm[0], 
                           dir=os.path.join(default_values.rootdir,'saved_models_'+tdate),
                           model=mod,
