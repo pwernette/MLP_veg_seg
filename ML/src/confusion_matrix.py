@@ -18,7 +18,7 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfile
 from tkinter import simpledialog
 
-def calculate_confusion_matrix(model, test_dataset, verbose=True):
+def calculate_confusion_matrix(model, test_dataset, class_depth=2, verbose=True):
     '''
     Calculate a confusion matrix from the test dataset specified
     '''
@@ -29,11 +29,11 @@ def calculate_confusion_matrix(model, test_dataset, verbose=True):
     # Iterate through the training data 
     for x, y in test_dataset:
         """ Extract the training labels """
-        # print('Original Labels')
-        # print(original_labels)
-        # print('To Concatenate:')
-        # print(np.argmax(y.numpy(), axis=-1))
-        original_labels = np.concatenate([original_labels, y])
+        print('Original Labels')
+        print(original_labels)
+        print('To Concatenate:')
+        print(np.argmax(y.numpy(), axis=-1))
+        original_labels = np.concatenate([original_labels, np.argmax(y.numpy(), axis=-1)])
         # Predict class using model 
         # model_predictions = np.concatenate([model_predictions, y])      # debugging only
         model_predictions = np.concatenate([model_predictions, tf.argmax(model.predict(x, verbose=1), axis=-1)])
@@ -201,7 +201,7 @@ def plot_confusion_matrices(confusion_matrices, dir, model, class_names, verbose
     plt.clf()
 
 
-def plot_confusion_matrix(confusion_matrix, dir, model, class_names, drange='data', plot_title=None, verbose=True):
+def plot_confusion_matrix(confusion_matrix, dir, model, class_names, drange='data', filename=None, plot_title=None, verbose=True):
     # set plotting parameters
     plt.rcParams['figure.figsize'] = (12.0,6.5)
     plt.rcParams['figure.subplot.bottom'] = 0.3
@@ -215,7 +215,19 @@ def plot_confusion_matrix(confusion_matrix, dir, model, class_names, drange='dat
         drange = [0,np.sum(confusion_matrix)]
     else:
         drange = [0.0, 1.0]
+    
+    # Get/Set the filename
+    if filename:
+        filename = filename
+    else:
+        filename = str(model.name)+'_confusion_matrix_'+str(drange)
 
+    # Add a title 
+    if plot_title:
+        fig.set_title(plot_title)
+    else:
+        fig.set_title('Confusion Matrix for '+str(model.name))
+    
     '''
     Plot confusion matrix
     '''
@@ -228,19 +240,15 @@ def plot_confusion_matrix(confusion_matrix, dir, model, class_names, drange='dat
         cmap=sns.color_palette('gray_r')
     )
     
-    # Add a title 
-    if plot_title:
-        fig.set_title(plot_title)
-    else:
-        fig.set_title('Confusion Matrix for '+str(model.name))
     
+
     # Add X and Y axes labels 
     fig.set(xlabel='Predicted', ylabel='True')
     savefig = fig.get_figure()
 
-    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix.eps'), dpi=300, format='eps')
-    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix.jpg'), dpi=300)
-    savefig.savefig(os.path.join(dir, str(model.name)+'_confusion_matrix.png'), dpi=300, transparent=True)
+    savefig.savefig(os.path.join(dir, filename+'.eps'), dpi=300, format='eps')
+    savefig.savefig(os.path.join(dir, filename+'.jpg'), dpi=300)
+    savefig.savefig(os.path.join(dir, filename+'.png'), dpi=300, transparent=True)
     
     # Clear plot 
     plt.clf()

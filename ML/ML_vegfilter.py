@@ -204,7 +204,7 @@ def ml_veg_filter(default_values, verbose=True):
         fh.write('\nvegetation indices: {}\n'.format(list(default_values.model_vegetation_indices)))
         fh.write('model inputs: {}\n'.format(list(default_values.model_inputs)))
 
-        fh.write('\nEvaluation metrics:\n')
+        fh.write('\vEvaluation metrics:\n')
         fh.write('Loss: {}\n'.format(model_eval[0]))
         fh.write('Cross Entropy: {}\n'.format(model_eval[1]))
         fh.write('Categorical Accuracy: {}\n'.format(model_eval[2]))
@@ -217,23 +217,24 @@ def ml_veg_filter(default_values, verbose=True):
         fh.write('\nClass Dictionary:\n')
         # for key, value in class_dat.items():  
         #     fh.write('%s: %s\n' % (value, key))
-        [fh.write('%s: %s\n' % (value, key)) for key,value in class_dat]
+        [fh.write('%s: %s\n' % (value,key)) for key,value in class_dat.items()]
 
-    '''
-    Plot and save the confusion matrix/matrices
-    '''
-    # cm = calculate_confusion_matrix(model=mod, test_dataset=test_ds)
-
-    # plot_confusion_matrix(confusion_matrix=cm[0], 
-    #                       dir=os.path.join(default_values.rootdir,'saved_models_'+tdate), 
-    #                       model=mod, 
-    #                       class_names=[k for k,_ in enumerate(class_dat)], 
-    #                       drange='data')
-    # plot_confusion_matrix(confusion_matrix=cm[1], 
-    #                       dir=os.path.join(default_values.rootdir,'saved_models_'+tdate), 
-    #                       model=mod, 
-    #                       class_names=[k for k,_ in enumerate(class_dat)], 
-    #                       drange='percentage')
+    # calculate the confusion matrix
+    cm = calculate_confusion_matrix(mod, test_ds, class_depth=len(class_dat), verbose=True)
+    plot_confusion_matrix(confusion_matrix=cm[0], 
+                          dir=os.path.join(default_values.rootdir,'saved_models_'+tdate),
+                          model=mod,
+                          class_names=[v for _,v in class_dat.items()],
+                          drange='data',
+                          plot_title='Confusion Matrix (Data)',
+                          verbose=True)
+    plot_confusion_matrix(confusion_matrix=cm[1], 
+                          dir=os.path.join(default_values.rootdir,'saved_models_'+tdate),
+                          model=mod,
+                          class_names=[v for _,v in class_dat.items()],
+                          drange='percent',
+                          plot_title='Confusion Matrix (Percent)',
+                          verbose=True)
 
     print('\nSaving model as .h5 and sub-directory in {}...'.format(os.path.join(default_values.rootdir,'saved_models_'+tdate)))
     # save the complete model (will create a new folder with the saved model)
