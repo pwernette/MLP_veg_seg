@@ -37,8 +37,8 @@ def calculate_confusion_matrix(model, test_dataset, class_depth=2, verbose=False
         # Predict class using model 
         # model_predictions = np.concatenate([model_predictions, y])      # debugging only
         model_predictions = np.concatenate([model_predictions, tf.argmax(model.predict(x, verbose=1), axis=-1)])
-        if verbose:
-            print('\nOriginal:\n {}\nPredicted:\n {}'.format(y, tf.argmax(model.predict(x, verbose=1), axis=-1)))
+        # if verbose:
+        #     print('\nOriginal:\n {}\nPredicted:\n {}'.format(y, tf.argmax(model.predict(x, verbose=1), axis=-1)))
 
     # Create the confusion matrix (and calculate as a percentage) 
     confusion_mat = tf.math.confusion_matrix(labels=original_labels, predictions=model_predictions).numpy()
