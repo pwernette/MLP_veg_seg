@@ -18,7 +18,7 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfile
 from tkinter import simpledialog
 
-def calculate_confusion_matrix(model, test_dataset, class_depth=2, verbose=True):
+def calculate_confusion_matrix(model, test_dataset, class_depth=2, verbose=False):
     '''
     Calculate a confusion matrix from the test dataset specified
     '''
@@ -29,10 +29,10 @@ def calculate_confusion_matrix(model, test_dataset, class_depth=2, verbose=True)
     # Iterate through the training data 
     for x, y in test_dataset:
         """ Extract the training labels """
-        print('Original Labels')
-        print(original_labels)
-        print('To Concatenate:')
-        print(np.argmax(y.numpy(), axis=-1))
+        # print('Original Labels')
+        # print(original_labels)
+        # print('To Concatenate:')
+        # print(np.argmax(y.numpy(), axis=-1))
         original_labels = np.concatenate([original_labels, np.argmax(y.numpy(), axis=-1)])
         # Predict class using model 
         # model_predictions = np.concatenate([model_predictions, y])      # debugging only
@@ -115,9 +115,9 @@ def plot_confusion_matrices(confusion_matrices, dir, model, class_names, verbose
         # re-format confusion matrix as 2D array for plotting
     conf_matrix = np.asarray(conf_matrix)
 
-    if verbose:
-        print('\nCombined confusion matrix:')
-        print(conf_matrix)
+    # if verbose:
+    #     print('\nCombined confusion matrix:')
+    #     print(conf_matrix)
 
     '''
     Plot combined confusion matrix
@@ -206,9 +206,9 @@ def plot_confusion_matrix(confusion_matrix, dir, model, class_names, drange='dat
     plt.rcParams['figure.figsize'] = (12.0,6.5)
     plt.rcParams['figure.subplot.bottom'] = 0.3
 
-    if verbose:
-        print('\nConfusion matrix:')
-        print(confusion_matrix)
+    # if verbose:
+    #     print('\nConfusion matrix:')
+    #     print(confusion_matrix)
 
     # switch for data-based min/max scaling or percentage-based (0.0 to 1.0)
     if drange == 'data':
