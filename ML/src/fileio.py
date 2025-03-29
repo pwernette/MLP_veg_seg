@@ -510,7 +510,9 @@ def predict_reclass_write(incloudname,
 
         if verbose_output == 2:
             print('\nOutput Predictions (raw): {}'.format(len(outdat_pred)))
+            print(type(outdat_pred))
             print(outdat_pred)
+            print(outdat_pred.transpose()[1])
         
         # if write_probabilities:
         #     # write probabilities to output file
