@@ -371,7 +371,8 @@ def predict_reclass_write(incloudname,
                           xyz_maxs=[0,0,0],
                           xyz_mins=[0,0,0],
                           geom_rad=0.10, 
-                          verbose_output=1):
+                          verbose_output=1,
+                          write_probabilities=True):
     '''
     Reclassify the input point cloud using the models specified in the model_list
     variable and the threshold value(s) specified in the threshold_vals list. It
@@ -510,6 +511,18 @@ def predict_reclass_write(incloudname,
         if verbose_output == 2:
             print('\nOutput Predictions (raw): {}'.format(len(outdat_pred)))
             print(outdat_pred)
+        
+        # if write_probabilities:
+        #     # write probabilities to output file
+        #     for i in 
+        #     if not 'sd3d' in dim_names:
+        #     lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
+        #         name="sd3d",
+        #         type=np.float32,
+        #         description="standard_deviation"
+        #         ))
+        # lasfileobj.sd3d = calc_3d_sd(np.array([lasfileobj.x, lasfileobj.y, lasfileobj.z]).transpose(), rad=geom_radius)
+        # print("Time to compute 3D Standard Deviation = {}".format(time.time()-starttime))
 
         # get the maximum likelihood classification based on the predicted probabilities
         outdat_pred = tf.argmax(outdat_pred,-1)
