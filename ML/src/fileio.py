@@ -523,7 +523,7 @@ def predict_reclass_write(incloudname,
         #         type=np.float32,
         #         description="standard_deviation"
         #         ))
-        # lasfileobj.sd3d = calc_3d_sd(np.array([lasfileobj.x, lasfileobj.y, lasfileobj.z]).transpose(), rad=geom_radius)
+        # lasfileobj.sd3d = outdat_pred[]
         # print("Time to compute 3D Standard Deviation = {}".format(time.time()-starttime))
 
         # get the maximum likelihood classification based on the predicted probabilities
