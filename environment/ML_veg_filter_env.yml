@@ -10,6 +10,7 @@ dependencies:
  - matplotlib
  - ipython
  - graphviz
+ - seaborn
  - pip
  - pip:
    - scikit-learn
