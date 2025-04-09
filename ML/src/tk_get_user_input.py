@@ -46,6 +46,7 @@ class App(tk.Tk):
         super().__init__()
         # give the window a title
         self.title('Input Parameters')
+
     def create_widgets(self, default_arguments_obj):
         ''' function to create the window '''
         def cancel_and_exit(self):
