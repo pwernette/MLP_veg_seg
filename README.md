@@ -12,7 +12,7 @@ Wernette, Phillipe A. 2024. Segmenting Vegetation from bare-Earth in High-relief
   date = {2024-04-12},
 }
 ```
-Or, download the citation [BibTeX file HERE](https://github.com/pwernette/point_cloud_vegetation_filtering/raw/main/misc/wernette_2024_citation.bib).
+Or, download the citation <a id="raw-url" href="https://github.com/pwernette/point_cloud_vegetation_filtering/raw/main/misc/wernette_2024_citation.bib">BibTeX file HERE</a>.
 
 These programs are modelled after work originally presented by myself at the AGU Fall Meeting in December 2021 ([abstract][https://agu.confex.com/agu/fm21/meetingapp.cgi/Paper/863844] and [recording](https://youtu.be/k1ors_mKxlo)) and supplementary to the manuscript in review in *Remote Sensing*. They are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other by colour alone. The programs are meant to reclassify large and dense point clouds very efficiently, similar to the following (green points represent 'vegetation' and brown points represent 'bare-Earth'):
 
@@ -384,7 +384,7 @@ The output LAZ file will be saved in the same directory as the input file and wi
 **If you have any questions about how to implement the code, suggestions for improvements, or feedback, please leave a comment or report the issue with as much detail as possible.**
 
 # CITATION
-[BibTeX file](https://github.com/pwernette/point_cloud_vegetation_filtering/raw/main/misc/wernette_2024_citation.bib)
+<a id="raw-url" href="https://github.com/pwernette/point_cloud_vegetation_filtering/raw/main/misc/wernette_2024_citation.bib">BibTeX file</a>
 
 Wernette, Phillipe A. 2024. Segmenting Vegetation from bare-Earth in High-relief and Dense Point Clouds using Machine Learning. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10966854.svg)](https://doi.org/10.5281/zenodo.10966854)
 ```
