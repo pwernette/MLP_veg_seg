@@ -12,7 +12,7 @@ Wernette, Phillipe A. 2024. Segmenting Vegetation from bare-Earth in High-relief
   date = {2024-04-12},
 }
 ```
-Or, download the citation <a href="https://github.com/pwernette/point_cloud_vegetation_filtering/raw/main/misc/wernette_2024_citation.bib" title="BibTeX file HERE" download>BibTeX file</a>.
+Or, download the citation [BibTeX file directly HERE](https://github.com/pwernette/point_cloud_vegetation_filtering/raw/main/misc/wernette_2024_citation.bib).
 
 These programs are modelled after work originally presented by myself at the AGU Fall Meeting in December 2021 ([abstract][https://agu.confex.com/agu/fm21/meetingapp.cgi/Paper/863844] and [recording](https://youtu.be/k1ors_mKxlo)) and supplementary to the manuscript in review in *Remote Sensing*. They are designed to segment vegetation from bare-Earth points in a dense point cloud, although they may also be used to segment any two classes that are visually distinguishable from each other by colour alone. The programs are meant to reclassify large and dense point clouds very efficiently, similar to the following (green points represent 'vegetation' and brown points represent 'bare-Earth'):
 
