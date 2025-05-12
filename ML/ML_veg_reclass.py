@@ -91,7 +91,7 @@ def ml_veg_reclass(default_values, verbose=True):
     # if default_values.reclassfile == 'NA':
     #     default_values.reclassfile = getfile(window_title='Select point cloud to reclassify')
 
-    print('\nRECLASSIFICATION THRESHOLD(S) = {}'.format(float(default_values.reclass_thresholds)))
+    # print('\nRECLASSIFICATION THRESHOLD(S) = {}'.format(float(default_values.reclass_thresholds)))
 
     # if the reclass model is already a list of models, then proceed
     if isinstance(reclassmodel, list):

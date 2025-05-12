@@ -513,25 +513,7 @@ def predict_reclass_write(incloudname,
         print(type(outdat_pred))
         print(outdat_pred)
         print(outdat_pred.transpose()[1])
-        
-        # if write_probabilities:
-        #     # write probabilities to output file
-        #     for i in 
-        #     if not 'sd3d' in dim_names:
-        #     lasfileobj.add_extra_dim(laspy.ExtraBytesParams(
-        #         name="sd3d",
-        #         type=np.float32,
-        #         description="standard_deviation"
-        #         ))
-        # lasfileobj.sd3d = outdat_pred[]
         # print("Time to compute 3D Standard Deviation = {}".format(time.time()-starttime))
-
-        # get the maximum likelihood classification based on the predicted probabilities
-        outdat_pred = tf.argmax(outdat_pred,-1)
-
-        if verbose_output == 2:
-            print('\nOutput Predictions: {}'.format(len(outdat_pred)))
-            print(outdat_pred)
 
         # open the output file (laspy version dependent)
         if int(laspy.__version__.split('.')[0]) == 1:
@@ -539,6 +521,13 @@ def predict_reclass_write(incloudname,
             outfile = file.File((outfilename.replace('.laz','.las')), mode='w', header=incloud.header)
             # copy the points from the original file
             outfile.points = incloud.points
+
+            # get the maximum likelihood classification based on the predicted probabilities
+            outdat_pred = tf.argmax(outdat_pred,-1)
+
+            if verbose_output == 2:
+                print('\nOutput Predictions: {}'.format(len(outdat_pred)))
+                print(outdat_pred)
 
             # update the classification values
             outfile.classification = outdat_pred
@@ -553,6 +542,24 @@ def predict_reclass_write(incloudname,
             subprocess.call(['rm',
                             ('results_' + rdate + '/' + ofname + "_" + str(m.name)+ '.las')])
         elif int(laspy.__version__.split('.')[0]) == 2:
+            if write_probabilities:
+                # write probabilities to output file
+                for i in range(outdat_pred.shape[1]):
+                    if not 'prob'+str(i) in list(incloud.point_format.dimension_names):
+                        incloud.add_extra_dim(laspy.ExtraBytesParams(
+                            name="prob"+str(i),
+                            type=np.float32,
+                            description="probability_"+str(i)
+                            ))
+                    globals()[('incloud.prob'+str(i))] = outdat_pred[:,i]
+                    print('prob'+str(i), outdat_pred[:,i])
+
+            # get the maximum likelihood classification based on the predicted probabilities
+            outdat_pred = tf.argmax(outdat_pred,-1)
+
+            if verbose_output == 2:
+                print('\nOutput Predictions: {}'.format(len(outdat_pred)))
+                print(outdat_pred)
             # update the classification values
             # print('\nincloud.classification: {}'.format(len(incloud.classification)))
             # print(incloud.classification)
