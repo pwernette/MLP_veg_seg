@@ -91,14 +91,15 @@ def ml_veg_reclass(default_values, verbose=True):
     # if default_values.reclassfile == 'NA':
     #     default_values.reclassfile = getfile(window_title='Select point cloud to reclassify')
 
-    print('\nRECLASSIFICATION THRESHOLD(S) = {}'.format(float(default_values.reclass_thresholds)))
+    # print('\nRECLASSIFICATION THRESHOLD(S) = {}'.format(float(default_values.reclass_thresholds)))
 
     # if the reclass model is already a list of models, then proceed
     if isinstance(reclassmodel, list):
         predict_reclass_write(default_values.reclassfile,
                                 reclassmodel,
                                 geo_metrics=geomet,
-                                geom_rad=default_values.geometry_radius)
+                                geom_rad=default_values.geometry_radius,
+                                write_probabilities=True)
     # else if the reclass model is not a list of models, then convert it to a
     # list for use in the predict_reclass_write() function
     elif not isinstance(reclassmodel, list):
@@ -106,7 +107,8 @@ def ml_veg_reclass(default_values, verbose=True):
         predict_reclass_write(default_values.reclassfile,
                                 [reclassmodel],
                                 geo_metrics=geomet,
-                                geom_rad=default_values.geometry_radius)
+                                geom_rad=default_values.geometry_radius,
+                                write_probabilities=True)
         #except Exception as e:
         #    print('ERROR: Unable to reclassify the input file. See below for specific error:')
         #    sys.exit(e)

@@ -256,7 +256,8 @@ def ml_veg_filter(default_values, verbose=True):
                             batch_sz=default_values.training_batch_size,
                             ds_cache=default_values.training_cache,
                             geo_metrics=geomet,
-                            geom_rad=default_values.geometry_radius)
+                            geom_rad=default_values.geometry_radius
+                            write_probabilities=True)
     # except Exception as e:
     #     print('ERROR: Unable to reclassify the input file. See below for specific error:')
     #     sys.exit(e)
