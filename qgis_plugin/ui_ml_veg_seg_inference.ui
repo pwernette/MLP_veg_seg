@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MLReclassDialog</class>
+ <widget class="QDialog" name="MLReclassDialog">
+  <property name="windowTitle">
+   <string>Vegetation Reclassifier</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="labelInput">
+     <property name="text">
+      <string>Input .las/.laz File:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="inputLayout">
+     <item>
+      <widget class="QLineEdit" name="inputFile"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="browseInput">
+       <property name="text">
+        <string>Browse</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+
+   <item>
+    <widget class="QLabel" name="labelModel">
+     <property name="text">
+      <string>TensorFlow Model (.h5 or .pb):</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="modelLayout">
+     <item>
+      <widget class="QLineEdit" name="modelFile"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="browseModel">
+       <property name="text">
+        <string>Browse</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+
+   <item>
+    <widget class="QLabel" name="labelOutput">
+     <property name="text">
+      <string>Output .laz File:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="outputLayout">
+     <item>
+      <widget class="QLineEdit" name="outputFile"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="browseOutput">
+       <property name="text">
+        <string>Browse</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+
+   <item>
+    <widget class="QPushButton" name="runButton">
+     <property name="text">
+      <string>Run Reclassification</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

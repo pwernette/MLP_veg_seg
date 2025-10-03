@@ -1,0 +1,7 @@
+[general]
+name=MLP Veg Seg
+description=Vegetation segmentation plugin using machine learning
+version=1.0
+qgisMinimumVersion=3.0
+author=Phillipe Wernette, PhD
+email=pwernett@msu.edu
