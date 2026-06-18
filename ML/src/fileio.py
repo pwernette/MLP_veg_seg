@@ -370,7 +370,7 @@ def predict_reclass_write(incloudname,
                           geo_metrics=[], 
                           xyz_maxs=[0,0,0],
                           xyz_mins=[0,0,0],
-                          geom_rad=0.10, 
+                          geom_rad=0.10,
                           verbose_output=1,
                           write_probabilities=True):
     '''
@@ -552,6 +552,7 @@ def predict_reclass_write(incloudname,
                             description="probability_"+str(i)
                             ))
                     globals()[('incloud.prob'+str(i))] = outdat_pred[:,i]
+                    # setattr(incloud, 'prob'+str(i), outdat_pred[:,i])
                     print('prob'+str(i), outdat_pred[:,i])
 
             # get the maximum likelihood classification based on the predicted probabilities
