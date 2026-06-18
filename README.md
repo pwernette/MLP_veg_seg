@@ -45,10 +45,11 @@ Wernette, Phillipe A. (in reivew) Vegetation Filtering of Coastal Cliff and Bluf
    - [Option A: Two Separate Programs](#option-a-run-two-separate-programs)
      - [ML_veg_train.py](#ml_veg_trainpy)
      - [ML_veg_reclass.py](#ml_veg_reclasspy)
-4. [Non-Machine Learning Approach](#usage-programs-without-machine-learning)
-5. [Feedback](#feedback)
-6. [Citation](#citation)
-7. [References](#references)
+4. [Machine Learning Approach - QGIS Plugin](#usage-for-machine-learning-programs---qgis-plugin)
+5. [Non-Machine Learning Approach](#usage-programs-without-machine-learning)
+6. [Feedback](#feedback)
+7. [Citation](#citation)
+8. [References](#references)
 
 ## Vegetation Indices Included
 
@@ -322,6 +323,17 @@ A new LAZ file will be generated in with the following syntax:
 > {filename}_{model_name}.laz
 
 Where *{filename}* is the original point cloud file name, *{model_name}* is the name of the model used to reclassify the input point cloud, and *{threshold_value}* is the threshold value used to segment vegetation from bare-Earth.
+
+# USAGE (FOR MACHINE LEARNING PROGRAMS - QGIS PLUGIN):
+
+The machine learning approach can be run as a QGIS plugin. The plugin will automatically read in the model structure, weights, and required inputs (including vegetation indices and geometry metrics) and will reclassify the input point cloud. If you want geometry metrics included in the model, simply include them in the specified vegetation indices.
+
+## Installing the QGIS Plugin
+
+1. Install dependencies into QGIS's Python: `pip install tensorflow laspy lazrs pandas scikit-learn tqdm matplotlib` (or use the included .yml files with conda)
+2. Download the plugin from the `qgis_package` folder.
+3. Unzip into your QGIS plugins folder (*~/.local/share/QGIS/QGIS3/profiles/default/python/plugins/* on Linux)
+4. Enable the plugin in **Plugins** → **Manage and Install Plugins**
 
 # USAGE (PROGRAMS *WITHOUT* MACHINE LEARNING):
 

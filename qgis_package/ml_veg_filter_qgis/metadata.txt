@@ -1,0 +1,19 @@
+[general]
+name=ML Vegetation Filter
+qgisMinimumVersion=3.16
+description=Segment vegetation from bare-Earth in dense RGB point clouds using a TensorFlow MLP classifier. Supports training new models, reclassifying point clouds, and a combined train+reclassify workflow.
+version=1.0.0
+author=Phillipe A. Wernette
+email=pwernett@msu.edu
+about=This plugin provides a QGIS Processing interface for the ML Vegetation Filter tool (Wernette 2024, doi:10.5281/zenodo.10966854). It classifies LAS/LAZ point cloud points as vegetation or bare-Earth using RGB colour-derived vegetation indices and an MLP neural network trained via TensorFlow. Three workflows are provided: (1) Train a new model, (2) Reclassify a point cloud with an existing model, and (3) Train and reclassify in a single step.
+
+tracker=https://github.com/pwernette/point_cloud_vegetation_filtering/issues
+repository=https://github.com/pwernette/point_cloud_vegetation_filtering
+
+hasProcessingProvider=yes
+tags=point cloud, lidar, vegetation, machine learning, tensorflow, las, laz, classification, remote sensing
+homepage=https://github.com/pwernette/point_cloud_vegetation_filtering
+category=Plugins
+icon=icon.png
+experimental=False
+deprecated=False

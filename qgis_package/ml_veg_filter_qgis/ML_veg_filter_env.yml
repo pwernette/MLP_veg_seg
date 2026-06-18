@@ -1,0 +1,23 @@
+name: mlvegfilter_qgis
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - cudnn=8.1
+  - cudatoolkit=11.2
+  - numpy<2.0
+  - matplotlib
+  - ipython
+  - graphviz
+  - pip
+  - pip:
+    - scikit-learn
+    - pandas
+    - geopandas
+    - scipy
+    - pydot
+    - tqdm
+    - laspy
+    - lazrs
+    - tensorflow-gpu==2.10
